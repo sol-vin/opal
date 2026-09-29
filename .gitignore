@@ -1,0 +1,13 @@
+/bin/
+/lib/
+/docs/
+/.shards/
+*.dwarf
+*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+shard.lock
+.DS_Store
+Thumbs.db

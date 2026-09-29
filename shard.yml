@@ -1,0 +1,15 @@
+name: opal
+version: 0.1.0
+authors:
+  - Ian Rash <redcodefinal@gmail.com>
+description: Next-generation TUI and CLI DSL framework for Crystal, unifying Bubbletea, Ink, and Blessed paradigms.
+license: MIT
+
+crystal: ">= 1.10.0"
+
+targets:
+  opal:
+    main: src/opal.cr
+
+development_dependencies:
+  # Zero external dependencies for core library!

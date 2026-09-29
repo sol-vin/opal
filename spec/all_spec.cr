@@ -1,0 +1,7 @@
+require "./terminal_spec"
+require "./style_spec"
+require "./cli_spec"
+require "./prompt_spec"
+require "./tea_spec"
+require "./ui_spec"
+require "./input_and_terminal_info_spec"

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: latest
+
+      - name: Check code formatting
+        run: crystal tool format --check
+
+      - name: Run Test Suite (Unix)
+        if: runner.os != 'Windows'
+        run: crystal spec spec/all_spec.cr
+
+      - name: Run Test Suite (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Path bin -Force
+          crystal build spec/all_spec.cr -o bin/all_spec.exe
+          .\bin\all_spec.exe
+
+      - name: Verify Examples Compilation
+        shell: bash
+        run: |
+          mkdir -p bin
+          crystal build examples/01_lapis_revamp.cr -o bin/example1
+          crystal build examples/02_interactive_prompts.cr -o bin/example2
+          crystal build examples/03_tea_counter.cr -o bin/example3
+          crystal build examples/04_system_dashboard.cr -o bin/example4
+          crystal build examples/05_autocomplete_and_input.cr -o bin/example5
