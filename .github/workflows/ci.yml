@@ -25,6 +25,7 @@ jobs:
           crystal: latest
 
       - name: Check code formatting
+        if: matrix.os == 'ubuntu-latest'
         run: crystal tool format --check
 
       - name: Run Test Suite (Unix)
