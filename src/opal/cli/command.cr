@@ -17,7 +17,7 @@ module Opal
       property category : String? = nil
       property parent : Command? = nil
       property? allow_unknown_options : Bool = false
-      property help_handler : (-> String | Nil)? = nil
+      property help_handler : (Context? -> String | Nil)? = nil
 
       # Allows unrecognized options or flags to pass through without parsing errors
       def allow_unknown_options(allow : Bool = true) : self
@@ -26,7 +26,7 @@ module Opal
       end
 
       # Registers a custom help handler for this command
-      def on_help(&block : -> String | Nil) : self
+      def on_help(&block : Context? -> String | Nil) : self
         @help_handler = block
         self
       end
@@ -227,9 +227,9 @@ module Opal
       end
 
       # Formats help screen for this command
-      def help_text(app_name : String) : String
+      def help_text(app_name : String, context : Context? = nil) : String
         if handler = @help_handler
-          res = handler.call
+          res = handler.call(context)
           return res.is_a?(String) ? res : ""
         end
         Help.render(

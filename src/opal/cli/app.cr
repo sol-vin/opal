@@ -73,10 +73,10 @@ module Opal
 
           if context.flag?(:help)
             if handler = target_command.help_handler
-              res = handler.call
+              res = handler.call(context)
               puts res if res.is_a?(String)
             else
-              puts target_command.help_text(@name)
+              puts target_command.help_text(@name, context)
             end
             return 0
           end
