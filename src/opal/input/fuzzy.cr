@@ -99,6 +99,51 @@ module Opal
 
         results
       end
+      # Computes the Levenshtein edit distance between two strings.
+      def self.levenshtein(s1 : String, s2 : String) : Int32
+        m = s1.size
+        n = s2.size
+        return n if m == 0
+        return m if n == 0
+
+        d = Array.new(m + 1) { Array.new(n + 1, 0) }
+        (0..m).each { |i| d[i][0] = i }
+        (0..n).each { |j| d[0][j] = j }
+
+        s1_chars = s1.chars
+        s2_chars = s2.chars
+
+        (1..m).each do |i|
+          (1..n).each do |j|
+            cost = (s1_chars[i - 1].downcase == s2_chars[j - 1].downcase) ? 0 : 1
+            d[i][j] = Math.min(
+              d[i - 1][j] + 1,
+              Math.min(
+                d[i][j - 1] + 1,
+                d[i - 1][j - 1] + cost
+              )
+            )
+          end
+        end
+
+        d[m][n]
+      end
+
+      # Suggests the closest matching candidate for a typo, or nil if no good match.
+      def self.suggest(query : String, candidates : Array(String) | Enumerable(String), max_distance : Int32 = 3) : String?
+        best_candidate : String? = nil
+        min_dist = max_distance + 1
+
+        candidates.each do |cand|
+          dist = levenshtein(query, cand)
+          if dist < min_dist
+            min_dist = dist
+            best_candidate = cand
+          end
+        end
+
+        best_candidate
+      end
     end
   end
 end

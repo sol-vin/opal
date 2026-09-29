@@ -45,6 +45,20 @@ module Opal
         io.to_s
       end
 
+      def self.powershell(app_name : String, root : Command) : String
+        commands = collect_command_names(root).map { |c| "'#{c}'" }.join(", ")
+        <<-PS1
+        # PowerShell completion script for #{app_name}
+        Register-ArgumentCompleter -Native -CommandName #{app_name} -ScriptBlock {
+            param($wordToComplete, $commandAst, $cursorPosition)
+            $commands = @(#{commands})
+            $commands | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
+                [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+            }
+        }
+        PS1
+      end
+
       def self.zsh(app_name : String, root : Command) : String
         <<-ZSH
         #compdef #{app_name}

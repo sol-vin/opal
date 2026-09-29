@@ -1,5 +1,6 @@
 require "./msg"
 require "./cmd"
+require "../ui/buffer"
 
 module Opal
   module TEA
@@ -13,6 +14,16 @@ module Opal
 
       # Renders the current state as a formatted terminal string.
       abstract def view : String
+
+      # Optional direct buffer rendering for flicker-free double buffering
+      def render(buffer : UI::Buffer) : Nil
+        y = 0
+        view.each_line do |line|
+          break if y >= buffer.height
+          buffer.put_string(0, y, line)
+          y += 1
+        end
+      end
     end
   end
 end

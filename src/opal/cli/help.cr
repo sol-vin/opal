@@ -40,14 +40,37 @@ module Opal
 
         # Subcommands
         unless subcommands.empty?
-          io.puts heading_style.render("Available Commands:")
-          max_cmd_len = subcommands.keys.map(&.size).max? || 0
-          subcommands.each do |name, subcmd|
-            padding = " " * (max_cmd_len - name.size + 4)
-            alias_info = subcmd.aliases.empty? ? "" : " (aliases: #{subcmd.aliases.join(", ")})"
-            io.puts "  #{cmd_style.render(name)}#{padding}#{subcmd.description}#{dim_style.render(alias_info)}"
+          has_categories = subcommands.values.any? { |c| !c.category.nil? }
+          if has_categories
+            grouped = Hash(String, Array({String, Command})).new
+            subcommands.each do |name, subcmd|
+              next if subcmd.aliases.includes?(name) && name != subcmd.name
+              cat = subcmd.category || "Available Commands"
+              grouped[cat] ||= [] of {String, Command}
+              grouped[cat] << {name, subcmd}
+            end
+
+            grouped.each do |cat_name, cmds|
+              io.puts heading_style.render("#{cat_name}:")
+              max_cmd_len = cmds.map { |n, _| n.size }.max? || 0
+              cmds.each do |name, subcmd|
+                padding = " " * (max_cmd_len - name.size + 4)
+                alias_info = subcmd.aliases.empty? ? "" : " (aliases: #{subcmd.aliases.join(", ")})"
+                io.puts "  #{cmd_style.render(name)}#{padding}#{subcmd.description}#{dim_style.render(alias_info)}"
+              end
+              io.puts
+            end
+          else
+            io.puts heading_style.render("Available Commands:")
+            max_cmd_len = subcommands.keys.map(&.size).max? || 0
+            subcommands.each do |name, subcmd|
+              next if subcmd.aliases.includes?(name) && name != subcmd.name
+              padding = " " * (max_cmd_len - name.size + 4)
+              alias_info = subcmd.aliases.empty? ? "" : " (aliases: #{subcmd.aliases.join(", ")})"
+              io.puts "  #{cmd_style.render(name)}#{padding}#{subcmd.description}#{dim_style.render(alias_info)}"
+            end
+            io.puts
           end
-          io.puts
         end
 
         # Positional arguments

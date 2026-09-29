@@ -216,4 +216,77 @@ describe Opal::CLI do
     fish_script.should contain("complete -c mycli")
     fish_script.should contain("run")
   end
+it "accepts global options preceding subcommands" do
+    received_quiet = false
+    executed = false
+
+    app = Opal.cli("lapis") do |cli|
+      cli.flag :quiet, "--quiet", "-q", global: true
+      cli.command :build do |build|
+        build.run do |ctx|
+          executed = true
+          received_quiet = ctx.flag?(:quiet)
+          0
+        end
+      end
+    end
+
+    app.run(["-q", "build"]).should eq(0)
+    executed.should be_true
+    received_quiet.should be_true
+  end
+
+  it "suggests close command match on typo" do
+    app = Opal.cli("tool") do |cli|
+      cli.command :build, "Compile game"
+      cli.command :test, "Run test suite"
+    end
+
+    expect_raises(Opal::CLI::ParseError, /Did you mean 'build'/) do
+      Opal::CLI::Parser.parse(app, ["biuld"])
+    end
+  end
+
+  it "suggests close option match on typo" do
+    app = Opal.cli("tool") do |cli|
+      cli.command :build do |b|
+        b.flag :release, "--release", "-r"
+      end
+    end
+
+    expect_raises(Opal::CLI::ParseError, /Did you mean '--release'/) do
+      Opal::CLI::Parser.parse(app, ["build", "--releas"])
+    end
+  end
+
+  it "groups commands by category in help text" do
+    app = Opal.cli("lapis") do |cli|
+      cli.command :build do |b|
+        b.category "Build Commands"
+        b.description "Compile code"
+      end
+      cli.command :test do |t|
+        t.category "Test Commands"
+        t.description "Run specs"
+      end
+    end
+
+    help = app.help_text("lapis")
+    help.should contain("Build Commands:")
+    help.should contain("Test Commands:")
+    help.should contain("build")
+    help.should contain("test")
+  end
+
+  it "generates powershell completion scripts" do
+    app = Opal.cli("mycli") do |cli|
+      cli.command :build, "Build task"
+      cli.command :test, "Test task"
+    end
+
+    ps_script = Opal::CLI::Completion.powershell("mycli", app)
+    ps_script.should contain("Register-ArgumentCompleter")
+    ps_script.should contain("'build'")
+    ps_script.should contain("'test'")
+  end
 end

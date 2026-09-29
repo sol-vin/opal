@@ -1,5 +1,6 @@
 require "./command"
 require "./context"
+require "../input/fuzzy"
 
 module Opal
   module CLI
@@ -11,64 +12,34 @@ module Opal
     class Parser
       def self.parse(root_command : Command, args : Array(String)) : {Command, Context}
         current_cmd = root_command
-        idx = 0
-
-        # Traverse subcommand tree
-        while idx < args.size
-          token = args[idx]
-          break if token.starts_with?('-')
-
-          if sub = current_cmd.find_command(token)
-            current_cmd = sub
-            idx += 1
-          else
-            break
-          end
-        end
-
-        remaining_tokens = args[idx..]
-        all_opts = current_cmd.all_options
-
         flags_map = Hash(Symbol, Bool).new
         options_map = Hash(Symbol, OptionValue).new
         positional_args = [] of String
 
-        # Prepopulate default values and environment variables
-        all_opts.each do |opt|
-          if opt.flag?
-            flags_map[opt.name] = opt.default == true
-          else
-            if opt.default
-              options_map[opt.name] = opt.default
-            end
-            if env = opt.env_var
-              if env_val = ENV[env]?
-                options_map[opt.name] = cast_value(env_val, opt.type)
-              end
-            end
-          end
-        end
-
-        t_idx = 0
-        while t_idx < remaining_tokens.size
-          tok = remaining_tokens[t_idx]
+        idx = 0
+        while idx < args.size
+          tok = args[idx]
 
           if tok == "--"
-            # End of options delimiter, remaining are positional
-            t_idx += 1
-            while t_idx < remaining_tokens.size
-              positional_args << remaining_tokens[t_idx]
-              t_idx += 1
+            idx += 1
+            while idx < args.size
+              positional_args << args[idx]
+              idx += 1
             end
             break
           elsif tok.starts_with?("--")
-            # Long option
             key_part, delim, val_part = tok[2..].partition('=')
             has_val = !delim.empty?
+            all_opts = current_cmd.all_options
             opt = all_opts.reverse.find { |o| o.long == "--#{key_part}" }
 
             unless opt
-              raise ParseError.new("Unknown option: #{tok} for command '#{current_cmd.name}'")
+              candidates = all_opts.compact_map { |o| o.long.lstrip('-') }
+              if suggestion = Input::Fuzzy.suggest(key_part, candidates)
+                raise ParseError.new("Unknown option: #{tok} for command '#{current_cmd.name}'. Did you mean '--#{suggestion}'?")
+              else
+                raise ParseError.new("Unknown option: #{tok} for command '#{current_cmd.name}'")
+              end
             end
 
             if opt.flag?
@@ -77,9 +48,9 @@ module Opal
             else
               val_str = if has_val
                           val_part
-                        elsif t_idx + 1 < remaining_tokens.size && !remaining_tokens[t_idx + 1].starts_with?('-')
-                          t_idx += 1
-                          remaining_tokens[t_idx]
+                        elsif idx + 1 < args.size && !args[idx + 1].starts_with?('-')
+                          idx += 1
+                          args[idx]
                         else
                           raise ParseError.new("Option #{tok} requires a value")
                         end
@@ -88,7 +59,7 @@ module Opal
               set_option_value(options_map, opt, val_str)
             end
           elsif tok.starts_with?('-') && tok.size > 1
-            # Short option(s)
+            all_opts = current_cmd.all_options
             short_chars = tok[1..].chars
 
             if short_chars.size == 1
@@ -103,9 +74,9 @@ module Opal
                 flags_map[opt.name] = true
                 options_map[opt.name] = true
               else
-                val_str = if t_idx + 1 < remaining_tokens.size && !remaining_tokens[t_idx + 1].starts_with?('-')
-                            t_idx += 1
-                            remaining_tokens[t_idx]
+                val_str = if idx + 1 < args.size && !args[idx + 1].starts_with?('-')
+                            idx += 1
+                            args[idx]
                           else
                             raise ParseError.new("Option #{tok} requires a value")
                           end
@@ -113,7 +84,6 @@ module Opal
                 set_option_value(options_map, opt, val_str)
               end
             else
-              # Clustered short flags (e.g. -qvr)
               short_chars.each do |c|
                 char_str = "-#{c}"
                 opt = all_opts.reverse.find { |o| o.short == char_str }
@@ -128,11 +98,40 @@ module Opal
               end
             end
           else
-            # Positional argument
-            positional_args << tok
+            # Positional token or subcommand
+            if sub = current_cmd.find_command(tok)
+              current_cmd = sub
+            elsif !current_cmd.subcommands.empty? && current_cmd.arguments.empty?
+              candidates = current_cmd.subcommands.keys
+              if suggestion = Input::Fuzzy.suggest(tok, candidates)
+                raise ParseError.new("Unknown command: '#{tok}' for '#{current_cmd.name}'. Did you mean '#{suggestion}'?")
+              else
+                raise ParseError.new("Unknown command: '#{tok}' for '#{current_cmd.name}'")
+              end
+            else
+              positional_args << tok
+            end
           end
 
-          t_idx += 1
+          idx += 1
+        end
+
+        all_opts = current_cmd.all_options
+
+        # Populate defaults
+        all_opts.each do |opt|
+          if opt.flag?
+            flags_map[opt.name] = (opt.default == true) unless flags_map.has_key?(opt.name)
+          else
+            if opt.default && !options_map.has_key?(opt.name)
+              options_map[opt.name] = opt.default
+            end
+            if env = opt.env_var
+              if (env_val = ENV[env]?) && !options_map.has_key?(opt.name)
+                options_map[opt.name] = cast_value(env_val, opt.type)
+              end
+            end
+          end
         end
 
         # Validate required options
@@ -142,7 +141,7 @@ module Opal
           end
         end
 
-        # Map positional arguments to declared arguments
+        # Map positional arguments
         named_args = Hash(Symbol, String).new
         current_cmd.arguments.each_with_index do |arg_def, i|
           if i < positional_args.size

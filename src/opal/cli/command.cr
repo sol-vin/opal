@@ -14,6 +14,7 @@ module Opal
       property arguments : Array(Argument)
       property subcommands : Hash(String, Command)
       property examples : Array(String)
+      property category : String? = nil
       property parent : Command? = nil
 
       @before_hooks = [] of (Context -> Nil)
@@ -29,6 +30,12 @@ module Opal
       end
 
       # Sets command description
+            # Sets command category for grouped help rendering
+      def category(cat : String) : self
+        @category = cat
+        self
+      end
+
       def description(desc : String) : self
         @description = desc
         self

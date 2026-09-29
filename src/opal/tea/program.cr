@@ -1,4 +1,6 @@
 require "../terminal"
+require "../ui/diff_renderer"
+require "../ui/buffer"
 require "./model"
 require "./msg"
 require "./cmd"
@@ -11,14 +13,18 @@ module Opal
       property driver : Terminal::Driver
       property? alt_screen : Bool
       property? mouse_enabled : Bool
+      property? diff_render : Bool
+      @diff_renderer : UI::DiffRenderer? = nil
 
       def initialize(
         @model : Model,
         driver : Terminal::Driver? = nil,
         @alt_screen : Bool = true,
         @mouse_enabled : Bool = false,
+        @diff_render : Bool = false,
       )
         @driver = driver || Terminal.default_driver
+        @diff_renderer = UI::DiffRenderer.new(@driver) if @diff_render
       end
 
       # Runs the interactive application loop and returns the final Model state upon exit.
@@ -105,10 +111,17 @@ module Opal
       end
 
       private def render_view : Nil
-        @driver.write(Terminal::Screen::CURSOR_HOME)
-        @driver.write(Terminal::Screen::CLEAR_ALL)
-        @driver.write(@model.view)
-        @driver.flush
+        if @diff_render && (dr = @diff_renderer)
+          cols, rows = @driver.size
+          buffer = UI::Buffer.new(cols, rows)
+          @model.render(buffer)
+          dr.render(buffer)
+        else
+          @driver.write(Terminal::Screen::CURSOR_HOME)
+          @driver.write(Terminal::Screen::CLEAR_ALL)
+          @driver.write(@model.view)
+          @driver.flush
+        end
       end
     end
   end
