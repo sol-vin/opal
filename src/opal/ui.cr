@@ -9,6 +9,10 @@ require "./ui/components/stack"
 require "./ui/components/box"
 require "./ui/components/table"
 require "./ui/components/viewport"
+require "./ui/components/split_view"
+require "./ui/components/code_view"
+require "./ui/components/tabs"
+require "./ui/components/hex_viewer"
 require "./ui/dsl"
 
 module Opal

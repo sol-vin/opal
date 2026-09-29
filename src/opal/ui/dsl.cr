@@ -15,6 +15,10 @@ require "./components/toast"
 require "./components/filter_list"
 require "./markdown/renderer"
 require "./components/command_palette"
+require "./components/split_view"
+require "./components/code_view"
+require "./components/tabs"
+require "./components/hex_viewer"
 
 module Opal
   module UI
@@ -196,8 +200,113 @@ module Opal
         el
       end
 
+      def split_view(
+        direction : SplitDirection = SplitDirection::Horizontal,
+        ratio : Float64? = 0.5,
+        first_size : Int32? = nil,
+        second_size : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &block : SplitBuilder -> Nil
+      ) : SplitView
+        sb = SplitBuilder.new
+        block.call(sb)
+        el = SplitView.new(
+          first: sb.first,
+          second: sb.second,
+          direction: direction,
+          ratio: ratio,
+          first_size: first_size,
+          second_size: second_size,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def code_view(
+        code : String,
+        language : Symbol = :plain,
+        start_line : Int32 = 1,
+        highlighted_line : Int32? = nil,
+        scroll_offset : Int32 = 0,
+        show_line_numbers : Bool = true,
+        gutter_fg : Color | Symbol | String = :dark_gray,
+        cursor_fg : Color | Symbol | String = :yellow,
+      ) : CodeView
+        el = CodeView.new(
+          code: code,
+          language: language,
+          start_line: start_line,
+          highlighted_line: highlighted_line,
+          scroll_offset: scroll_offset,
+          show_line_numbers: show_line_numbers,
+          gutter_fg: gutter_fg,
+          cursor_fg: cursor_fg
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def tabs(
+        labels : Array(String),
+        active_index : Int32 = 0,
+        active_fg : Color | Symbol | String = :bright_white,
+        active_bg : Color | Symbol | String = :blue,
+        inactive_fg : Color | Symbol | String = :gray,
+        pill_style : Bool = false,
+      ) : Tabs
+        el = Tabs.from_labels(labels, active: active_index)
+        el.active_fg = Color.from(active_fg)
+        el.active_bg = Color.from(active_bg)
+        el.inactive_fg = Color.from(inactive_fg)
+        el.pill_style = pill_style
+        set_root_or_child(el)
+        el
+      end
+
+      def hex_viewer(
+        bytes : Bytes | Slice(UInt8) | Array(UInt8),
+        base_address : UInt64 = 0_u64,
+        bytes_per_row : Int32 = 16,
+        scroll_offset : Int32 = 0,
+        selected_byte : Int32? = nil,
+      ) : HexViewer
+        el = HexViewer.new(
+          bytes: bytes,
+          base_address: base_address,
+          bytes_per_row: bytes_per_row,
+          scroll_offset: scroll_offset,
+          selected_byte: selected_byte
+        )
+        set_root_or_child(el)
+        el
+      end
+
       private def set_root_or_child(el : Element) : Nil
         @root ||= el
+      end
+    end
+
+    class SplitBuilder
+      getter first : Element?
+      getter second : Element?
+
+      def first(&block : Builder -> Nil) : Nil
+        b = Builder.new
+        block.call(b)
+        @first = b.root
+      end
+
+      def second(&block : Builder -> Nil) : Nil
+        b = Builder.new
+        block.call(b)
+        @second = b.root
       end
     end
 
@@ -340,6 +449,93 @@ module Opal
 
       def markdown(content : String, width : Int32 = 80) : MarkdownElement
         el = MarkdownElement.new(content, width)
+        add(el)
+        el
+      end
+      def split_view(
+        direction : SplitDirection = SplitDirection::Horizontal,
+        ratio : Float64? = 0.5,
+        first_size : Int32? = nil,
+        second_size : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &block : SplitBuilder -> Nil
+      ) : SplitView
+        sb = SplitBuilder.new
+        block.call(sb)
+        el = SplitView.new(
+          first: sb.first,
+          second: sb.second,
+          direction: direction,
+          ratio: ratio,
+          first_size: first_size,
+          second_size: second_size,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator
+        )
+        add(el)
+        el
+      end
+
+      def code_view(
+        code : String,
+        language : Symbol = :plain,
+        start_line : Int32 = 1,
+        highlighted_line : Int32? = nil,
+        scroll_offset : Int32 = 0,
+        show_line_numbers : Bool = true,
+        gutter_fg : Color | Symbol | String = :dark_gray,
+        cursor_fg : Color | Symbol | String = :yellow,
+      ) : CodeView
+        el = CodeView.new(
+          code: code,
+          language: language,
+          start_line: start_line,
+          highlighted_line: highlighted_line,
+          scroll_offset: scroll_offset,
+          show_line_numbers: show_line_numbers,
+          gutter_fg: gutter_fg,
+          cursor_fg: cursor_fg
+        )
+        add(el)
+        el
+      end
+
+      def tabs(
+        labels : Array(String),
+        active_index : Int32 = 0,
+        active_fg : Color | Symbol | String = :bright_white,
+        active_bg : Color | Symbol | String = :blue,
+        inactive_fg : Color | Symbol | String = :gray,
+        pill_style : Bool = false,
+      ) : Tabs
+        el = Tabs.from_labels(labels, active: active_index)
+        el.active_fg = Color.from(active_fg)
+        el.active_bg = Color.from(active_bg)
+        el.inactive_fg = Color.from(inactive_fg)
+        el.pill_style = pill_style
+        add(el)
+        el
+      end
+
+      def hex_viewer(
+        bytes : Bytes | Slice(UInt8) | Array(UInt8),
+        base_address : UInt64 = 0_u64,
+        bytes_per_row : Int32 = 16,
+        scroll_offset : Int32 = 0,
+        selected_byte : Int32? = nil,
+      ) : HexViewer
+        el = HexViewer.new(
+          bytes: bytes,
+          base_address: base_address,
+          bytes_per_row: bytes_per_row,
+          scroll_offset: scroll_offset,
+          selected_byte: selected_byte
+        )
         add(el)
         el
       end
