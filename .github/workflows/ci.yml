@@ -49,3 +49,7 @@ jobs:
           crystal build examples/03_tea_counter.cr -o bin/example3
           crystal build examples/04_system_dashboard.cr -o bin/example4
           crystal build examples/05_autocomplete_and_input.cr -o bin/example5
+          crystal build examples/06_rich_form_wizard.cr -o bin/example6
+          crystal build examples/07_fuzzy_finder.cr -o bin/example7
+          crystal build examples/08_dataviz_dashboard.cr -o bin/example8
+          crystal build examples/09_markdown_and_overlays.cr -o bin/example9

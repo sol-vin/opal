@@ -6,6 +6,15 @@ require "./components/stack"
 require "./components/box"
 require "./components/table"
 require "./components/viewport"
+require "./components/sparkline"
+require "./components/barchart"
+require "./components/gauge"
+require "./components/tree"
+require "./components/modal"
+require "./components/toast"
+require "./components/filter_list"
+require "./markdown/renderer"
+require "./components/command_palette"
 
 module Opal
   module UI
@@ -108,6 +117,85 @@ module Opal
         el
       end
 
+      def sparkline(
+        data : Array(Float64),
+        color : Color | Symbol | String = :cyan,
+        title : String? = nil,
+        min : Float64? = nil,
+        max : Float64? = nil,
+      ) : Sparkline
+        el = Sparkline.new(data: data, color: color, title: title, min: min, max: max)
+        set_root_or_child(el)
+        el
+      end
+
+      def barchart(
+        title : String? = nil,
+        bar_char : Char = '█',
+        max_value : Float64? = nil,
+        &block : BarChartBuilder -> Nil
+      ) : BarChart
+        chart = BarChart.new(title: title, bar_char: bar_char, max_value: max_value)
+        bb = BarChartBuilder.new(chart)
+        block.call(bb)
+        set_root_or_child(chart)
+        chart
+      end
+
+      def gauge(
+        ratio : Float64,
+        label : String? = nil,
+        color : Color | Symbol | String | Nil = nil,
+        filled_char : Char = '█',
+        empty_char : Char = '░',
+      ) : Gauge
+        el = Gauge.new(ratio: ratio, label: label, color: color, filled_char: filled_char, empty_char: empty_char)
+        set_root_or_child(el)
+        el
+      end
+
+      def tree(title : String? = nil, &block : TreeBuilder -> Nil) : Tree
+        tr = Tree.new(title: title)
+        tb = TreeBuilder.new(tr)
+        block.call(tb)
+        set_root_or_child(tr)
+        tr
+      end
+
+      def modal(
+        title : String,
+        message : String,
+        buttons : Array(String) = ["OK"],
+        selected_button : Int32 = 0,
+        border_fg : Color | Symbol | String = :cyan,
+        title_fg : Color | Symbol | String = :bright_white,
+        button_fg : Color | Symbol | String = :white,
+        selected_fg : Color | Symbol | String = :black,
+        selected_bg : Color | Symbol | String = :cyan,
+        dim_backdrop : Bool = true,
+      ) : Modal
+        el = Modal.new(
+          title: title,
+          message: message,
+          buttons: buttons,
+          selected_button: selected_button,
+          border_fg: border_fg,
+          title_fg: title_fg,
+          button_fg: button_fg,
+          selected_fg: selected_fg,
+          selected_bg: selected_bg,
+          dim_backdrop: dim_backdrop
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def markdown(content : String, width : Int32 = 80) : MarkdownElement
+        el = MarkdownElement.new(content, width)
+        set_root_or_child(el)
+        el
+      end
+
       private def set_root_or_child(el : Element) : Nil
         @root ||= el
       end
@@ -204,6 +292,57 @@ module Opal
         add(tbl)
         tbl
       end
+
+      def sparkline(
+        data : Array(Float64),
+        color : Color | Symbol | String = :cyan,
+        title : String? = nil,
+        min : Float64? = nil,
+        max : Float64? = nil,
+      ) : Sparkline
+        el = Sparkline.new(data: data, color: color, title: title, min: min, max: max)
+        add(el)
+        el
+      end
+
+      def barchart(
+        title : String? = nil,
+        bar_char : Char = '█',
+        max_value : Float64? = nil,
+        &block : BarChartBuilder -> Nil
+      ) : BarChart
+        chart = BarChart.new(title: title, bar_char: bar_char, max_value: max_value)
+        bb = BarChartBuilder.new(chart)
+        block.call(bb)
+        add(chart)
+        chart
+      end
+
+      def gauge(
+        ratio : Float64,
+        label : String? = nil,
+        color : Color | Symbol | String | Nil = nil,
+        filled_char : Char = '█',
+        empty_char : Char = '░',
+      ) : Gauge
+        el = Gauge.new(ratio: ratio, label: label, color: color, filled_char: filled_char, empty_char: empty_char)
+        add(el)
+        el
+      end
+
+      def tree(title : String? = nil, &block : TreeBuilder -> Nil) : Tree
+        tr = Tree.new(title: title)
+        tb = TreeBuilder.new(tr)
+        block.call(tb)
+        add(tr)
+        tr
+      end
+
+      def markdown(content : String, width : Int32 = 80) : MarkdownElement
+        el = MarkdownElement.new(content, width)
+        add(el)
+        el
+      end
     end
 
     # Builder for table rows
@@ -213,6 +352,32 @@ module Opal
 
       def row(cells : Array(String)) : Nil
         @table.row(cells)
+      end
+    end
+
+    # Builder for bar charts
+    class BarChartBuilder
+      def initialize(@chart : BarChart)
+      end
+
+      def bar(label : String, value : Float64 | Int32, color : Color | Symbol | String = :cyan, formatted : String? = nil) : Nil
+        @chart.add(label, value.to_f, color, formatted)
+      end
+    end
+
+    # Builder for tree hierarchies
+    class TreeBuilder
+      def initialize(@tree : Tree)
+      end
+
+      def node(label : String, color : Color | Symbol | String = :white, icon : String? = nil, &block : TreeNode -> Nil) : TreeNode
+        @tree.add(label, color, icon, &block)
+      end
+
+      def node(label : String, color : Color | Symbol | String = :white, icon : String? = nil) : TreeNode
+        n = TreeNode.new(label, color, icon)
+        @tree.add(n)
+        n
       end
     end
 

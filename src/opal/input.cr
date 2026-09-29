@@ -2,6 +2,7 @@ require "./input/key_map"
 require "./input/mouse_map"
 require "./input/autocomplete"
 require "./input/text_input"
+require "./input/fuzzy"
 
 module Opal
   module Input

@@ -50,6 +50,8 @@ module Opal
       end
     end
 
+    alias Key = KeyEvent
+
     # Mouse button actions
     enum MouseButton
       Left
@@ -87,6 +89,8 @@ module Opal
       )
       end
     end
+
+    alias ANSIParser = AnsiParser
 
     # Decoder that turns raw byte chunks and ANSI escape sequences into structured events.
     class AnsiParser

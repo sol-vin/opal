@@ -20,12 +20,17 @@
 
 It merges the best paradigms from modern terminal engineering into a cohesive, idiomatic Crystal DSL:
 - 🍵 **The Elm Architecture (TEA)** — Pure, predictable state management inspired by [Bubble Tea](https://github.com/charmbracelet/bubbletea).
-- 🎨 **Declarative Fluent Styling** — Lipgloss-inspired composable styling, borders, 24-bit TrueColor, visual string width, and box layouts.
+- 🎨 **Declarative Fluent Styling & Themes** — Lipgloss-inspired composable styling, borders, 24-bit TrueColor, visual string width, and curated themes (Catppuccin, Dracula, TokyoNight, Nord, Gruvbox).
 - ⚡ **Flicker-Free Delta Rendering** — Blessed-inspired double buffering that computes minimal character delta updates for 60fps full-screen performance.
 - 🛠️ **Expressive CLI App DSL** — Clap/Commander-style subcommands, typed flags, choices, global flag propagation, and shell completion (`bash`, `zsh`, `fish`).
+- 📝 **Multi-Field Form & Wizard DSL** — All fields visible simultaneously, tab navigation, live inline validation, and instant submission.
+- 🔍 **Live Fuzzy Search & Filter** — Instant keystroke matching with rune highlighting and split preview pane (`Opal.filter`).
+- 📊 **Rich Data Visualizations** — Unicode block Sparklines, horizontal/vertical BarCharts, percentage Gauges, and hierarchical Trees.
+- 🪟 **Layer Blending, Modals & Toasts** — Buffer `blit`, backdrop dimming, centered confirmation dialogs, and non-blocking toast queues.
+- 📖 **Terminal Markdown Viewer** — Styled headers, blockquotes, lists, and syntax colorized code blocks.
 - 🔮 **Ghost-Text Autocomplete & Input DSL** — Modern fish/zsh-style inline ghost text autocomplete on `Tab`, flexible interactive line editing, and declarative key bindings.
 - 🖱️ **Hit-Test Mouse Routing DSL** — SGR extended mouse tracking with declarative click, drag, and scroll zones.
-- 🖥️ **Terminal Capabilities DSL** — Automatic detection of TrueColor, 256 colors, Unicode width, and live terminal dimensions.
+- 🔗 **OSC 8 Links & OSC 52 Clipboard** — Native clickable terminal hyperlinks and desktop clipboard copying across SSH and local sessions.
 
 ---
 
@@ -58,19 +63,21 @@ require "opal"
 
 - [Quick Start](#-quick-start)
 - [Architecture Overview](#-architecture-overview)
+- [Multi-Field Form & Wizard DSL](#-multi-field-form--wizard-dsl)
+- [Live Fuzzy Search & Filter](#-live-fuzzy-search--filter)
+- [Data Visualizations](#-data-visualizations)
+- [Buffer Blitting, Modals & Toasts](#-buffer-blitting-modals--toasts)
+- [Terminal Markdown Viewer](#-terminal-markdown-viewer)
+- [Theme Engine & Semantic Colors](#-theme-engine--semantic-colors)
+- [Command Palette Overlay](#-command-palette-overlay)
+- [OSC 8 Hyperlinks & OSC 52 Clipboard](#-osc-8-hyperlinks--osc-52-clipboard)
+- [Animation & Easing Engine](#-animation--easing-engine)
 - [CLI Application DSL](#-cli-application-dsl)
-  - [Defining Commands & Options](#defining-commands--options)
-  - [Shell Completions](#shell-completions)
 - [Fluent Styling & Layout](#-fluent-styling--layout)
-  - [Colors & Modifiers](#colors--modifiers)
-  - [Borders, Padding & Alignment](#borders-padding--alignment)
-  - [Layout Combinators](#layout-combinators)
 - [Interactive Prompts](#-interactive-prompts)
 - [Autocomplete & Ghost Text DSL](#-autocomplete--ghost-text-dsl)
 - [KeyMap & MouseMap DSLs](#-keymap--mousemap-dsls)
-- [Terminal Info & Capabilities DSL](#-terminal-info--capabilities-dsl)
 - [The Elm Architecture (TEA)](#-the-elm-architecture-tea)
-- [Declarative UI & Diff Rendering](#-declarative-ui--diff-rendering)
 - [Testing with MockDriver](#-testing-with-mockdriver)
 - [Examples](#-examples)
 - [License](#-license)
@@ -79,33 +86,258 @@ require "opal"
 
 ## 🚀 Quick Start
 
-### 1. Build an Expressive CLI in 20 lines
+### 1. Build an Interactive Setup Wizard with `Opal.form`
 
 ```crystal
 require "opal"
 
-cli = Opal.cli("lapis", "Modern full-stack Crystal toolchain", "1.0.0") do
-  command "build", "Compile production application" do
-    argument "entry", "Application entry file", default: "src/main.cr"
-    option "-r", "--release", "Compile with release optimizations", type: :bool
-    option "-t", "--target=TRIPLE", "Cross-compilation target"
+result = Opal.form("Project Setup") do |f|
+  f.text "name", "Project Name:", default: "my-app", required: true
+  f.password "token", "API Token:", min_length: 8
+  f.select "db", "Database:", ["PostgreSQL", "SQLite", "MySQL"]
+  f.multi_select "addons", "Addons:", ["Redis", "Elasticsearch", "GraphQL"]
+  f.confirm "deploy", "Auto-deploy to staging?", default: true
+end
+
+if config = result
+  puts "Created project #{config["name"]} using #{config["db"]}!"
+end
+```
+
+### 2. Live Fuzzy Filter with Split Preview
+
+```crystal
+require "opal"
+
+branches = ["main", "staging", "feat/auth", "feat/fuzzy-finder", "fix/timeout"]
+
+selected = Opal.filter(
+  items: branches,
+  title: "Git Switcher",
+  preview: ->(b : String) { "Branch #{b}\nStatus: Clean\nUpdated: 5m ago" }
+)
+
+puts "Switched to branch: #{selected}" if selected
+```
+
+---
+
+## 📝 Multi-Field Form & Wizard DSL
+
+Traditional CLI prompts ask one question at a time and prevent reviewing earlier inputs. `Opal.form` presents an interactive card where all fields are visible simultaneously, users navigate using `Tab` / `Shift+Tab`, and live validation catches mistakes instantly.
+
+```crystal
+result = Opal.form("New Microservice") do |f|
+  f.text "service", "Service Name:", required: true
+  f.text "port", "HTTP Port:", default: "8080"
+  f.password "secret", "Secret Key:", min_length: 6
+  f.select "tier", "Hosting Tier:", ["Small", "Medium", "Large"]
+  f.multi_select "plugins", "Plugins:", ["Metrics", "Tracing", "Auth"]
+  f.confirm "enabled", "Enable service immediately?", default: true
+
+  # Custom real-time validation
+  f.validate "port" do |val|
+    (val.to_i? && (1024..65535).includes?(val.to_i)) ? nil : "Port must be 1024-65535"
+  end
+end
+```
+
+---
+
+## 🔍 Live Fuzzy Search & Filter
+
+Fast, keystroke-responsive fuzzy filtering inspired by `fzf`:
+
+- Instant substring matching with word boundary bonuses.
+- Highlights matched characters in bold cyan.
+- Split preview pane for viewing item details.
+
+```crystal
+choice = Opal.filter(
+  items: Dir["src/**/*.cr"],
+  title: "Fuzzy File Finder",
+  preview: ->(path : String) { File.read(path).lines.first(15).join("\n") }
+)
+```
+
+---
+
+## 📊 Data Visualizations
+
+Render rich dashboards and metrics without graphics libraries:
+
+### Sparklines
+```crystal
+# Output:  ▂▄▇▇█▆▄▃▂▂
+puts Opal::UI::Sparkline.render_to_string([10.0, 15.0, 25.0, 80.0, 95.0, 60.0])
+```
+
+### BarCharts, Gauges & Trees in UI Trees
+```crystal
+Opal.render_ui(width: 70, height: 20) do |ui|
+  ui.vstack(spacing: 1) do |v|
+    # Percentage Gauge
+    v.gauge 0.76, label: "Disk Usage", color: :yellow
+
+    # Horizontal Bar Chart
+    v.barchart(title: "Memory Allocation") do |bc|
+      bc.bar "Web", 420, color: :green
+      bc.bar "Worker", 850, color: :cyan
+      bc.bar "DB", 1200, color: :red
+    end
+
+    # Hierarchical Tree
+    v.tree(title: "Service Graph") do |t|
+      t.node("API Gateway", icon: "🌐") do |gateway|
+        gateway.add("Auth Service", icon: "🔒")
+        gateway.add("Search Node", icon: "🔍")
+      end
+    end
+  end
+end
+```
+
+---
+
+## 🪟 Buffer Blitting, Modals & Toasts
+
+### Floating Modal Dialog
+Center a dialog box over any screen buffer with automatic background dimming:
+
+```crystal
+modal = Opal::UI::Modal.new(
+  title: "Confirm Deletion",
+  message: "Are you sure you want to drop database 'prod'?",
+  buttons: ["Cancel", "Confirm Drop"],
+  selected_button: 1
+)
+modal.render(buffer, 0, 0, 80, 24)
+```
+
+### Toast Notifications
+Stack floating alerts in the top-right corner with auto-dismiss timers:
+
+```crystal
+toasts = Opal::UI::ToastManager.new
+toasts.add("Build Succeeded", "All 124 tests passed", level: :success, duration_ms: 3000)
+toasts.add("Disk Warning", "Free space below 10%", level: :warning)
+
+toasts.render_overlay(buffer, position: :top_right)
+```
+
+---
+
+## 📖 Terminal Markdown Viewer
+
+Convert Markdown documents into styled ANSI terminal text:
+
+```crystal
+doc = <<-MD
+# Opal Framework v1.0
+Welcome to **Opal**! Build *beautiful* CLIs in Crystal.
+
+### Features
+- Zero external C dependencies
+- 60fps delta rendering
+
+```crystal
+require "opal"
+puts "Hello world!"
+```
+
+> "Simplicity is prerequisite for reliability."
+MD
+
+puts Opal.render_markdown(doc, width: 80)
+```
+
+---
+
+## 🎨 Theme Engine & Semantic Colors
+
+Opal includes pre-registered designer palettes and semantic color tokens:
+
+```crystal
+# Switch theme dynamically
+Opal.theme = :catppuccin_mocha # :dracula, :nord, :tokyo_night, :gruvbox, etc.
+
+# Semantic color tokens
+theme = Opal.theme
+style = Opal.style
+  .foreground(theme.primary)
+  .background(theme.surface)
+  .border_foreground(theme.border)
+```
+
+---
+
+## 🔍 Command Palette Overlay
+
+Press `Ctrl+P` or `Ctrl+K` to summon an instant Spotlight action launcher:
+
+```crystal
+palette = Opal::UI::CommandPalette.new
+palette.add("git:commit", "Commit changes", category: "Git", shortcut: "ctrl+c") { commit_flow }
+palette.add("file:open", "Open file picker", category: "File", shortcut: "ctrl+o") { open_picker }
+```
+
+---
+
+## 🔗 OSC 8 Hyperlinks & OSC 52 Clipboard
+
+```crystal
+# Clickable hyperlink in modern terminals
+puts Opal.hyperlink("View Source on GitHub", "https://github.com/sol-vin/opal")
+
+# Copy directly to OS desktop clipboard over SSH and local sessions
+Opal.copy_to_clipboard("API_KEY_SECRET_12345")
+```
+
+---
+
+## ⏱️ Animation & Easing Engine
+
+Smooth transitions, progress bars, and color interpolation:
+
+```crystal
+# Easing functions
+t = Opal::Animation.ease(:ease_in_out_cubic, 0.5)
+
+# Color interpolation (e.g. green to red as CPU load increases)
+normal_color = Opal::Color.green
+alert_color  = Opal::Color.red
+current_c    = Opal::Color.lerp(normal_color, alert_color, 0.75)
+```
+
+---
+
+## 🛠️ CLI Application DSL
+
+```crystal
+app = Opal.cli("deployer", "Cloud deployment manager", "0.4.0") do
+  option "-v", "--verbose", "Enable debug logging", type: :bool
+
+  command "deploy", "Deploy application containers" do
+    argument "service", "Service name to deploy"
+    option "-c", "--concurrency=NUM", "Max concurrency", type: :int, default: 3
 
     run do |ctx|
-      entry = ctx.argument("entry")
-      release = ctx.bool?("release") ? " (release mode)" : ""
-      puts "Building #{entry}#{release}..."
+      svc = ctx.argument("service")
+      puts "Deploying #{svc} (concurrency: #{ctx.int("concurrency")})..."
     end
   end
 end
 
-cli.run(ARGV)
+app.run(ARGV)
 ```
 
-### 2. Full-Screen Bubbletea-Style Counter
+---
+
+## 🍵 The Elm Architecture (TEA)
+
+Build reactive terminal applications with pure state transitions:
 
 ```crystal
-require "opal"
-
 record CounterModel, count : Int32 = 0 do
   include Opal::Tea::Model
 
@@ -117,9 +349,9 @@ record CounterModel, count : Int32 = 0 do
     case msg
     when Opal::Tea::KeyMsg
       case msg.key
-      when "up", "+", "k"   then {CounterModel.new(count + 1), Opal::Tea::Cmd.none}
-      when "down", "-", "j" then {CounterModel.new(count - 1), Opal::Tea::Cmd.none}
-      when "q", "ctrl+c"    then {self, Opal::Tea::Cmd.quit}
+      when "up", "k"   then {CounterModel.new(count + 1), Opal::Tea::Cmd.none}
+      when "down", "j" then {CounterModel.new(count - 1), Opal::Tea::Cmd.none}
+      when "q"         then {self, Opal::Tea::Cmd.quit}
       else {self, Opal::Tea::Cmd.none}
       end
     else
@@ -128,15 +360,7 @@ record CounterModel, count : Int32 = 0 do
   end
 
   def view : String
-    box = Opal.style
-      .border(:rounded)
-      .border_foreground(Opal::Style::Color.hex("#6C5CE7"))
-      .padding(1, 4)
-      .render(
-        "Current count: #{Opal.style.bold.foreground(Opal::Style::Color.hex("#00CEC9")).render(count.to_s)}\n" \
-        "Press [↑/k] Increment  [↓/j] Decrement  [q] Quit"
-      )
-    "\n" + box + "\n"
+    "Counter: #{count} (Press ↑/k, ↓/j, q to quit)"
   end
 end
 
@@ -145,408 +369,19 @@ Opal::Tea::Program.new(CounterModel.new).run
 
 ---
 
-## 🏛️ Architecture Overview
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                           Opal DSL                               │
-│  Opal.cli  │  Opal.prompt  │  Opal.on_key  │  Opal.autocomplete  │
-└──────┬─────────────┬──────────────┬──────────────────┬───────────┘
-       │             │              │                  │
-┌──────▼──────┐┌─────▼───────┐┌─────▼───────┐┌─────────▼───────────┐
-│  CLI Engine ││ Interactive ││ TEA Runtime ││ Declarative UI DSL  │
-│  Parser,    ││ Prompts &   ││ Model, Msg, ││ Box, VStack, HStack │
-│  Completion ││ Micro-UI    ││ Cmd, Loops  ││ Table, Viewport     │
-└──────┬──────┘└─────┬───────┘└─────┬───────┘└─────────┬───────────┘
-       │             │              │                  │
-┌──────▼─────────────▼──────────────▼──────────────────▼───────────┐
-│                   Diff Renderer & Double Buffer                  │
-│             Zero-flicker cell-level minimal delta screen         │
-└──────────────────────────────────┬───────────────────────────────┘
-                                   │
-┌──────────────────────────────────▼───────────────────────────────┐
-│               Styling & Unicode Visual Engine                    │
-│   24-bit TrueColor, ANSI 16/256, East Asian Width, Emoji visual  │
-└──────────────────────────────────┬───────────────────────────────┘
-                                   │
-┌──────────────────────────────────▼───────────────────────────────┐
-│               Terminal Driver (Zero C Dependencies)              │
-│       POSIX (termios, ioctl)  │  Windows (Win32 Console & VT)    │
-└──────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🛠️ CLI Application DSL
-
-### Defining Commands & Options
-
-Opal provides a declarative DSL for commands, subcommands, arguments, typed options, validation, and auto-generated help.
-
-```crystal
-app = Opal.cli("deployer", "Cloud deployment manager", "0.4.0") do
-  # Global options inherit to all subcommands
-  option "-v", "--verbose", "Enable debug logging", type: :bool
-  option "--env=NAME", "Target environment", default: "staging", choices: ["dev", "staging", "prod"]
-
-  command "deploy", "Deploy application containers" do
-    argument "service", "Service name to deploy"
-    option "-c", "--concurrency=NUM", "Max concurrent deployments", type: :int, default: 3
-    option "-f", "--force", "Skip safety confirmation", type: :bool
-
-    run do |ctx|
-      svc = ctx.argument("service")
-      env = ctx.string("env")
-      concurrency = ctx.int("concurrency")
-      verbose = ctx.bool?("verbose")
-
-      puts "Deploying #{svc} to #{env} (concurrency: #{concurrency}, verbose: #{verbose})"
-    end
-  end
-end
-
-app.run(ARGV)
-```
-
-#### Features:
-- **Type Casting**: `:string`, `:int`, `:float`, `:bool`, `:array`.
-- **Validation**: Enforce valid inputs using `choices: [...]`.
-- **Environment Fallbacks**: `env: "DEPLOY_ENV"` automatically pulls from environment variables.
-- **Subcommands**: Nest commands arbitrarily deep (`service create instance`).
-- **Help Output**: Beautiful ANSI-styled help screens generated automatically (`--help` or `-h`).
-
-### Shell Completions
-
-Generate native shell completions with zero extra gems:
-
-```crystal
-app.completion_script(:bash) # Generate Bash completion
-app.completion_script(:zsh)  # Generate Zsh completion
-app.completion_script(:fish) # Generate Fish completion
-```
-
----
-
-## 🎨 Fluent Styling & Layout
-
-Inspired by Charm's [Lipgloss](https://github.com/charmbracelet/lipgloss), Opal's styling engine allows chaining modifiers on immutable style objects.
-
-### Colors & Modifiers
-
-```crystal
-include Opal::Style
-
-# Color formats: Hex, RGB, 256-color palette, or ANSI 16
-primary = Color.hex("#6C5CE7")
-accent  = Color.rgb(0, 206, 201)
-warning = Color.palette_256(214)
-dimmed  = Color.ansi_16(8)
-
-style = Opal.style
-  .bold
-  .italic
-  .underline
-  .foreground(primary)
-  .background(Color.hex("#2D3436"))
-
-puts style.render("Styled text with Opal!")
-```
-
-### Borders, Padding & Alignment
-
-```crystal
-card = Opal.style
-  .border(:rounded) # :single, :double, :rounded, :thick, :ascii, or :none
-  .border_foreground(Color.hex("#0984E3"))
-  .padding(1, 2)    # top/bottom: 1, left/right: 2
-  .margin(0, 1)
-  .width(40)
-  .align(:center)
-
-puts card.render("Hello, World!")
-```
-
-### Layout Combinators
-
-Combine rendered blocks horizontally or vertically with automatic height and visual width alignment:
-
-```crystal
-left_pane = Opal.style.border(:rounded).width(25).render("Sidebar Menu\n- Dashboard\n- Settings")
-right_pane = Opal.style.border(:rounded).width(50).render("Main Content\nWelcome to Opal!")
-
-# Join horizontally with top alignment
-dashboard = Opal::Style.join_horizontal(:top, [left_pane, right_pane])
-puts dashboard
-```
-
----
-
-## 💬 Interactive Prompts
-
-Opal includes lightweight, interactive prompts with full keyboard navigation:
-
-### Ask, Confirm, Select & Multi-Select
-
-```crystal
-prompt = Opal.prompt
-
-# Text input
-username = prompt.ask("Enter your username:", default: "admin")
-
-# Yes / No confirmation
-proceed = prompt.confirm("Deploy to production?", default: false)
-
-# Single choice list
-role = prompt.select("Select target environment:", ["Development", "Staging", "Production"])
-
-# Multi-select checklist
-features = prompt.multi_select("Select features to enable:", ["Auth", "Metrics", "GraphQL", "Caching"])
-```
-
-### Async Spinners & Progress Bars
-
-```crystal
-# Animated spinner for background fibers
-prompt.spinner("Downloading dependencies...") do
-  sleep 2.seconds
-end
-
-# Smooth Unicode progress bar
-progress = prompt.progress(total: 100, width: 30)
-100.times do
-  sleep 20.milliseconds
-  progress.increment
-end
-```
-
----
-
-## 🔮 Autocomplete & Ghost Text DSL
-
-Opal features a fast, inline ghost-text autocomplete engine. As the user types, suggestions appear inline in dimmed text and can be accepted with `Tab`.
-
-```crystal
-engine = Opal.autocomplete(["status", "start", "stop", "restart", "deploy", "destroy"])
-
-# Query candidates
-engine.candidates("st") # => ["status", "start", "stop"]
-
-# Ghost text suffix for inline rendering
-engine.suffix("st") # => "atus" (completes "status")
-
-# Tab completion cycle
-engine.next_completion("st") # => "status"
-engine.next_completion("st") # => "start"
-```
-
-### Interactive TextInput Component
-
-Use the full-featured `Opal::Input::TextInput` line editor with built-in ghost text:
-
-```crystal
-input = Opal::Input::TextInput.new(
-  prompt_prefix: "opal> ",
-  completions: ["checkout", "commit", "push", "pull", "status", "rebase"]
-)
-
-# Renders prompt, user input, cursor, and dimmed ghost text preview!
-print input.render
-```
-
----
-
-## ⌨️ KeyMap & MouseMap DSLs
-
-### Key Binding DSL (`Opal.on_key`)
-
-Handle keyboard shortcuts declaratively with automatic modifier parsing:
-
-```crystal
-keymap = Opal.on_key do
-  bind "ctrl+s", "Save current file" do
-    save_file
-  end
-
-  bind ["q", "ctrl+c"], "Quit application" do
-    exit
-  end
-
-  bind "tab", "Accept completion" do
-    autocomplete.accept
-  end
-
-  catch_all do |key|
-    handle_character(key)
-  end
-end
-
-# Feed parsed Opal::Terminal::Key events
-keymap.handle(event)
-```
-
-### Mouse Routing DSL (`Opal.on_mouse`)
-
-Map mouse click, double-click, scroll, and drag events to UI zones:
-
-```crystal
-mouse_map = Opal.on_mouse do
-  zone :sidebar, x: 0, y: 0, width: 20, height: 25 do
-    on :click do |event|
-      puts "Sidebar clicked at (#{event.x}, #{event.y})"
-    end
-
-    on :scroll_up do
-      scroll_sidebar(-1)
-    end
-  end
-
-  zone :main_button, x: 25, y: 5, width: 12, height: 3 do
-    on :click do
-      submit_form
-    end
-  end
-end
-
-# Feed SGR mouse events
-mouse_map.handle(mouse_event)
-```
-
----
-
-## 🖥️ Terminal Info & Capabilities DSL
-
-Inspect terminal capabilities and dimensions effortlessly:
-
-```crystal
-term = Opal.terminal
-
-puts "Interactive TTY : #{term.interactive?}"
-puts "Color Support   : #{term.color_support}" # :truecolor, :palette_256, :ansi_16, or :none
-puts "Unicode Support : #{term.unicode?}"
-puts "TrueColor?      : #{term.truecolor?}"
-puts "Screen Size     : #{term.width} columns x #{term.height} rows"
-```
-
----
-
-## 🍵 The Elm Architecture (TEA)
-
-Build complex interactive terminal applications using pure state machines.
-
-### 1. Model
-Define your application state:
-
-```crystal
-record EditorModel, text : String = "", saved : Bool = false do
-  include Opal::Tea::Model
-
-  def init : Opal::Tea::Cmd
-    Opal::Tea::Cmd.none
-  end
-```
-
-### 2. Update
-Handle messages and return a new model + commands:
-
-```crystal
-  def update(msg : Opal::Tea::Msg) : {Opal::Tea::Model, Opal::Tea::Cmd}
-    case msg
-    when Opal::Tea::KeyMsg
-      if msg.matches?("ctrl+s")
-        {EditorModel.new(text, saved: true), Opal::Tea::Cmd.none}
-      elsif msg.matches?("ctrl+q")
-        {self, Opal::Tea::Cmd.quit}
-      else
-        {self, Opal::Tea::Cmd.none}
-      end
-    when Opal::Tea::WindowSizeMsg
-      # React to terminal resize events
-      {self, Opal::Tea::Cmd.none}
-    else
-      {self, Opal::Tea::Cmd.none}
-    end
-  end
-```
-
-### 3. View
-Render the UI string:
-
-```crystal
-  def view : String
-    status = saved ? "SAVED" : "MODIFIED"
-    "File Editor [#{status}]\n#{text}"
-  end
-end
-```
-
-### 4. Run the Program
-```crystal
-program = Opal::Tea::Program.new(EditorModel.new)
-program.run
-```
-
----
-
-## ⚡ Declarative UI & Diff Rendering
-
-Opal includes a declarative UI tree and a minimal double-buffered differential delta renderer. It only updates screen cells that actually changed, completely eliminating terminal flicker.
-
-```crystal
-ui = Opal.render_ui(width: 80, height: 24) do
-  box border: :rounded, border_color: Opal::Style::Color.hex("#6C5CE7"), padding: 1 do
-    vstack do
-      badge "OPAL DASHBOARD", bg: Opal::Style::Color.hex("#0984E3"), fg: Opal::Style::Color.hex("#FFFFFF")
-      rule char: "─", color: Opal::Style::Color.ansi_16(8)
-      
-      hstack do
-        box width: 25 do
-          text "CPU: 18.4%\nRAM: 4.2 GB / 16 GB"
-        end
-
-        table headers: ["PID", "Process", "Status"],
-              rows: [
-                ["1024", "crystal-server", "RUNNING"],
-                ["2048", "opal-worker",    "IDLE"]
-              ]
-      end
-    end
-  end
-end
-
-puts ui
-```
-
-### Built-in Components:
-- `box`: Styled containers with borders, padding, and alignment.
-- `vstack` & `hstack`: Declarative vertical and horizontal layout stacks.
-- `text`: Styled text with visual width wrapping.
-- `badge`: Pill/tag indicators.
-- `rule`: Horizontal divider lines.
-- `table`: Auto-sized tables with headers, borders, and rows.
-- `viewport`: Scrollable viewing windows for large buffers.
-
----
-
 ## 🧪 Testing with MockDriver
 
-Opal is engineered for testability. You can run and verify full TUI interactions headlessly without opening an actual terminal using `Opal::Terminal::MockDriver`:
+Test full TUI interactions headlessly without opening an actual terminal:
 
 ```crystal
 require "spec"
 require "opal"
 
-describe "MyTUI" do
-  it "updates on keypress" do
-    mock = Opal::Terminal::MockDriver.new(width: 80, height: 24)
+describe "Counter" do
+  it "increments on keypress" do
     model = CounterModel.new
-
-    # Simulate keypress
     new_model, cmd = model.update(Opal::Tea::KeyMsg.new("k"))
     new_model.as(CounterModel).count.should eq(1)
-
-    # Render into mock buffer
-    output = new_model.view
-    output.should contain("Current count: 1")
   end
 end
 ```
@@ -555,19 +390,24 @@ end
 
 ## 📂 Examples
 
-Explore the full runnable examples in the [`examples/`](examples/) directory:
+Explore all runnable examples in the [`examples/`](examples/) directory:
 
-- [`01_lapis_revamp.cr`](examples/01_lapis_revamp.cr) — Comprehensive CLI developer toolchain with subcommands, typed options, and table outputs.
-- [`02_interactive_prompts.cr`](examples/02_interactive_prompts.cr) — Interactive setup wizard with ask, select, multi-select, spinner, and progress bars.
+- [`01_lapis_revamp.cr`](examples/01_lapis_revamp.cr) — Comprehensive CLI developer toolchain with subcommands, typed options, and table reports.
+- [`02_interactive_prompts.cr`](examples/02_interactive_prompts.cr) — Setup wizard showing `ask`, `confirm`, `select`, `multi_select`, `spinner`, and `progress`.
 - [`03_tea_counter.cr`](examples/03_tea_counter.cr) — Classic Elm Architecture counter application with keyboard controls.
 - [`04_system_dashboard.cr`](examples/04_system_dashboard.cr) — Live full-screen system monitor dashboard with charts, tables, and async metrics updates.
-- [`05_autocomplete_and_input.cr`](examples/05_autocomplete_and_input.cr) — Interactive REPL showcasing Tab autocompletion, ghost-text preview, keymaps, mouse routing, and terminal inspection.
+- [`05_autocomplete_and_input.cr`](examples/05_autocomplete_and_input.cr) — Interactive REPL showcasing Tab autocompletion, inline ghost-text hints, keymaps, mouse routing, and terminal inspection.
+- [`06_rich_form_wizard.cr`](examples/06_rich_form_wizard.cr) — Multi-field form wizard with live validation, password masking, select menus, and checkboxes.
+- [`07_fuzzy_finder.cr`](examples/07_fuzzy_finder.cr) — Live fuzzy search list with rune highlighting and split preview pane.
+- [`08_dataviz_dashboard.cr`](examples/08_dataviz_dashboard.cr) — Rich analytics dashboard with Sparklines, BarCharts, Gauges, Trees, and Themes.
+- [`09_markdown_and_overlays.cr`](examples/09_markdown_and_overlays.cr) — Terminal Markdown viewer, Modal dialogs, and floating Toast notifications.
 
 Run any example:
 
 ```bash
-crystal run examples/01_lapis_revamp.cr -- --help
-crystal run examples/05_autocomplete_and_input.cr
+crystal run examples/06_rich_form_wizard.cr
+crystal run examples/08_dataviz_dashboard.cr
+crystal run examples/09_markdown_and_overlays.cr
 ```
 
 ---
@@ -579,16 +419,6 @@ crystal run examples/05_autocomplete_and_input.cr
 | **Linux** | POSIX `termios`, VT100, SGR | TrueColor, 256, ANSI 16 | Yes (SGR 1006) |
 | **macOS** | POSIX `termios`, VT100, SGR | TrueColor, 256, ANSI 16 | Yes (SGR 1006) |
 | **Windows** | Win32 Console API (`ENABLE_VIRTUAL_TERMINAL_PROCESSING`) + ANSI VT100 | TrueColor, 256, ANSI 16 | Yes (SGR 1006) |
-
----
-
-## 🤝 Contributing
-
-1. Fork it (<https://github.com/sol-vin/opal/fork>)
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
 
 ---
 

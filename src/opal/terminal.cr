@@ -4,6 +4,7 @@ require "./terminal/driver"
 require "./terminal/raw_mode"
 require "./terminal/mock"
 require "./terminal/info"
+require "./terminal/osc"
 {% if flag?(:windows) %}
   require "./terminal/windows"
 {% else %}

@@ -194,5 +194,62 @@ module Opal
         ""
       end
     end
+
+    # Converts color to RGB tuple (approximate for ANSI)
+    def to_rgb : {UInt8, UInt8, UInt8}
+      case @type
+      when Type::RGB
+        {@r, @g, @b}
+      when Type::ANSI16
+        case @code
+        when 30 then {0_u8, 0_u8, 0_u8}
+        when 31 then {205_u8, 49_u8, 49_u8}
+        when 32 then {13_u8, 188_u8, 121_u8}
+        when 33 then {229_u8, 229_u8, 16_u8}
+        when 34 then {36_u8, 114_u8, 200_u8}
+        when 35 then {188_u8, 63_u8, 188_u8}
+        when 36 then {17_u8, 168_u8, 205_u8}
+        when 37 then {229_u8, 229_u8, 229_u8}
+        when 90 then {102_u8, 102_u8, 102_u8}
+        when 91 then {241_u8, 76_u8, 76_u8}
+        when 92 then {35_u8, 209_u8, 139_u8}
+        when 93 then {245_u8, 245_u8, 67_u8}
+        when 94 then {59_u8, 142_u8, 234_u8}
+        when 95 then {214_u8, 112_u8, 214_u8}
+        when 96 then {41_u8, 184_u8, 219_u8}
+        when 97 then {255_u8, 255_u8, 255_u8}
+        else         {128_u8, 128_u8, 128_u8}
+        end
+      when Type::ANSI256
+        # Basic 256 to RGB approximation
+        if @code < 16
+          Color.ansi(@code < 8 ? @code + 30 : @code + 82).to_rgb
+        elsif @code >= 232 # Grayscale ramp
+          gray = (8 + (@code - 232) * 10).to_u8
+          {gray, gray, gray}
+        else # 6x6x6 color cube
+          idx = @code - 16
+          r = ((idx / 36) * 51).to_u8
+          g = (((idx % 36) / 6) * 51).to_u8
+          b = ((idx % 6) * 51).to_u8
+          {r, g, b}
+        end
+      else
+        {255_u8, 255_u8, 255_u8}
+      end
+    end
+
+    # Linearly interpolates between two colors by factor t (0.0 to 1.0)
+    def self.lerp(c1 : Color, c2 : Color, t : Float64) : Color
+      factor = t.clamp(0.0, 1.0)
+      r1, g1, b1 = c1.to_rgb
+      r2, g2, b2 = c2.to_rgb
+
+      r = (r1.to_f + (r2.to_f - r1.to_f) * factor).round.to_u8
+      g = (g1.to_f + (g2.to_f - g1.to_f) * factor).round.to_u8
+      b = (b1.to_f + (b2.to_f - b1.to_f) * factor).round.to_u8
+
+      rgb(r, g, b)
+    end
   end
 end
