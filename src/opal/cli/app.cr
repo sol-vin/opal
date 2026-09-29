@@ -28,7 +28,7 @@ module Opal
             target_sub = find_command(args[1])
             if target_sub
               if handler = target_sub.help_handler
-                res = handler.call
+                res = handler.call(nil)
                 puts res if res.is_a?(String)
               else
                 puts target_sub.help_text(@name)
