@@ -147,6 +147,54 @@ module Opal
         dim_rect(0, 0, @width, @height)
       end
 
+
+      # Renders the buffer content to a string, optionally including ANSI color and style sequences.
+      def render_to_string(with_ansi : Bool = true) : String
+        String.build do |io|
+          (0...@height).each do |y|
+            last_fg = Color.none
+            last_bg = Color.none
+            last_bold = false
+            last_dim = false
+            last_italic = false
+            last_underline = false
+
+            row_content = String.build do |row_io|
+              (0...@width).each do |x|
+                cell = get(x, y)
+                if with_ansi
+                  if cell.bold? != last_bold ||
+                     cell.dim? != last_dim ||
+                     cell.italic? != last_italic ||
+                     cell.underline? != last_underline ||
+                     cell.fg != last_fg ||
+                     cell.bg != last_bg
+                    row_io << "\e[0m"
+                    last_bold = cell.bold?
+                    last_dim = cell.dim?
+                    last_italic = cell.italic?
+                    last_underline = cell.underline?
+                    last_fg = cell.fg
+                    last_bg = cell.bg
+
+                    codes = [] of String
+                    codes << "1" if last_bold
+                    codes << "2" if last_dim
+                    codes << "3" if last_italic
+                    codes << "4" if last_underline
+                    row_io << "\e[" + codes.join(';') + "m" unless codes.empty?
+                    row_io << last_fg.fg_escape
+                    row_io << last_bg.bg_escape
+                  end
+                end
+                row_io << cell.char
+              end
+              row_io << "\e[0m" if with_ansi
+            end
+            io.puts row_content.rstrip
+          end
+        end
+      end
       def to_s(io : IO) : Nil
         (0...@height).each do |y|
           (0...@width).each do |x|
