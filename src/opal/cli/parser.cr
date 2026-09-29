@@ -35,6 +35,11 @@ module Opal
             opt = all_opts.reverse.find { |o| o.long == "--#{key_part}" }
 
             unless opt
+              if current_cmd.allow_unknown_options?
+                positional_args << tok
+                idx += 1
+                next
+              end
               candidates = all_opts.compact_map { |o| o.long.lstrip('-') }
               if suggestion = Input::Fuzzy.suggest(key_part, candidates)
                 raise ParseError.new("Unknown option: #{tok} for command '#{current_cmd.name}'. Did you mean '--#{suggestion}'?")
@@ -68,6 +73,11 @@ module Opal
               opt = all_opts.reverse.find { |o| o.short == char_str }
 
               unless opt
+                if current_cmd.allow_unknown_options?
+                  positional_args << tok
+                  idx += 1
+                  next
+                end
                 raise ParseError.new("Unknown option: #{tok} for command '#{current_cmd.name}'")
               end
 
@@ -89,6 +99,10 @@ module Opal
                 char_str = "-#{c}"
                 opt = all_opts.reverse.find { |o| o.short == char_str }
                 unless opt
+                  if current_cmd.allow_unknown_options?
+                    positional_args << tok
+                    break
+                  end
                   raise ParseError.new("Unknown flag: #{char_str} in #{tok}")
                 end
                 unless opt.flag?

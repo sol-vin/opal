@@ -27,7 +27,12 @@ module Opal
           if args.size > 1
             target_sub = find_command(args[1])
             if target_sub
-              puts target_sub.help_text(@name)
+              if handler = target_sub.help_handler
+                res = handler.call
+                puts res if res.is_a?(String)
+              else
+                puts target_sub.help_text(@name)
+              end
               return 0
             else
               STDERR.puts "\e[31mError:\e[0m Unknown command for help: '#{args[1]}'"
@@ -67,7 +72,12 @@ module Opal
           target_command, context = Parser.parse(self, args)
 
           if context.flag?(:help)
-            puts target_command.help_text(@name)
+            if handler = target_command.help_handler
+              res = handler.call
+              puts res if res.is_a?(String)
+            else
+              puts target_command.help_text(@name)
+            end
             return 0
           end
 
