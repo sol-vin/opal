@@ -47,8 +47,15 @@ module Opal
       def initialize(@root_nodes : Array(TreeNode) = [] of TreeNode, @title : String? = nil)
       end
 
-      def add(node : TreeNode) : Nil
+      def add(node : TreeNode) : TreeNode
         @root_nodes << node
+        node
+      end
+
+      def add(label : String, color : Color | Symbol | String = :white, icon : String? = nil) : TreeNode
+        node = TreeNode.new(label, color, icon)
+        add(node)
+        node
       end
 
       def add(label : String, color : Color | Symbol | String = :white, icon : String? = nil, &block : TreeNode -> Nil) : TreeNode
