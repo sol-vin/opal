@@ -12,6 +12,7 @@ module Opal
     class Parser
       def self.parse(root_command : Command, args : Array(String)) : {Command, Context}
         current_cmd = root_command
+        subcommand_idx : Int32? = nil
         flags_map = Hash(Symbol, Bool).new
         options_map = Hash(Symbol, OptionValue).new
         positional_args = [] of String
@@ -101,6 +102,7 @@ module Opal
             # Positional token or subcommand
             if sub = current_cmd.find_command(tok)
               current_cmd = sub
+              subcommand_idx = idx
             elsif !current_cmd.subcommands.empty? && current_cmd.arguments.empty?
               candidates = current_cmd.subcommands.keys
               if suggestion = Input::Fuzzy.suggest(tok, candidates)
@@ -153,11 +155,18 @@ module Opal
           end
         end
 
+        raw = if s_idx = subcommand_idx
+                args[s_idx + 1..]
+              else
+                args.dup
+              end
+
         context = Context.new(
           flags: flags_map,
           options: options_map,
           args: positional_args,
-          named_args: named_args
+          named_args: named_args,
+          raw_args: raw
         )
 
         {current_cmd, context}

@@ -8,12 +8,14 @@ module Opal
       getter options : Hash(Symbol, OptionValue)
       getter args : Array(String)
       getter named_args : Hash(Symbol, String)
+      getter raw_args : Array(String)
 
       def initialize(
         @flags = Hash(Symbol, Bool).new,
         @options = Hash(Symbol, OptionValue).new,
         @args = Array(String).new,
         @named_args = Hash(Symbol, String).new,
+        @raw_args = Array(String).new,
       )
       end
 
