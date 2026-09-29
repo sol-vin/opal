@@ -5,6 +5,7 @@
 **Next-Generation Terminal User Interface (TUI) & CLI DSL Framework for Crystal**
 
 [![CI](https://github.com/sol-vin/opal/actions/workflows/ci.yml/badge.svg)](https://github.com/sol-vin/opal/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://sol-vin.github.io/opal/)
 [![Crystal](https://img.shields.io/badge/crystal-%3E%3D%201.8.0-black.svg)](https://crystal-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
