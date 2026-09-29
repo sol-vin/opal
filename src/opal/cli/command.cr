@@ -44,7 +44,7 @@ module Opal
       end
 
       # Sets command description
-            # Sets command category for grouped help rendering
+      # Sets command category for grouped help rendering
       def category(cat : String) : self
         @category = cat
         self

@@ -57,9 +57,9 @@ module Opal
           default_shell = (ENV["OS"]? == "Windows_NT") ? "powershell" : "bash"
           shell = args.size > 1 ? args[1].downcase : default_shell
           case shell
-          when "bash" then puts Completion.bash(@name, self)
-          when "zsh"  then puts Completion.zsh(@name, self)
-          when "fish" then puts Completion.fish(@name, self)
+          when "bash"               then puts Completion.bash(@name, self)
+          when "zsh"                then puts Completion.zsh(@name, self)
+          when "fish"               then puts Completion.fish(@name, self)
           when "powershell", "pwsh" then puts Completion.powershell(@name, self)
           else
             STDERR.puts "Supported shells: bash, zsh, fish, powershell"

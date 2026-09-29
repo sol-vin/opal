@@ -452,6 +452,7 @@ module Opal
         add(el)
         el
       end
+
       def split_view(
         direction : SplitDirection = SplitDirection::Horizontal,
         ratio : Float64? = 0.5,

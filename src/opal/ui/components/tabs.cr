@@ -16,7 +16,7 @@ module Opal
         @id : String,
         @label : String,
         @badge : String? = nil,
-        @shortcut : String? = nil
+        @shortcut : String? = nil,
       )
       end
     end
@@ -130,7 +130,7 @@ module Opal
         y : Int32,
         item : TabItem,
         is_active : Bool,
-        max_w : Int32
+        max_w : Int32,
       ) : Nil
         text = tab_string(item)
         if is_active

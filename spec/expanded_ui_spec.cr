@@ -134,7 +134,7 @@ describe "Opal Expanded UI Components" do
         rows: [
           ["Alpha", "100"],
           ["VeryLongStringToTruncate", "200"],
-          ["Gamma", "300"]
+          ["Gamma", "300"],
         ],
         selected_index: 1,
         visible_rows: 2,

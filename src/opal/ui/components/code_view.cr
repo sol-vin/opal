@@ -103,7 +103,7 @@ module Opal
         y : Int32,
         line : String,
         max_width : Int32,
-        highlight : Bool
+        highlight : Bool,
       ) : Nil
         cur_x = start_x
 

@@ -147,7 +147,6 @@ module Opal
         dim_rect(0, 0, @width, @height)
       end
 
-
       # Renders the buffer content to a string, optionally including ANSI color and style sequences.
       def render_to_string(with_ansi : Bool = true) : String
         String.build do |io|
@@ -195,6 +194,7 @@ module Opal
           end
         end
       end
+
       def to_s(io : IO) : Nil
         (0...@height).each do |y|
           (0...@width).each do |x|

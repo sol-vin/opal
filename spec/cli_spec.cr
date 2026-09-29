@@ -216,7 +216,7 @@ describe Opal::CLI do
     fish_script.should contain("complete -c mycli")
     fish_script.should contain("run")
   end
-it "accepts global options preceding subcommands" do
+  it "accepts global options preceding subcommands" do
     received_quiet = false
     executed = false
 

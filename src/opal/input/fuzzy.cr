@@ -99,6 +99,7 @@ module Opal
 
         results
       end
+
       # Computes the Levenshtein edit distance between two strings.
       def self.levenshtein(s1 : String, s2 : String) : Int32
         m = s1.size
