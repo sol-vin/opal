@@ -89,6 +89,7 @@ require "opal"
 - [KeyMap & MouseMap DSLs](#-keymap--mousemap-dsls)
 - [The Elm Architecture (TEA)](#-the-elm-architecture-tea)
 - [Testing with MockDriver](#-testing-with-mockdriver)
+- [Asciicast Terminal Recording (`opal/asciicast`)](#-asciicast-terminal-recording)
 - [Examples](#-examples)
 - [Cross-Platform Support](#-cross-platform-support)
 - [License](#-license)
@@ -674,6 +675,62 @@ end
 
 ---
 
+## 🎬 Asciicast Terminal Recording (`opal/asciicast`)
+
+> [!NOTE]
+> For in-depth architectural design, format specifications, and parser details, see the [Architecture Guide: Asciicast System](docs/architecture/asciicast.md).
+
+Generate pixel-perfect, flicker-free terminal recordings in the standard **Asciinema v2 (`.cast`)** format with zero external dependencies.
+
+This feature is modular and packaged as an **optional require**:
+
+```crystal
+require "opal"
+require "opal/asciicast"
+```
+
+### 1. Programmatic Session Recording (`Opal::Asciicast.record`)
+Record buffer frames, simulate human typing cadence with timing jitter, and save directly to `.cast`:
+
+```crystal
+Opal::Asciicast.record("demo.cast", width: 80, height: 20, title: "System Monitor") do |cast|
+  cast.write("\e[?25h\e[1;36muser@terminal\e[0m:$ ", advance: 0.0)
+  cast.type_text("crystal run app.cr\r\n", cps: 20.0)
+  cast.pause(0.5)
+
+  buf = Opal::UI::Buffer.new(78, 16)
+  buf.put_string(2, 2, "🚀 Opal 60fps Double Buffered Output", fg: Opal::Color.cyan, bold: true)
+  cast.draw_buffer(buf, advance: 0.5)
+end
+```
+
+### 2. Headless Recording with `Opal::Asciicast::Driver`
+Pass the headless driver into any Opal prompt, form wizard, or TEA program to record user interactions without an active terminal:
+
+```crystal
+driver = Opal::Asciicast.create_driver(width: 80, height: 24, title: "Form Wizard Demo")
+
+# Inject simulated keystrokes
+driver.inject_key("enter")
+
+# Run prompt headlessly
+Opal.form("Setup", driver: driver) do |f|
+  f.confirm "deploy", "Deploy now?", default: true
+end
+
+driver.save("demos/form.cast")
+```
+
+### 3. Parsing & Assertions with `Opal::Asciicast.read`
+```crystal
+recording = Opal::Asciicast.read("demo.cast")
+puts "Duration: #{recording.duration}s | Outputs: #{recording.outputs.size}"
+```
+
+For a complete runnable demonstration, check out [`examples/14_asciicast_recording.cr`](examples/14_asciicast_recording.cr).
+
+---
+
 ## 📂 Examples
 
 Explore all runnable examples in the [`examples/`](examples/) directory:
@@ -690,6 +747,8 @@ Explore all runnable examples in the [`examples/`](examples/) directory:
 - [`10_opal_tui_showcase.cr`](examples/10_opal_tui_showcase.cr) — **Full-featured 23-slide linear TUI showcase tour** displaying every Opal feature with interactive mini-apps, file dialogs, 2D/3D color pickers, and live text shaders.
 - [`11_text_shaders.cr`](examples/11_text_shaders.cr) — Realtime text shader playground demonstrating Matrix Rain, CRT scanlines, Glitch, Plasma waves, Fire FX, and multi-pass pipeline compositing.
 - [`12_3d_color_picker.cr`](examples/12_3d_color_picker.cr) — Interactive 3D RGB Cube, 3D Sphere, 2D Wheel, and Spectrum color pickers with pitch/yaw rotation and surface raycasting.
+- [`13_control_input_hooks_and_puppeting.cr`](examples/13_control_input_hooks_and_puppeting.cr) — Multi-control focus orchestration with `Opal::UI::Engine`, custom input hooks (`on_input`), Vim navigation, and automated background puppeting.
+- [`14_asciicast_recording.cr`](examples/14_asciicast_recording.cr) — Standardized Asciinema v2 recording with `require "opal/asciicast"`, programmatic buffer capture, and headless driver execution.
 
 Run any example:
 
