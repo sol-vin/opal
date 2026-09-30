@@ -1,4 +1,5 @@
 require "./pass"
+require "./fast_math"
 require "../style/color"
 
 module Opal
@@ -241,21 +242,22 @@ module Opal
         t = time * @speed
 
         (ry...(ry + rh)).each do |y|
+          v = (y - ry).to_f * @scale * 2.0 # Aspect ratio compensation
+          v2 = FastMath.sin(v + t * 0.8)
+
           (rx...(rx + rw)).each do |x|
             u = (x - rx).to_f * @scale
-            v = (y - ry).to_f * @scale * 2.0 # Aspect ratio compensation
 
-            v1 = Math.sin(u + t)
-            v2 = Math.sin(v + t * 0.8)
-            v3 = Math.sin((u + v) * 0.5 + t * 1.2)
+            v1 = FastMath.sin(u + t)
+            v3 = FastMath.sin((u + v) * 0.5 + t * 1.2)
             dist = Math.sqrt((u - 4.0)**2 + (v - 4.0)**2)
-            v4 = Math.sin(dist + t)
+            v4 = FastMath.sin(dist + t)
 
             plasma_val = (v1 + v2 + v3 + v4) * 0.25 # -1.0 .. 1.0
 
-            r = ((Math.sin(plasma_val * Math::PI) * 127.5) + 127.5).to_u8
-            g = ((Math.sin(plasma_val * Math::PI + (2.0 * Math::PI / 3.0)) * 127.5) + 127.5).to_u8
-            b = ((Math.sin(plasma_val * Math::PI + (4.0 * Math::PI / 3.0)) * 127.5) + 127.5).to_u8
+            r = ((FastMath.sin(plasma_val * Math::PI) * 127.5) + 127.5).to_u8
+            g = ((FastMath.sin(plasma_val * Math::PI + (2.0 * Math::PI / 3.0)) * 127.5) + 127.5).to_u8
+            b = ((FastMath.sin(plasma_val * Math::PI + (4.0 * Math::PI / 3.0)) * 127.5) + 127.5).to_u8
             plasma_c = Color.rgb(r, g, b)
 
             cell = source.get(x, y)
@@ -573,6 +575,399 @@ module Opal
             else
               char = is_stripe ? '▓' : '░'
               target.put_char(x, y, char, fg: shaded_color, dim: depth < 0.4)
+            end
+          end
+        end
+      end
+    end
+
+    # Procedural 3D Raymarched Sphere shader pass with dynamic orbital lighting,
+    # diffuse Lambertian shading, specular highlights, and ASCII luminance ramping.
+    class RaymarchSpherePass < Pass
+      property speed : Float64
+      property radius : Float64
+      property sphere_color : Color
+      property light_color : Color
+      property? preserve_text : Bool
+
+      RAMP = [' ', '.', ':', '-', '=', '+', '*', '%', '#', '@', '$']
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 1.0,
+        @radius : Float64 = 0.75,
+        sphere_color : Color | Symbol | String = :bright_cyan,
+        light_color : Color | Symbol | String = :white,
+        @preserve_text : Bool = false,
+      )
+        super(region)
+        @sphere_color = Color.from(sphere_color)
+        @light_color = Color.from(light_color)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        cx = rx + rw / 2.0
+        cy = ry + rh / 2.0
+        half_w = rw / 2.0
+        half_h = rh / 2.0
+
+        t = time * @speed
+        # Light position in 3D orbiting the sphere
+        lx = FastMath.cos(t)
+        ly = FastMath.sin(t * 0.7) * 0.6
+        lz = FastMath.sin(t)
+        l_len = Math.sqrt(lx * lx + ly * ly + lz * lz)
+        lx /= l_len; ly /= l_len; lz /= l_len
+
+        r_sq = @radius * @radius
+
+        (ry...(ry + rh)).each do |y|
+          ny = (y - cy).to_f / half_h * 1.8 # Aspect compensation
+          ny_sq = ny * ny
+
+          (rx...(rx + rw)).each do |x|
+            nx = (x - cx).to_f / half_w
+            d_sq = nx * nx + ny_sq
+
+            orig = source.get(x, y)
+            if d_sq <= r_sq
+              nz = Math.sqrt(r_sq - d_sq)
+              norm_x = nx / @radius
+              norm_y = ny / @radius
+              norm_z = nz / @radius
+
+              diff = Math.max(0.0, norm_x * lx + norm_y * ly + norm_z * lz)
+
+              hx = lx; hy = ly; hz = lz + 1.0
+              h_len = Math.sqrt(hx * hx + hy * hy + hz * hz)
+              if h_len > 0.0001
+                hx /= h_len; hy /= h_len; hz /= h_len
+              end
+              ndoth = Math.max(0.0, norm_x * hx + norm_y * hy + norm_z * hz)
+              spec = (ndoth ** 16) * 0.8
+
+              intensity = (0.15 + diff * 0.75 + spec).clamp(0.0, 1.0)
+              shaded_c = Color.lerp(Color.black, @sphere_color, intensity)
+              if spec > 0.3
+                shaded_c = Color.lerp(shaded_c, @light_color, ((spec - 0.3) / 0.7).clamp(0.0, 1.0))
+              end
+
+              ramp_idx = ((intensity * (RAMP.size - 1)).round.to_i).clamp(0, RAMP.size - 1)
+              char = if @preserve_text && orig.char != ' '
+                       orig.char
+                     else
+                       RAMP[ramp_idx]
+                     end
+
+              target.set(x, y, UI::Cell.new(
+                char: char,
+                fg: shaded_c,
+                bg: orig.bg,
+                bold: intensity > 0.6
+              ))
+            elsif !@preserve_text || orig.char == ' '
+              target.set(x, y, orig)
+            end
+          end
+        end
+      end
+    end
+
+    # Procedural Voronoi (Worley Cellular Noise) shader pass
+    # Renders organic crystal-like cells, glowing neon boundaries, and pulsating nuclei.
+    class VoronoiPass < Pass
+      property speed : Float64
+      property scale : Float64
+      property border_color : Color
+      property inner_color : Color
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 0.8,
+        @scale : Float64 = 0.15,
+        border_color : Color | Symbol | String = :bright_cyan,
+        inner_color : Color | Symbol | String = :blue,
+      )
+        super(region)
+        @border_color = Color.from(border_color)
+        @inner_color = Color.from(inner_color)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        t = time * @speed
+
+        (ry...(ry + rh)).each do |y|
+          gy = (y - ry).to_f * @scale * 2.0
+          iy = gy.floor.to_i
+
+          (rx...(rx + rw)).each do |x|
+            gx = (x - rx).to_f * @scale
+            ix = gx.floor.to_i
+
+            min_d1 = 999.0
+            min_d2 = 999.0
+
+            (-1..1).each do |dy|
+              ny = iy + dy
+              (-1..1).each do |dx|
+                nx = ix + dx
+
+                hash = ((nx.to_i64 &* 374761393_i64) ^ (ny.to_i64 &* 668265263_i64))
+                phase_x = ((hash % 1000).to_f / 1000.0) * Math::PI * 2.0
+                phase_y = (((hash >> 10) % 1000).to_f / 1000.0) * Math::PI * 2.0
+
+                px = nx.to_f + 0.5 + FastMath.sin(t + phase_x) * 0.4
+                py = ny.to_f + 0.5 + FastMath.cos(t * 1.3 + phase_y) * 0.4
+
+                dist = Math.sqrt((gx - px)**2 + (gy - py)**2)
+
+                if dist < min_d1
+                  min_d2 = min_d1
+                  min_d1 = dist
+                elsif dist < min_d2
+                  min_d2 = dist
+                end
+              end
+            end
+
+            edge_dist = min_d2 - min_d1
+            is_edge = edge_dist < 0.18
+            cell = source.get(x, y)
+
+            if is_edge
+              edge_factor = (1.0 - (edge_dist / 0.18)).clamp(0.0, 1.0)
+              c = Color.lerp(@inner_color, @border_color, edge_factor)
+              char = edge_factor > 0.6 ? '▓' : '▒'
+              if cell.char != ' ' && cell.fg.type != Color::Type::None
+                target.set(x, y, UI::Cell.new(char: cell.char, fg: @border_color, bg: cell.bg, bold: true))
+              else
+                target.put_char(x, y, char, fg: c, bold: true)
+              end
+            else
+              intensity = (1.0 - (min_d1 * 0.8)).clamp(0.0, 1.0)
+              c = Color.lerp(Color.black, @inner_color, intensity)
+              if cell.char != ' ' && cell.fg.type != Color::Type::None
+                target.set(x, y, UI::Cell.new(char: cell.char, fg: Color.lerp(cell.fg, c, 0.4), bg: cell.bg))
+              else
+                char = intensity > 0.7 ? '.' : ' '
+                target.put_char(x, y, char, fg: c, dim: true)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    # Procedural multi-layer parallax mountain/ridge landscape with starry sky
+    class FractalLandscapePass < Pass
+      property speed : Float64
+      property sky_color : Color
+      property mountain_color : Color
+      property ridge_color : Color
+      property foreground_color : Color
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 1.0,
+        sky_color : Color | Symbol | String = :dark_gray,
+        mountain_color : Color | Symbol | String = :blue,
+        ridge_color : Color | Symbol | String = :magenta,
+        foreground_color : Color | Symbol | String = :bright_cyan,
+      )
+        super(region)
+        @sky_color = Color.from(sky_color)
+        @mountain_color = Color.from(mountain_color)
+        @ridge_color = Color.from(ridge_color)
+        @foreground_color = Color.from(foreground_color)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        t = time * @speed
+
+        (rx...(rx + rw)).each do |x|
+          norm_x = (x - rx).to_f
+
+          # Layer 1: Distant mountains (slow scroll)
+          m_x = norm_x * 0.05 + t * 0.2
+          h_mountain = (rh * 0.45) + (FastMath.sin(m_x) * 0.6 + FastMath.sin(m_x * 2.3 + 1.2) * 0.3 + FastMath.sin(m_x * 5.1) * 0.1) * (rh * 0.25)
+
+          # Layer 2: Midground ridge (medium scroll)
+          r_x = norm_x * 0.08 + t * 0.6
+          h_ridge = (rh * 0.65) + (FastMath.sin(r_x) * 0.5 + FastMath.sin(r_x * 2.7 + 0.8) * 0.35 + FastMath.sin(r_x * 6.0) * 0.15) * (rh * 0.2)
+
+          # Layer 3: Foreground hills (fast scroll)
+          f_x = norm_x * 0.12 + t * 1.4
+          h_fore = (rh * 0.82) + (FastMath.sin(f_x) * 0.4 + FastMath.sin(f_x * 3.1 + 2.0) * 0.4) * (rh * 0.12)
+
+          (ry...(ry + rh)).each do |y|
+            rel_y = (y - ry).to_f
+            cell = source.get(x, y)
+
+            if rel_y >= h_fore
+              depth = ((rel_y - h_fore) / (rh - h_fore + 0.001)).clamp(0.0, 1.0)
+              c = Color.lerp(@foreground_color, Color.black, depth * 0.3)
+              if cell.char != ' ' && cell.fg.type != Color::Type::None
+                target.set(x, y, UI::Cell.new(char: cell.char, fg: c, bg: cell.bg, bold: true))
+              else
+                target.put_char(x, y, rel_y.to_i == h_fore.to_i ? '/' : '█', fg: c, bold: true)
+              end
+            elsif rel_y >= h_ridge
+              c = @ridge_color
+              if cell.char != ' ' && cell.fg.type != Color::Type::None
+                target.set(x, y, UI::Cell.new(char: cell.char, fg: c, bg: cell.bg))
+              else
+                target.put_char(x, y, rel_y.to_i == h_ridge.to_i ? '^' : '▓', fg: c)
+              end
+            elsif rel_y >= h_mountain
+              c = @mountain_color
+              if cell.char != ' ' && cell.fg.type != Color::Type::None
+                target.set(x, y, UI::Cell.new(char: cell.char, fg: c, bg: cell.bg, dim: true))
+              else
+                target.put_char(x, y, rel_y.to_i == h_mountain.to_i ? '▲' : '░', fg: c, dim: true)
+              end
+            else
+              if cell.char != ' ' && cell.fg.type != Color::Type::None
+                target.set(x, y, cell)
+              else
+                star_seed = (x.to_i64 &* 54321_i64) ^ (y.to_i64 &* 98765_i64)
+                is_star = (star_seed.abs % 73) == 0
+                if is_star
+                  star_twinkle = (FastMath.sin(t * 3.0 + (star_seed % 10)) > 0.0)
+                  target.put_char(x, y, star_twinkle ? '*' : '.', fg: @sky_color, dim: !star_twinkle)
+                else
+                  target.put_char(x, y, ' ', fg: Color.none)
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    # Procedural multi-band equalizer / audio spectrum visualizer
+    # Features dynamic frequency bands, responsive VU meter gradients, and peak hold markers.
+    class AudioVisualizerPass < Pass
+      property speed : Float64
+      property bar_count : Int32
+      property low_color : Color
+      property mid_color : Color
+      property high_color : Color
+      property peak_color : Color
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 1.0,
+        @bar_count : Int32 = 16,
+        low_color : Color | Symbol | String = :green,
+        mid_color : Color | Symbol | String = :yellow,
+        high_color : Color | Symbol | String = :bright_red,
+        peak_color : Color | Symbol | String = :bright_white,
+      )
+        super(region)
+        @low_color = Color.from(low_color)
+        @mid_color = Color.from(mid_color)
+        @high_color = Color.from(high_color)
+        @peak_color = Color.from(peak_color)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        t = time * @speed
+        bars = Math.min(@bar_count, rw // 2)
+        return if bars <= 0
+
+        bar_width = Math.max(1, rw // bars)
+        effective_width = bars * bar_width
+        start_x = rx + (rw - effective_width) // 2
+
+        (0...bars).each do |b|
+          freq = (b + 1).to_f / bars.to_f
+          bass_hit = (FastMath.sin(t * 4.0) ** 4) * (1.0 - freq)
+          rhythm = FastMath.sin(t * (3.0 + freq * 8.0) + freq * 12.0).abs
+          noise = (FastMath.sin(t * 15.0 + b * 2.3) * 0.2).abs
+          val = ((bass_hit * 0.7 + rhythm * 0.5 + noise * 0.3) * 1.1).clamp(0.05, 1.0)
+
+          bar_height = (val * (rh - 2)).round.to_i
+          peak_height = ((val + 0.1).clamp(0.0, 1.0) * (rh - 2)).round.to_i
+
+          bx = start_x + b * bar_width
+
+          (0...bar_width).each do |bw_offset|
+            col_x = bx + bw_offset
+            next if col_x >= rx + rw
+
+            (0...rh).each do |level|
+              target_y = ry + rh - 1 - level
+              next if target_y < ry || target_y >= ry + rh
+
+              cell = source.get(col_x, target_y)
+
+              if level < bar_height
+                frac = level.to_f / rh.to_f
+                color = if frac < 0.5
+                          Color.lerp(@low_color, @mid_color, frac * 2.0)
+                        else
+                          Color.lerp(@mid_color, @high_color, (frac - 0.5) * 2.0)
+                        end
+                if cell.char != ' ' && cell.fg.type != Color::Type::None
+                  target.set(col_x, target_y, UI::Cell.new(char: cell.char, fg: color, bg: cell.bg, bold: frac > 0.6))
+                else
+                  target.put_char(col_x, target_y, '█', fg: color, bold: frac > 0.6)
+                end
+              elsif level == peak_height
+                target.put_char(col_x, target_y, '▔', fg: @peak_color, bold: true)
+              end
             end
           end
         end

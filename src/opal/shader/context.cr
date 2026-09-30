@@ -1,41 +1,31 @@
 require "../ui/cell"
 require "../ui/buffer"
 require "../style/color"
+require "../ui/rect"
+require "./fast_math"
 
 module Opal
   module Shader
     # 2D rectangular bounding box for region-scoped shader passes
-    struct Rect
-      getter x : Int32
-      getter y : Int32
-      getter width : Int32
-      getter height : Int32
-
-      def initialize(@x : Int32, @y : Int32, @width : Int32, @height : Int32)
-      end
-
-      def in_bounds?(px : Int32, py : Int32) : Bool
-        px >= @x && px < (@x + @width) && py >= @y && py < (@y + @height)
-      end
-    end
+    alias Rect = UI::Rect
 
     # Execution context provided to a text fragment shader for each evaluated cell.
     class ShaderContext
-      getter x : Int32
-      getter y : Int32
-      getter u : Float64
-      getter v : Float64
-      getter local_x : Int32
-      getter local_y : Int32
-      getter local_u : Float64
-      getter local_v : Float64
-      getter width : Int32
-      getter height : Int32
-      getter region_width : Int32
-      getter region_height : Int32
-      getter time : Float64
-      getter frame : UInt64
-      getter source_buffer : UI::Buffer
+      property x : Int32
+      property y : Int32
+      property u : Float64
+      property v : Float64
+      property local_x : Int32
+      property local_y : Int32
+      property local_u : Float64
+      property local_v : Float64
+      property width : Int32
+      property height : Int32
+      property region_width : Int32
+      property region_height : Int32
+      property time : Float64
+      property frame : UInt64
+      property source_buffer : UI::Buffer
       property cell : UI::Cell
       property? discarded : Bool = false
 
@@ -53,6 +43,41 @@ module Opal
         @source_buffer : UI::Buffer,
         @cell : UI::Cell,
       )
+        @u = @width > 1 ? (@x.to_f / (@width - 1)) : 0.0
+        @v = @height > 1 ? (@y.to_f / (@height - 1)) : 0.0
+        @local_u = @region_width > 1 ? (@local_x.to_f / (@region_width - 1)) : 0.0
+        @local_v = @region_height > 1 ? (@local_y.to_f / (@region_height - 1)) : 0.0
+      end
+
+      # Mutates context in-place to avoid per-cell heap allocations during fragment shader passes
+      def reset(
+        x : Int32,
+        y : Int32,
+        local_x : Int32,
+        local_y : Int32,
+        width : Int32,
+        height : Int32,
+        region_width : Int32,
+        region_height : Int32,
+        time : Float64,
+        frame : UInt64,
+        source_buffer : UI::Buffer,
+        cell : UI::Cell,
+      ) : Nil
+        @x = x
+        @y = y
+        @local_x = local_x
+        @local_y = local_y
+        @width = width
+        @height = height
+        @region_width = region_width
+        @region_height = region_height
+        @time = time
+        @frame = frame
+        @source_buffer = source_buffer
+        @cell = cell
+        @discarded = false
+
         @u = @width > 1 ? (@x.to_f / (@width - 1)) : 0.0
         @v = @height > 1 ? (@y.to_f / (@height - 1)) : 0.0
         @local_u = @region_width > 1 ? (@local_x.to_f / (@region_width - 1)) : 0.0
@@ -171,13 +196,13 @@ module Opal
         @cell = other
       end
 
-      # Procedural trigonometric wave functions
+      # Procedural trigonometric wave functions (accelerated via FastMath LUT)
       def wave(freq : Float64 = 1.0, speed : Float64 = 1.0) : Float64
-        Math.sin(@u * freq + @time * speed)
+        FastMath.sin(@u * freq + @time * speed)
       end
 
       def wave_y(freq : Float64 = 1.0, speed : Float64 = 1.0) : Float64
-        Math.sin(@v * freq + @time * speed)
+        FastMath.sin(@v * freq + @time * speed)
       end
 
       # Fast deterministic pseudo-random float between 0.0 and 1.0

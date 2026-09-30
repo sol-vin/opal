@@ -147,7 +147,7 @@ drv.raw_mode do
     buf = Opal::UI::Buffer.new(w, h)
 
     # Title Bar
-    title = "💎 Opal UI Control Hooks & Puppeting Engine Demo"
+    title = "[*] Opal UI Control Hooks & Puppeting Engine Demo"
     buf.put_string(2, 0, title, fg: Opal::Color.cyan, bold: true)
     buf.put_string(2, 1, status_msg, fg: Opal::Color.bright_black)
     buf.put_string(0, 2, "─" * w, fg: Opal::Color.bright_black)

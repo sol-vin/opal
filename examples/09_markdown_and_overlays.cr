@@ -3,7 +3,7 @@ require "../src/opal"
 # Showcases Opal's Markdown terminal rendering, Modal dialogs, and Toast notifications.
 
 doc = <<-MD
-# 💎 Opal Architecture Overview
+# [*] Opal Architecture Overview
 Opal combines **The Elm Architecture**, **Lipgloss styling**, and **double-buffering**.
 
 ### Key Advantages

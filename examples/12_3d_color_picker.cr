@@ -1,7 +1,7 @@
 require "../src/opal"
 
 # =============================================================================
-# 🔮 OPAL 2D/3D COLOR SPECTRUM & ROTATABLE CUBE STUDIO
+# [*] OPAL 2D/3D COLOR SPECTRUM & ROTATABLE CUBE STUDIO
 # =============================================================================
 # Demonstrates 3D RGB Cube rendering with 3D rotation, aspect ratio correction,
 # Z-buffer depth sorting, 3D sphere, 2D polar circle wheel, and virtual raycast cursor.
@@ -9,7 +9,7 @@ require "../src/opal"
 # Controls:
 #   [W/A/S/D]    : Turn / Rotate 3D Cube (Pitch & Yaw)
 #   [↑/↓/←/→]    : Move Virtual Picker Cursor across the surface
-#   [m]          : Switch Shape (3D Cube ➔ 3D Sphere ➔ 2D Wheel ➔ 2D Square)
+#   [m]          : Switch Shape (3D Cube -> 3D Sphere -> 2D Wheel -> 2D Square)
 #   [Space]      : Toggle Auto-Rotation
 #   [+/-]        : Adjust Lightness
 #   [Enter]      : Confirm & capture selected color
@@ -64,7 +64,7 @@ class ColorPicker3DAppModel
     if @captured
       buffer.put_string(
         cols - 35, 1,
-        "✔ Captured #{@picker.selected_color.to_hex}!",
+        "[OK] Captured #{@picker.selected_color.to_hex}!",
         fg: Opal::Color.green,
         bold: true
       )

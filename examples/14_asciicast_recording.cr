@@ -1,12 +1,12 @@
 require "../src/opal"
 require "../src/opal/asciicast"
 
-# 🎬 Opal Asciicast Recording Example
+# [*] Opal Asciicast Recording Example
 # Demonstrates how to use `require "opal/asciicast"` to programmatically
 # record terminal sessions, render buffers, and drive headless TUI workflows
 # into standard Asciinema v2 (.cast) files.
 
-puts "💎 Opal Asciicast Recording Demo"
+puts "[*] Opal Asciicast Recording Demo"
 puts "================================"
 
 output_dir = "tmp/example_casts"
@@ -35,7 +35,7 @@ Opal::Asciicast.record(
 
   # Frame 1: Render a styled UI buffer
   buf = Opal::UI::Buffer.new(78, 16)
-  buf.put_string(2, 1, "🚀 SYSTEM METRICS MONITOR", fg: Opal::Color.cyan, bold: true)
+  buf.put_string(2, 1, ">> SYSTEM METRICS MONITOR", fg: Opal::Color.cyan, bold: true)
   buf.put_string(2, 2, "─" * 74, fg: Opal::Color.bright_black)
 
   # Render mock metrics
@@ -51,7 +51,7 @@ Opal::Asciicast.record(
   # Frame 2: Updated metric state
   gauge2 = Opal::UI::Gauge.new(ratio: 0.88, label: "Memory (88%)", color: :red)
   buf.fill(0, 0, 78, 16, ' ')
-  buf.put_string(2, 1, "🚀 SYSTEM METRICS MONITOR", fg: Opal::Color.cyan, bold: true)
+  buf.put_string(2, 1, ">> SYSTEM METRICS MONITOR", fg: Opal::Color.cyan, bold: true)
   buf.put_string(2, 2, "─" * 74, fg: Opal::Color.bright_black)
   sparkline.render(buf, 4, 4, 30, 1)
   buf.put_string(36, 4, "CPU Load: 94%", fg: Opal::Color.red, bold: true)
@@ -61,7 +61,7 @@ Opal::Asciicast.record(
   writer.pause(1.0)
 end
 
-puts "   ✓ Successfully generated #{cast1_path}!"
+puts "   [OK] Successfully generated #{cast1_path}!"
 
 # -----------------------------------------------------------------------------
 # Part 2: Headless TUI Recording via Opal::Asciicast::Driver
@@ -104,7 +104,7 @@ driver.raw_mode do
   driver.save(cast2_path)
 end
 
-puts "   ✓ Successfully generated #{cast2_path}!"
+puts "   [OK] Successfully generated #{cast2_path}!"
 
 # -----------------------------------------------------------------------------
 # Part 3: Reading & Verifying Cast Recordings
@@ -123,4 +123,4 @@ puts "     Dimensions: #{rec2.header.width}x#{rec2.header.height}"
 puts "     Duration:   #{rec2.duration.round(2)}s"
 puts "     Events:     #{rec2.events.size}"
 
-puts "\n🎉 Asciicast standardized recording demonstration complete!"
+puts "\n[OK] Asciicast standardized recording demonstration complete!"

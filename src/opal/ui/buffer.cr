@@ -1,4 +1,5 @@
 require "./cell"
+require "./rect"
 require "../style/visual_width"
 
 module Opal
@@ -8,6 +9,7 @@ module Opal
       getter width : Int32
       getter height : Int32
       getter cells : Array(Cell)
+      property clip_rect : Rect? = nil
 
       def initialize(@width : Int32, @height : Int32)
         @cells = Array(Cell).new(@width * @height, Cell.empty)
@@ -17,13 +19,40 @@ module Opal
         x >= 0 && x < @width && y >= 0 && y < @height
       end
 
+      # Returns true if the coordinate is within the buffer bounds and the active clip rect (if any).
+      def in_clip?(x : Int32, y : Int32) : Bool
+        return false unless in_bounds?(x, y)
+        if cr = @clip_rect
+          cr.in_bounds?(x, y)
+        else
+          true
+        end
+      end
+
+      # Executes a block with an active clipping rectangle.
+      # If a clip rectangle is already active, computes their intersection.
+      def with_clip(x : Int32, y : Int32, w : Int32, h : Int32, &block)
+        new_rect = Rect.new(x, y, Math.max(0, w), Math.max(0, h))
+        if old_clip = @clip_rect
+          new_rect = old_clip.intersection(new_rect)
+        end
+
+        prev = @clip_rect
+        @clip_rect = new_rect
+        begin
+          yield
+        ensure
+          @clip_rect = prev
+        end
+      end
+
       def get(x : Int32, y : Int32) : Cell
         return Cell.empty unless in_bounds?(x, y)
         @cells[y * @width + x]
       end
 
       def set(x : Int32, y : Int32, cell : Cell) : Nil
-        return unless in_bounds?(x, y)
+        return unless in_clip?(x, y)
         @cells[y * @width + x] = cell
       end
 
@@ -40,22 +69,22 @@ module Opal
         reverse : Bool = false,
         keep_bg : Bool = false,
       ) : Nil
-        return unless in_bounds?(x, y)
+        return unless in_clip?(x, y)
 
         # If overwriting a continuation cell, clear the preceding wide character cell
-        if x > 0 && get(x, y).continuation?
+        if x > 0 && in_bounds?(x - 1, y) && get(x, y).continuation?
           set(x - 1, y, Cell.empty)
         end
 
         # If this cell previously had a wide character, clear its continuation cell
-        if x + 1 < @width && get(x + 1, y).continuation?
+        if x + 1 < @width && in_bounds?(x + 1, y) && get(x + 1, y).continuation?
           set(x + 1, y, Cell.empty)
         end
 
         cw = VisualWidth.char_width(char)
         if cw == 2
-          if x + 1 >= @width
-            # Cannot fit wide character on the last column; replace with space to avoid line wrap
+          if x + 1 >= @width || !in_clip?(x + 1, y)
+            # Cannot fit wide character or continuation is clipped; replace with space to avoid line wrap
             char = ' '
             cw = 1
           else
@@ -100,30 +129,39 @@ module Opal
         max_width : Int32? = nil,
         keep_bg : Bool = false,
       ) : Int32
+        return 0 if y < 0 || y >= @height
+        if cr = @clip_rect
+          return 0 if y < cr.y || y >= cr.bottom
+        end
         cur_x = x
         clean_text = VisualWidth.strip_ansi(text)
 
         clean_text.each_char do |ch|
           break if cur_x >= @width
+          if cr = @clip_rect
+            break if cur_x >= cr.right
+          end
           if mw = max_width
             break if (cur_x - x) >= mw
           end
 
           cw = VisualWidth.char_width(ch)
           if cw > 0
-            put_char(
-              cur_x, y, ch,
-              fg: fg, bg: bg,
-              bold: bold, dim: dim,
-              italic: italic, underline: underline,
-              reverse: reverse,
-              keep_bg: keep_bg
-            )
+            if cur_x >= 0 && (cr.nil? || cur_x >= cr.not_nil!.x)
+              put_char(
+                cur_x, y, ch,
+                fg: fg, bg: bg,
+                bold: bold, dim: dim,
+                italic: italic, underline: underline,
+                reverse: reverse,
+                keep_bg: keep_bg
+              )
+            end
             cur_x += cw
           end
         end
 
-        cur_x - x
+        Math.max(0, cur_x - x)
       end
 
       # Writes string and pads remaining columns up to `width` with spaces, ensuring clean erasure
@@ -137,16 +175,32 @@ module Opal
         bold : Bool = false,
         dim : Bool = false,
       ) : Nil
+        return if y < 0 || y >= @height
+        if cr = @clip_rect
+          return if y < cr.y || y >= cr.bottom
+        end
         written_w = put_string(x, y, text, fg: fg, bg: bg, bold: bold, dim: dim, max_width: width)
         if written_w < width
           (written_w...width).each do |pad_x|
-            put_char(x + pad_x, y, ' ', fg: fg, bg: bg)
+            px = x + pad_x
+            break if px >= @width
+            if cr = @clip_rect
+              break if px >= cr.right
+            end
+            if px >= 0 && (cr.nil? || px >= cr.not_nil!.x)
+              put_char(px, y, ' ', fg: fg, bg: bg)
+            end
           end
         end
       end
 
       def fill(x : Int32, y : Int32, w : Int32, h : Int32, cell : Cell = Cell.empty) : Nil
+        return if w <= 0 || h <= 0
         (y...(y + h)).each do |cur_y|
+          next if cur_y < 0 || cur_y >= @height
+          if cr = @clip_rect
+            next if cur_y < cr.y || cur_y >= cr.bottom
+          end
           # Clear boundary wide characters to prevent slicing
           if x > 0 && in_bounds?(x, cur_y) && get(x, cur_y).continuation?
             set(x - 1, cur_y, Cell.empty)
@@ -156,6 +210,10 @@ module Opal
           end
 
           (x...(x + w)).each do |cur_x|
+            next if cur_x < 0 || cur_x >= @width
+            if cr = @clip_rect
+              next if cur_x < cr.x || cur_x >= cr.right
+            end
             set(cur_x, cur_y, cell)
           end
         end
@@ -197,10 +255,20 @@ module Opal
       # If ignore_spaces is true, empty cells without background do not overwrite existing cells.
       def blit(src : Buffer, dst_x : Int32, dst_y : Int32, ignore_spaces : Bool = false) : Nil
         (0...src.height).each do |sy|
+          target_y = dst_y + sy
+          next if target_y < 0 || target_y >= @height
+          if cr = @clip_rect
+            next if target_y < cr.y || target_y >= cr.bottom
+          end
           (0...src.width).each do |sx|
+            target_x = dst_x + sx
+            next if target_x < 0 || target_x >= @width
+            if cr = @clip_rect
+              next if target_x < cr.x || target_x >= cr.right
+            end
             cell = src.get(sx, sy)
             next if ignore_spaces && cell.char == ' ' && cell.bg.type == Color::Type::None
-            set(dst_x + sx, dst_y + sy, cell)
+            set(target_x, target_y, cell)
           end
         end
       end

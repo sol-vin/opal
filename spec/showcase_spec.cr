@@ -2,9 +2,9 @@ require "./spec_helper"
 require "../examples/10_opal_tui_showcase"
 
 describe ShowcaseAppModel do
-  it "initializes with 26 slides" do
+  it "initializes with 31 slides" do
     app = ShowcaseAppModel.new
-    app.slides.size.should eq(26)
+    app.slides.size.should eq(31)
     app.current_idx.should eq(0)
   end
 
@@ -24,7 +24,7 @@ describe ShowcaseAppModel do
     app = ShowcaseAppModel.new
     shift_right_msg = Opal::TEA::KeyMsg.new("right", shift: true)
 
-    26.times do |step|
+    31.times do |step|
       app.current_idx.should eq(step)
       app.update(shift_right_msg)
     end
@@ -52,7 +52,7 @@ describe ShowcaseAppModel do
     app = ShowcaseAppModel.new
     view_out = app.view
     view_out.should contain("OPAL TUI SHOWCASE")
-    view_out.should contain("Slide 1/26")
+    view_out.should contain("Slide 1/31")
     view_out.should contain("Next")
     view_out.should contain("Quit")
   end

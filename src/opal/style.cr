@@ -4,6 +4,7 @@ require "./style/border"
 require "./style/style"
 require "./style/layout"
 require "./style/theme"
+require "./style/theme_store"
 require "./style/animation"
 
 module Opal
@@ -20,5 +21,10 @@ module Opal
   # Sets the current active Theme by symbol, string, or Theme instance
   def self.theme=(theme : Theme | Symbol | String) : Theme
     Theme.current = theme
+  end
+
+  # Returns the global ThemeStore registry
+  def self.theme_store : ThemeStore.class
+    ThemeStore
   end
 end

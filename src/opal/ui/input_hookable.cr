@@ -64,6 +64,16 @@ module Opal
         self
       end
 
+      def focus : self
+        @focused = true
+        self
+      end
+
+      def unfocus : self
+        @focused = false
+        self
+      end
+
       # Routes an incoming input event through custom hooks or default handlers.
       def handle_input(event : InputEvent) : Bool
         if @custom_inputs && (hook = @input_hook)

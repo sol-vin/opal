@@ -1,7 +1,7 @@
 require "../src/opal"
 
 # =============================================================================
-# 🔮 OPAL TEXT SHADER ENGINE & COMPOSITING SHOWCASE
+# [*] OPAL TEXT SHADER ENGINE & COMPOSITING SHOWCASE
 # =============================================================================
 # Demonstrates procedural fragment shaders running over terminal screen buffers.
 #
@@ -101,7 +101,7 @@ class ShaderDemoModel
     buffer = Opal::UI::Buffer.new(cols, rows)
 
     # 1. Base UI Render Pass
-    buffer.put_string(2, 1, "🔮 Opal Text Shader Engine ── Mode: #{@mode.title}", fg: Opal::Color.bright_cyan, bold: true)
+    buffer.put_string(2, 1, "[*] Opal Text Shader Engine ── Mode: #{@mode.title}", fg: Opal::Color.bright_cyan, bold: true)
     buffer.put_string(2, 2, "─" * (cols - 4), fg: Opal::Color.bright_black)
 
     # Draw terminal dashboard content

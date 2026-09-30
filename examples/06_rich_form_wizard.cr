@@ -1,7 +1,7 @@
 require "../src/opal"
 
 # Showcases Opal's Multi-Field Form DSL with live inline validation and tab navigation.
-puts Opal.style.bold.foreground(Opal::Color.hex("#CBA6F7")).render("\n💎 Opal Multi-Field Interactive Form Wizard\n")
+puts Opal.style.bold.foreground(Opal::Color.hex("#CBA6F7")).render("\n[*] Opal Multi-Field Interactive Form Wizard\n")
 
 result = Opal.form("New Microservice Configuration") do |f|
   f.text "name", "Service Name:", default: "auth-gateway", required: true
@@ -17,7 +17,7 @@ result = Opal.form("New Microservice Configuration") do |f|
 end
 
 if res = result
-  puts Opal.style.bold.foreground(Opal::Color.green).render("\n✔ Configuration Captured Successfully!")
+  puts Opal.style.bold.foreground(Opal::Color.green).render("\n[OK] Configuration Captured Successfully!")
   res.each do |k, v|
     puts "  #{Opal.style.bold.render(k.ljust(15))}: #{v}"
   end

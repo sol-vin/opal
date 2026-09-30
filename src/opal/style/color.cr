@@ -282,5 +282,33 @@ module Opal
       r_u, g_u, b_u = to_rgb
       sprintf("#%02X%02X%02X", r_u, g_u, b_u)
     end
+
+    # Calculates WCAG 2.1 relative luminance (0.0 for black to 1.0 for white)
+    def relative_luminance : Float64
+      r_u, g_u, b_u = to_rgb
+      s_r = r_u.to_f / 255.0
+      s_g = g_u.to_f / 255.0
+      s_b = b_u.to_f / 255.0
+
+      r_lin = s_r <= 0.04045 ? (s_r / 12.92) : (((s_r + 0.055) / 1.055) ** 2.4)
+      g_lin = s_g <= 0.04045 ? (s_g / 12.92) : (((s_g + 0.055) / 1.055) ** 2.4)
+      b_lin = s_b <= 0.04045 ? (s_b / 12.92) : (((s_b + 0.055) / 1.055) ** 2.4)
+
+      0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin
+    end
+
+    # Calculates WCAG 2.1 contrast ratio against another color (range 1.0 : 1 to 21.0 : 1)
+    def contrast_ratio(other : Color) : Float64
+      l1 = relative_luminance
+      l2 = other.relative_luminance
+      lighter = Math.max(l1, l2)
+      darker = Math.min(l1, l2)
+      (lighter + 0.05) / (darker + 0.05)
+    end
+
+    # Returns true if the contrast ratio meets or exceeds the required WCAG threshold (default 4.5 for AA normal text)
+    def readable_against?(bg : Color, min_ratio : Float64 = 4.5) : Bool
+      contrast_ratio(bg) >= min_ratio
+    end
   end
 end

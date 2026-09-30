@@ -113,27 +113,101 @@ module Opal
         self
       end
 
+      def raymarch_sphere(
+        region : Rect? = nil,
+        speed : Float64 = 1.0,
+        radius : Float64 = 0.75,
+        sphere_color : Color | Symbol | String = :bright_cyan,
+        light_color : Color | Symbol | String = :white,
+        preserve_text : Bool = false,
+      ) : self
+        @passes << RaymarchSpherePass.new(
+          region: region,
+          speed: speed,
+          radius: radius,
+          sphere_color: sphere_color,
+          light_color: light_color,
+          preserve_text: preserve_text
+        )
+        self
+      end
+
+      def voronoi(
+        region : Rect? = nil,
+        speed : Float64 = 0.8,
+        scale : Float64 = 0.15,
+        border_color : Color | Symbol | String = :bright_cyan,
+        inner_color : Color | Symbol | String = :blue,
+      ) : self
+        @passes << VoronoiPass.new(
+          region: region,
+          speed: speed,
+          scale: scale,
+          border_color: border_color,
+          inner_color: inner_color
+        )
+        self
+      end
+
+      def fractal_landscape(
+        region : Rect? = nil,
+        speed : Float64 = 1.0,
+        sky_color : Color | Symbol | String = :dark_gray,
+        mountain_color : Color | Symbol | String = :blue,
+        ridge_color : Color | Symbol | String = :magenta,
+        foreground_color : Color | Symbol | String = :bright_cyan,
+      ) : self
+        @passes << FractalLandscapePass.new(
+          region: region,
+          speed: speed,
+          sky_color: sky_color,
+          mountain_color: mountain_color,
+          ridge_color: ridge_color,
+          foreground_color: foreground_color
+        )
+        self
+      end
+
+      def audio_visualizer(
+        region : Rect? = nil,
+        speed : Float64 = 1.0,
+        bar_count : Int32 = 16,
+        low_color : Color | Symbol | String = :green,
+        mid_color : Color | Symbol | String = :yellow,
+        high_color : Color | Symbol | String = :bright_red,
+        peak_color : Color | Symbol | String = :bright_white,
+      ) : self
+        @passes << AudioVisualizerPass.new(
+          region: region,
+          speed: speed,
+          bar_count: bar_count,
+          low_color: low_color,
+          mid_color: mid_color,
+          high_color: high_color,
+          peak_color: peak_color
+        )
+        self
+      end
+
       # Applies all pipeline passes sequentially to the target buffer using ping-pong buffering.
       def apply(buffer : UI::Buffer, time : Float64 = 0.0, frame : UInt64 = 0_u64) : UI::Buffer
         return buffer if @passes.empty?
 
-        src = buffer.clone
-        dst = buffer.clone
+        buf_a = buffer.clone
+        buf_b = buffer.clone
+
+        src = buf_a
+        dst = buf_b
 
         @passes.each do |pass|
           next unless pass.enabled?
+          dst.copy_from(src)
           pass.apply(src, dst, time, frame)
-          # Ping-pong: copy dst back to src for next pass
-          src = dst.clone
+          src, dst = dst, src
         end
 
         # Copy final output back into caller's buffer
-        (0...buffer.height).each do |y|
-          (0...buffer.width).each do |x|
-            buffer.set(x, y, dst.get(x, y))
-          end
-        end
-
+        buffer.copy_from(src)
         buffer
       end
     end

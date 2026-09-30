@@ -22,6 +22,12 @@ require "./components/hex_viewer"
 require "./components/file_dialog"
 require "./components/color_picker"
 require "./components/color_picker_3d"
+require "./components/button"
+require "./components/dropdown"
+require "./components/scrollbar"
+require "./components/window"
+require "./components/canvas_2d"
+require "./components/mesh_3d"
 
 module Opal
   module UI
@@ -393,6 +399,200 @@ module Opal
           auto_rotate: auto_rotate,
           initial_color: initial_color,
           size: size
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def button(
+        label : String,
+        icon : String? = nil,
+        variant : Symbol = :primary,
+        toggle : Bool = false,
+        active : Bool = false,
+        disabled : Bool = false,
+        shortcut_char : Char? = nil,
+        &block : Button -> Nil
+      ) : Button
+        el = Button.new(
+          label: label,
+          icon: icon,
+          variant: variant,
+          toggle: toggle,
+          active: active,
+          disabled: disabled,
+          shortcut_char: shortcut_char,
+          on_click: block
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def button(
+        label : String,
+        icon : String? = nil,
+        variant : Symbol = :primary,
+        toggle : Bool = false,
+        active : Bool = false,
+        disabled : Bool = false,
+        shortcut_char : Char? = nil,
+      ) : Button
+        el = Button.new(
+          label: label,
+          icon: icon,
+          variant: variant,
+          toggle: toggle,
+          active: active,
+          disabled: disabled,
+          shortcut_char: shortcut_char
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def dropdown(
+        items : Array(String),
+        selected_index : Int32 = 0,
+        placeholder : String = "Select...",
+        expanded : Bool = false,
+        max_visible_items : Int32 = 6,
+        &block : (Int32, String) -> Nil
+      ) : Dropdown
+        el = Dropdown.new(
+          items: items,
+          selected_index: selected_index,
+          placeholder: placeholder,
+          expanded: expanded,
+          max_visible_items: max_visible_items,
+          on_change: block
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def dropdown(
+        items : Array(String),
+        selected_index : Int32 = 0,
+        placeholder : String = "Select...",
+        expanded : Bool = false,
+        max_visible_items : Int32 = 6,
+      ) : Dropdown
+        el = Dropdown.new(
+          items: items,
+          selected_index: selected_index,
+          placeholder: placeholder,
+          expanded: expanded,
+          max_visible_items: max_visible_items
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def scrollbar(
+        orientation : ScrollBar::Orientation = ScrollBar::Orientation::Vertical,
+        min_value : Int32 = 0,
+        max_value : Int32 = 100,
+        value : Int32 = 0,
+        page_size : Int32 = 10,
+        show_arrows : Bool = true,
+        &block : Int32 -> Nil
+      ) : ScrollBar
+        el = ScrollBar.new(
+          orientation: orientation,
+          min_value: min_value,
+          max_value: max_value,
+          value: value,
+          page_size: page_size,
+          show_arrows: show_arrows,
+          on_change: block
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def scrollbar(
+        orientation : ScrollBar::Orientation = ScrollBar::Orientation::Vertical,
+        min_value : Int32 = 0,
+        max_value : Int32 = 100,
+        value : Int32 = 0,
+        page_size : Int32 = 10,
+        show_arrows : Bool = true,
+      ) : ScrollBar
+        el = ScrollBar.new(
+          orientation: orientation,
+          min_value: min_value,
+          max_value: max_value,
+          value: value,
+          page_size: page_size,
+          show_arrows: show_arrows
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def window(
+        title : String,
+        x : Int32 = 2,
+        y : Int32 = 2,
+        width : Int32 = 40,
+        height : Int32 = 12,
+        min_width : Int32 = 18,
+        min_height : Int32 = 5,
+        closable : Bool = true,
+        minimizable : Bool = true,
+        maximizable : Bool = true,
+        resizable : Bool = true,
+        &block : Builder -> Nil
+      ) : Window
+        sub_builder = Builder.new
+        block.call(sub_builder)
+        el = Window.new(
+          title: title,
+          x: x,
+          y: y,
+          width: width,
+          height: height,
+          min_width: min_width,
+          min_height: min_height,
+          closable: closable,
+          minimizable: minimizable,
+          maximizable: maximizable,
+          resizable: resizable,
+          content: sub_builder.root
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def canvas_2d(
+        width : Int32? = nil,
+        height : Int32? = nil,
+        &block : (Buffer, Int32, Int32, Int32, Int32) -> Nil
+      ) : Canvas2D
+        el = Canvas2D.new(width: width, height: height, &block)
+        set_root_or_child(el)
+        el
+      end
+
+      def mesh_3d(
+        shape : Symbol = :cube,
+        pitch : Float64 = 0.4,
+        yaw : Float64 = 0.6,
+        roll : Float64 = 0.0,
+        scale : Float64 = 7.0,
+        auto_rotate : Bool = false,
+        wireframe : Bool = false,
+        color : Color | Symbol | String = :cyan,
+      ) : Mesh3D
+        el = Mesh3D.new(
+          shape: shape,
+          pitch: pitch,
+          yaw: yaw,
+          roll: roll,
+          scale: scale,
+          auto_rotate: auto_rotate,
+          wireframe: wireframe,
+          color: color
         )
         set_root_or_child(el)
         el

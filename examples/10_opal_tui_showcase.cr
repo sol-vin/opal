@@ -1,9 +1,9 @@
 require "../src/opal"
 
 # =============================================================================
-# 💎 OPAL FULL-FEATURED TUI SHOWCASE & INTERACTIVE DEMO APP
+# [*] OPAL FULL-FEATURED TUI SHOWCASE & INTERACTIVE DEMO APP
 # =============================================================================
-# A complete, linear 26-scene interactive presentation demonstrating all
+# A complete, linear interactive presentation demonstrating all
 # capabilities of the Opal framework.
 #
 # Navigation:
@@ -40,20 +40,20 @@ class WelcomeSlide < ShowcaseSlide
 
   def initialize
     doc = <<-MD
-    # 💎 Welcome to Opal TUI Framework
+    # [*] Welcome to Opal TUI Framework
 
     **Next-Generation Terminal User Interface & CLI DSL for Crystal**
 
     Opal unifies the best terminal engineering paradigms into a cohesive framework:
-    - 🍵 **The Elm Architecture (TEA)** — Pure, predictable state transitions (Bubbletea style).
-    - 🎨 **Declarative Fluent Styling & Themes** — Lipgloss-inspired styling, 24-bit TrueColor, visual width calculation.
-    - ⚡ **Flicker-Free Delta Rendering** — Blessed-inspired double buffering for 60fps smooth updates.
-    - 📁 **Rich Interactive Components** — Multi-field forms, live fuzzy search, file dialogs, and color pickers.
-    - 📊 **Terminal Data Visualizations** — Sparklines, bar charts, pie charts, line graphs, gauges, and trees.
+    - [TEA] **The Elm Architecture (TEA)** — Pure, predictable state transitions (Bubbletea style).
+    - [UI]  **Declarative Fluent Styling & Themes** — Lipgloss-inspired styling, 24-bit TrueColor, visual width calculation.
+    - [FX]  **Flicker-Free Delta Rendering** — Blessed-inspired double buffering for 60fps smooth updates.
+    - [CTL] **Rich Interactive Components** — Multi-field forms, live fuzzy search, file dialogs, and color pickers.
+    - [VIZ] **Terminal Data Visualizations** — Sparklines, bar charts, pie charts, line graphs, gauges, and trees.
 
     > *"Build world-class command-line interfaces with zero external C dependencies."*
 
-    ### 🧭 Presentation Navigation Controls
+    ### >> Presentation Navigation Controls
     - **Press `[Shift+→]`** to advance to the next slide.
     - **Press `[Shift+←]`** to navigate back to the previous slide.
     - **Press `[ESC]`** at any time to exit and return to your shell.
@@ -172,7 +172,7 @@ class FormWizardSlide < ShowcaseSlide
     stat_y = y + form_h + 1
     if stat_y < y + h
       if @submitted
-        buffer.put_string(x + 4, stat_y, "✔ Form Validated & Ready for Deployment!", fg: Opal::Color.green, bold: true)
+        buffer.put_string(x + 4, stat_y, "[OK] Form Validated & Ready for Deployment!", fg: Opal::Color.green, bold: true)
       else
         buffer.put_string(x + 4, stat_y, "ℹ Edit fields with Tab/Space. Press [Enter] to validate.", fg: Opal::Color.cyan)
       end
@@ -197,7 +197,7 @@ class FormCodeSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "📝 Why Multi-Field Forms Matter", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Why Multi-Field Forms Matter", fg: Opal::Color.cyan, bold: true)
     buffer.put_string(x + 2, y + 2, "Traditional CLI wizards ask one question at a time and prevent correcting prior fields.", fg: Opal::Color.white)
     buffer.put_string(x + 2, y + 3, "Opal presents an interactive card where all inputs are visible simultaneously with live validation.", fg: Opal::Color.white)
 
@@ -259,7 +259,7 @@ class FuzzyFinderSlide < ShowcaseSlide
       "Press [Enter] to inspect telemetry."
     }
 
-    @filter_list = Opal::UI::FilterList.new(items: items, title: "🔍 Microservice Search (Fuzzy Filter)", preview_fn: preview)
+    @filter_list = Opal::UI::FilterList.new(items: items, title: "[?] Microservice Search (Fuzzy Filter)", preview_fn: preview)
   end
 
   def title : String
@@ -348,7 +348,7 @@ class FileDialogCodeSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "📁 Opal::UI::FileDialog & FilePicker DSL", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Opal::UI::FileDialog & FilePicker DSL", fg: Opal::Color.cyan, bold: true)
     buffer.put_string(x + 2, y + 2, "Cross-platform directory traversal with icons, formatted sizes, filter search, and split preview.", fg: Opal::Color.white)
 
     code = <<-CR
@@ -425,7 +425,7 @@ class ColorPickerCodeSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "🎨 24-Bit TrueColor & Color Interpolation", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> 24-Bit TrueColor & Color Interpolation", fg: Opal::Color.cyan, bold: true)
     buffer.put_string(x + 2, y + 2, "Full RGB (16.7M colors), automatic 256-color fallback, hex parsing/formatting, and lerp.", fg: Opal::Color.white)
 
     code = <<-CR
@@ -480,7 +480,7 @@ class DatavizSlide < ShowcaseSlide
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
 
-    buffer.put_string(x + 2, cur_y, "📊 Real-Time Cluster Telemetry Dashboard", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Real-Time Cluster Telemetry Dashboard", fg: Opal::Color.cyan, bold: true)
     cur_y += 2
 
     # Top Sparklines & Gauges
@@ -514,11 +514,11 @@ class DatavizSlide < ShowcaseSlide
     buffer.put_string(x + 2, cur_y, "Distributed Service Graph:", fg: Opal::Color.white, bold: true)
     cur_y += 1
     tr = Opal::UI::Tree.new
-    tr.add("Opal Ingress Controller", Opal::Color.cyan, "🌐") do |ingress|
-      ingress.add("Authentication Node", Opal::Color.green, "🔒")
-      ingress.add("Search & Index Cluster", Opal::Color.yellow, "🔍") do |search|
-        search.add("Shard Alpha (Active)", Opal::Color.bright_black, "📦")
-        search.add("Shard Beta (Replica)", Opal::Color.bright_black, "📦")
+    tr.add("Opal Ingress Controller", Opal::Color.cyan, ">>") do |ingress|
+      ingress.add("Authentication Node", Opal::Color.green, "*")
+      ingress.add("Search & Index Cluster", Opal::Color.yellow, "?") do |search|
+        search.add("Shard Alpha (Active)", Opal::Color.bright_black, "+")
+        search.add("Shard Beta (Replica)", Opal::Color.bright_black, "+")
       end
     end
     tr.render(buffer, x + 2, cur_y, w - 4, Math.max(3, (y + h - 1) - cur_y))
@@ -576,7 +576,7 @@ class PieChartSlide < ShowcaseSlide
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
-    buffer.put_string(x + 2, cur_y, "🥧 TrueColor Circular & Donut Visualizations", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> TrueColor Circular & Donut Visualizations", fg: Opal::Color.cyan, bold: true)
     mode_text = @donut_mode ? "[Mode: Donut Chart]" : "[Mode: Standard Pie]"
     buffer.put_string(x + 48, cur_y, mode_text, fg: Opal::Color.bright_black, italic: true)
     cur_y += 1
@@ -635,7 +635,7 @@ class LineGraphSlide < ShowcaseSlide
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
-    buffer.put_string(x + 2, cur_y, "📈 Multi-Series Cartesian Line Plots with Gridlines", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Multi-Series Cartesian Line Plots with Gridlines", fg: Opal::Color.cyan, bold: true)
     cur_y += 1
     buffer.put_string(x + 2, cur_y, "─" * Math.min(w - 4, 66), fg: Opal::Color.bright_black)
     cur_y += 1
@@ -752,12 +752,12 @@ class TablesSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "📋 Fleet Service Table (#{(@active_pane == :table ? "FOCUS" : "")})", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, "[#] Fleet Service Table (#{(@active_pane == :table ? "FOCUS" : "")})", fg: Opal::Color.cyan, bold: true)
     @table.render(buffer, x + 2, y + 3, w - 4, 8)
 
     vp_y = y + 12
     if vp_y < y + h - 2
-      buffer.put_string(x + 2, vp_y, "📜 Live Audit Stream (#{(@active_pane == :viewport ? "FOCUS" : "")})", fg: Opal::Color.cyan, bold: true)
+      buffer.put_string(x + 2, vp_y, "[#] Live Audit Stream (#{(@active_pane == :viewport ? "FOCUS" : "")})", fg: Opal::Color.cyan, bold: true)
       @viewport.render(buffer, x + 2, vp_y + 1, w - 4, Math.max(3, (y + h - 1) - (vp_y + 1)))
     end
   end
@@ -839,7 +839,7 @@ class DevToolsSlide < ShowcaseSlide
     half_w = (w - 6) // 2
 
     # Left: CodeView
-    buffer.put_string(x + 2, y + 1, "💎 Syntax Highlighted CodeView", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Syntax Highlighted CodeView", fg: Opal::Color.cyan, bold: true)
     @code_view.render(buffer, x + 2, y + 3, half_w, h - 5)
 
     # Right: HexViewer
@@ -849,7 +849,7 @@ class DevToolsSlide < ShowcaseSlide
     end
 
     hex_x = divider_x + 2
-    buffer.put_string(hex_x, y + 1, "🔍 Binary Memory Dump (HexViewer)", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(hex_x, y + 1, "[?] Binary Memory Dump (HexViewer)", fg: Opal::Color.cyan, bold: true)
     @hex_viewer.render(buffer, hex_x, y + 3, (x + w) - hex_x - 2, h - 5)
   end
 end
@@ -908,7 +908,7 @@ class LayoutsSlide < ShowcaseSlide
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
-    buffer.put_string(x + 2, cur_y, "📐 Double-Buffered Split Layouts (Ratio: #{(@ratio * 100).to_i}%)", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Double-Buffered Split Layouts (Ratio: #{(@ratio * 100).to_i}%)", fg: Opal::Color.cyan, bold: true)
     cur_y += 2
 
     split_w = w - 4
@@ -1000,7 +1000,7 @@ class TabsSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "🗂️ Interactive Tabbed Navigation", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Interactive Tabbed Navigation", fg: Opal::Color.cyan, bold: true)
     @tabs.render(buffer, x + 2, y + 3, w - 4, 1)
 
     card_y = y + 5
@@ -1130,7 +1130,7 @@ class ToastsSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "🍞 Floating Toast Notifications Stack", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Floating Toast Notifications Stack", fg: Opal::Color.cyan, bold: true)
     buffer.put_string(x + 2, y + 3, "Press [1], [2], [3], [4] to trigger notifications.", fg: Opal::Color.white)
     buffer.put_string(x + 2, y + 4, "Active Toasts: #{@toast_mgr.size}", fg: Opal::Color.yellow)
 
@@ -1195,7 +1195,7 @@ class CommandPaletteSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "⚡ Spotlight Command Palette", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Spotlight Command Palette", fg: Opal::Color.cyan, bold: true)
     buffer.put_string(x + 2, y + 2, @feedback, fg: Opal::Color.green, italic: true)
 
     @palette.render(buffer, x + 2, y + 4, w - 4, h - 6)
@@ -1242,7 +1242,7 @@ class AutocompleteSlide < ShowcaseSlide
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
-    buffer.put_string(x + 2, cur_y, "🔮 Fish/Zsh-Style Inline Ghost-Text Autocomplete", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Fish/Zsh-Style Inline Ghost-Text Autocomplete", fg: Opal::Color.cyan, bold: true)
     cur_y += 2
 
     buffer.put_string(x + 2, cur_y, "Interactive Prompt Input:", fg: Opal::Color.white)
@@ -1309,7 +1309,7 @@ class ThemesSlide < ShowcaseSlide
     current_name = THEMES[@theme_idx]
     theme = Opal.theme
 
-    buffer.put_string(x + 2, y + 1, "🎨 Active Palette: :#{current_name} (Press Space to Switch)", fg: theme.primary, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Active Palette: :#{current_name} (Press Space to Switch)", fg: theme.primary, bold: true)
     buffer.put_string(x + 2, y + 2, "Semantic color tokens ensure consistent aesthetics across full applications.", fg: theme.text_muted)
 
     # Swatches row
@@ -1365,7 +1365,7 @@ class TerminalOscSlide < ShowcaseSlide
     case key.name
     when "c"
       Opal.copy_to_clipboard("OPAL_SECRET_TOKEN_993478a")
-      @copied_status = "✔ Copied 'OPAL_SECRET_TOKEN_993478a' to OS desktop clipboard via OSC 52!"
+      @copied_status = "[OK] Copied 'OPAL_SECRET_TOKEN_993478a' to OS desktop clipboard via OSC 52!"
       true
     else
       false
@@ -1373,7 +1373,7 @@ class TerminalOscSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "🖥️ Terminal Environment & Hardware Query", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Terminal Environment & Hardware Query", fg: Opal::Color.cyan, bold: true)
 
     cur_y = y + 3
     Opal.terminal do |term|
@@ -1389,12 +1389,12 @@ class TerminalOscSlide < ShowcaseSlide
       cur_y += 2
     end
 
-    buffer.put_string(x + 2, cur_y, "🔗 Clickable Terminal Hyperlinks (OSC 8):", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Clickable Terminal Hyperlinks (OSC 8):", fg: Opal::Color.cyan, bold: true)
     cur_y += 1
     buffer.put_string(x + 4, cur_y, Opal.hyperlink("Open GitHub Repository", "https://github.com/sol-vin/opal"), fg: Opal::Color.bright_cyan, underline: true)
     cur_y += 2
 
-    buffer.put_string(x + 2, cur_y, "📋 Desktop Clipboard Integration (OSC 52):", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Desktop Clipboard Integration (OSC 52):", fg: Opal::Color.cyan, bold: true)
     cur_y += 1
     buffer.put_string(x + 4, cur_y, "Press [c] to copy secret auth token to OS clipboard.", fg: Opal::Color.yellow)
     cur_y += 1
@@ -1450,7 +1450,7 @@ class TeaEngineSlide < ShowcaseSlide
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    buffer.put_string(x + 2, y + 1, "🍵 Pure Elm Architecture (Model -> Update -> View)", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, y + 1, ">> Pure Elm Architecture (Model -> Update -> View)", fg: Opal::Color.cyan, bold: true)
     buffer.put_string(x + 2, y + 2, "Predictable state transitions inspired by Bubble Tea with background Cmd timers.", fg: Opal::Color.white)
 
     box = Opal::UI::Box.new(
@@ -1481,11 +1481,27 @@ class TextShaderSlide < ShowcaseSlide
   property? animating : Bool = true
   property? bouncing : Bool = true
 
-  # Bouncing window coordinates & velocities (DVD logo style)
+  # Bouncing window coordinates & velocities
   @win_x : Float64 = 6.0
-  @win_y : Float64 = 4.0
-  @vel_x : Float64 = 0.8
-  @vel_y : Float64 = 0.4
+  @win_y : Float64 = 3.0
+  @vel_x : Float64 = 0.6
+  @vel_y : Float64 = 0.3
+
+  SHADERS = [
+    {id: 1, key: "1", name: "Matrix Rain", cat: "Procedural", desc: "Digital rain streams with glowing green trails"},
+    {id: 2, key: "2", name: "Retro CRT", cat: "Post-Process", desc: "Phosphor glow, scanlines & subtle flicker"},
+    {id: 3, key: "3", name: "TrueColor Plasma", cat: "Procedural", desc: "Sine wave interference plasma with 24-bit color"},
+    {id: 4, key: "4", name: "Glitch & Tearing", cat: "Post-Process", desc: "Horizontal slice displacement & chromatic shift"},
+    {id: 5, key: "5", name: "Fire Dispersion", cat: "Particle", desc: "Ascending heat dispersion with temperature ramp"},
+    {id: 6, key: "6", name: "3D Starfield", cat: "3D Motion", desc: "Perspective depth star projection with speed trails"},
+    {id: 7, key: "7", name: "Water Ripple", cat: "Displacement", desc: "Sinusoidal caustic water wave displacement"},
+    {id: 8, key: "8", name: "Cyber Tunnel", cat: "3D Motion", desc: "Infinite perspective polar coordinate cyber tunnel"},
+    {id: 9, key: "9", name: "Raymarch Sphere", cat: "Raymarch 3D", desc: "Dynamic orbiting light, specular & ASCII ramp"},
+    {id: 10, key: "0", name: "Voronoi Grid", cat: "Procedural", desc: "Worley cellular noise with glowing neon borders"},
+    {id: 11, key: "A", name: "Fractal Mountain", cat: "Landscape", desc: "Parallax mountain ridges under starry twilight"},
+    {id: 12, key: "B", name: "Audio Equalizer", cat: "Audio FX", desc: "Dynamic 16-band VU-meters with peak hold"},
+    {id: 13, key: "C", name: "Composite FX", cat: "Composite", desc: "Chained Plasma + CRT Scanlines + Vignette"},
+  ]
 
   def title : String
     "Text Shader Engine & Compositing FX"
@@ -1496,7 +1512,7 @@ class TextShaderSlide < ShowcaseSlide
   end
 
   def hints : String
-    "[1-9] Shaders   [B] Toggle Bounce   [Space] Pause FX"
+    "[↑/↓] or [1-9, 0, A, B, C] Select Shader   [Space] Pause   [B] Toggle Bounce"
   end
 
   def tick : Nil
@@ -1506,12 +1522,12 @@ class TextShaderSlide < ShowcaseSlide
     end
 
     if @bouncing && @animating
-      card_w = 46.0
-      card_h = 9.0
-      min_x = 2.0
-      max_x = 94.0 - card_w - 4.0
-      min_y = 3.0
-      max_y = 23.0 - card_h
+      card_w = 40.0
+      card_h = 7.0
+      min_x = 36.0
+      max_x = 100.0 - card_w
+      min_y = 4.0
+      max_y = 22.0 - card_h
 
       if max_x > min_x
         @win_x += @vel_x
@@ -1537,18 +1553,37 @@ class TextShaderSlide < ShowcaseSlide
     end
   end
 
+  def select_shader(idx : Int32) : Bool
+    if idx >= 1 && idx <= SHADERS.size
+      @mode = idx
+      true
+    else
+      false
+    end
+  end
+
   def handle_key(key : Opal::Terminal::KeyEvent) : Bool
-    case key.name
-    when "1" then @mode = 1; true
-    when "2" then @mode = 2; true
-    when "3" then @mode = 3; true
-    when "4" then @mode = 4; true
-    when "5" then @mode = 5; true
-    when "6" then @mode = 6; true
-    when "7" then @mode = 7; true
-    when "8" then @mode = 8; true
-    when "9" then @mode = 9; true
-    when "b"
+    case key.name.downcase
+    when "up", "k"
+      @mode = (@mode <= 1 ? SHADERS.size : @mode - 1)
+      true
+    when "down", "j"
+      @mode = (@mode >= SHADERS.size ? 1 : @mode + 1)
+      true
+    when "1" then select_shader(1)
+    when "2" then select_shader(2)
+    when "3" then select_shader(3)
+    when "4" then select_shader(4)
+    when "5" then select_shader(5)
+    when "6" then select_shader(6)
+    when "7" then select_shader(7)
+    when "8" then select_shader(8)
+    when "9" then select_shader(9)
+    when "0" then select_shader(10)
+    when "a" then select_shader(11)
+    when "b" then select_shader(12)
+    when "c" then select_shader(13)
+    when "t"
       @bouncing = !@bouncing
       true
     when "space", " "
@@ -1562,15 +1597,22 @@ class TextShaderSlide < ShowcaseSlide
   def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
     case event.button
     when Opal::Terminal::MouseButton::WheelUp
-      @mode = (@mode == 1 ? 9 : @mode - 1)
+      @mode = (@mode <= 1 ? SHADERS.size : @mode - 1)
       true
     when Opal::Terminal::MouseButton::WheelDown
-      @mode = (@mode == 9 ? 1 : @mode + 1)
+      @mode = (@mode >= SHADERS.size ? 1 : @mode + 1)
       true
     when Opal::Terminal::MouseButton::Left
       if event.action == Opal::Terminal::MouseAction::Press
-        @bouncing = !@bouncing
-        true
+        # Check if clicking on menu item on left pane (x: 2..32, y: 3..16)
+        if event.x >= 2 && event.x <= 34 && event.y >= 4 && event.y < 4 + SHADERS.size
+          clicked_idx = event.y - 4 + 1
+          select_shader(clicked_idx)
+          true
+        else
+          @bouncing = !@bouncing
+          true
+        end
       else
         false
       end
@@ -1581,89 +1623,176 @@ class TextShaderSlide < ShowcaseSlide
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
-    mode_name = case @mode
-                when 1 then "Matrix Digital Rain"
-                when 2 then "Retro CRT Scanlines & Glow"
-                when 3 then "24-bit TrueColor Sine Wave Plasma"
-                when 4 then "Cyberpunk Glitch & Raster Tearing"
-                when 5 then "Ascending Fire Dispersion"
-                when 6 then "Hyperdrive 3D Warp Starfield"
-                when 7 then "Water Ripple Caustic Dispersion"
-                when 8 then "3D Demoscene Cyber Tunnel"
-                when 9 then "Multi-Layer Composite (Plasma + CRT + Vignette)"
-                else        "Custom Shader"
-                end
+    active_shader = SHADERS[@mode - 1] rescue SHADERS[0]
 
-    buffer.put_string(x + 2, cur_y, "🔮 Text Shader Subsystem ── Mode [#{@mode}]: #{mode_name}", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Text Shader Engine ── Mode [#{@mode}/#{SHADERS.size}]: #{active_shader[:name]} [#{active_shader[:cat]}]", fg: Opal::Color.cyan, bold: true)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, active_shader[:desc], fg: Opal::Color.bright_black, italic: true)
     cur_y += 1
 
-    slide_region = Opal::Shader::Rect.new(x, y + 2, w, h - 3)
+    menu_w = 32
+    content_x = x + menu_w + 3
+    content_w = Math.max(20, w - menu_w - 5)
+    content_h = Math.max(10, h - 4)
 
-    # 1. For background shaders (Matrix, Plasma, Fire, Starfield, Ripple, Tunnel, Composite),
-    # apply procedural animation across the ENTIRE slide canvas first!
+    # 1. Left Menu: Shaders list
+    menu_box = Opal::UI::Box.new(
+      border: :rounded,
+      border_fg: Opal::Color.bright_black,
+      title: "Presets (#{SHADERS.size})",
+      title_fg: Opal::Color.cyan
+    )
+    menu_box.render(buffer, x + 2, cur_y, menu_w, content_h)
+
+    SHADERS.each_with_index do |s, idx|
+      item_y = cur_y + 1 + idx
+      break if item_y >= cur_y + content_h - 1
+
+      is_selected = (s[:id] == @mode)
+      prefix = is_selected ? "> [#{s[:key]}] " : "  [#{s[:key]}] "
+      line_text = "#{prefix}#{s[:name]}"
+
+      if is_selected
+        buffer.put_string(x + 3, item_y, line_text.ljust(menu_w - 2), fg: Opal::Color.black, bg: Opal::Color.bright_cyan, bold: true)
+      else
+        buffer.put_string(x + 3, item_y, line_text, fg: Opal::Color.white)
+      end
+    end
+
+    # 2. Right Canvas: Viewport for shaders
+    viewport_region = Opal::Shader::Rect.new(content_x, cur_y, content_w, content_h)
+
+    # Generate dense test detail pattern for post-processing shaders (CRT, Glitch, Ripple, Composite)
+    needs_detail = [2, 4, 7, 13].includes?(@mode)
+    if needs_detail
+      # Render rich diagnostic detail grid
+      (0...content_h).each do |dy|
+        py = cur_y + dy
+        (0...content_w).each do |dx|
+          px = content_x + dx
+          # Diagnostic pattern
+          if dy == 0 || dy == content_h - 1
+            buffer.put_char(px, py, '═', fg: Opal::Color.bright_black)
+          elsif dx == 0 || dx == content_w - 1
+            buffer.put_char(px, py, '║', fg: Opal::Color.bright_black)
+          elsif dy == 2
+            buffer.put_string(content_x + 2, py, "SYS DIAGNOSTIC MATRIX // KERNEL 5.15", fg: Opal::Color.green, bold: true)
+            break
+          elsif dy == 3
+            buffer.put_string(content_x + 2, py, "── MEMORY BUS ────────────────────────────", fg: Opal::Color.bright_black)
+            break
+          elsif dy == 4
+            buffer.put_string(content_x + 2, py, "0x0040A0: 48 89 E5 48 83 EC 20 48 8D 05 12", fg: Opal::Color.bright_white)
+            break
+          elsif dy == 5
+            buffer.put_string(content_x + 2, py, "0x0040B0: E8 B4 FE FF FF B8 00 00 00 00 C9", fg: Opal::Color.bright_white)
+            break
+          elsif dy == 7
+            buffer.put_string(content_x + 2, py, "VECTOR OSCILLOSCOPE [CH1/CH2]:", fg: Opal::Color.yellow, bold: true)
+            break
+          elsif dy == 8
+            # Oscilloscope wave
+            sine_w = Math.sin(dx * 0.15 + @time * 2.0)
+            char = sine_w > 0.5 ? '▲' : (sine_w < -0.5 ? '▼' : '─')
+            buffer.put_char(px, py, char, fg: Opal::Color.cyan)
+          elsif dy == 10
+            buffer.put_string(content_x + 2, py, "CORE LOAD:  [████████████░░░░░░░░] 60%", fg: Opal::Color.bright_cyan)
+            break
+          elsif dy == 11
+            buffer.put_string(content_x + 2, py, "BUS FLUX:   [████████████████░░░░] 80%", fg: Opal::Color.green)
+            break
+          elsif dy == 13
+            buffer.put_string(content_x + 2, py, "CALIBRATION: [RGB] R:255 G:180 B:40", fg: Opal::Color.magenta)
+            break
+          end
+        end
+      end
+    end
+
+    # Apply active shader
     case @mode
     when 1
-      pass = Opal::Shader::MatrixPass.new(region: slide_region, speed: 1.2, density: 0.25, preserve_text: false)
+      # Matrix Digital Rain
+      pass = Opal::Shader::MatrixPass.new(region: viewport_region, speed: 1.2, density: 0.25, preserve_text: false)
       pass.apply(buffer, buffer, @time, @frame)
     when 3
-      pass = Opal::Shader::PlasmaPass.new(region: slide_region, scale: 0.15, speed: 1.6)
+      # Sine Plasma
+      pass = Opal::Shader::PlasmaPass.new(region: viewport_region, scale: 0.14, speed: 1.6)
       pass.apply(buffer, buffer, @time, @frame)
     when 5
-      pass = Opal::Shader::FirePass.new(region: slide_region, speed: 1.2)
+      # Ascending Fire
+      pass = Opal::Shader::FirePass.new(region: viewport_region, speed: 1.2)
       pass.apply(buffer, buffer, @time, @frame)
     when 6
-      pass = Opal::Shader::StarfieldPass.new(region: slide_region, speed: 1.4, count: 90, preserve_text: false)
+      # 3D Starfield
+      pass = Opal::Shader::StarfieldPass.new(region: viewport_region, speed: 1.4, count: 70, preserve_text: false)
       pass.apply(buffer, buffer, @time, @frame)
     when 7
-      pass = Opal::Shader::RipplePass.new(region: slide_region, speed: 2.2, frequency: 0.35, amplitude: 2.0)
+      # Water Ripple
+      pass = Opal::Shader::RipplePass.new(region: viewport_region, speed: 2.2, frequency: 0.35, amplitude: 2.0)
       pass.apply(buffer, buffer, @time, @frame)
     when 8
-      pass = Opal::Shader::TunnelPass.new(region: slide_region, speed: 1.4, rotation_speed: 0.6)
+      # 3D Tunnel
+      pass = Opal::Shader::TunnelPass.new(region: viewport_region, speed: 1.4, rotation_speed: 0.6)
       pass.apply(buffer, buffer, @time, @frame)
     when 9
-      # Composite: Background plasma
-      bg_pass = Opal::Shader::PlasmaPass.new(region: slide_region, scale: 0.12, speed: 1.2)
+      # 3D Raymarched Shaded Sphere (NEW)
+      pass = Opal::Shader::RaymarchSpherePass.new(region: viewport_region, speed: 1.2, radius: 0.82)
+      pass.apply(buffer, buffer, @time, @frame)
+    when 10
+      # Voronoi Cellular Grid (NEW)
+      pass = Opal::Shader::VoronoiPass.new(region: viewport_region, speed: 0.8, scale: 0.18)
+      pass.apply(buffer, buffer, @time, @frame)
+    when 11
+      # Fractal Mountain Landscape (NEW)
+      pass = Opal::Shader::FractalLandscapePass.new(region: viewport_region, speed: 1.2)
+      pass.apply(buffer, buffer, @time, @frame)
+    when 12
+      # Audio Equalizer (NEW)
+      pass = Opal::Shader::AudioVisualizerPass.new(region: viewport_region, speed: 1.2, bar_count: 14)
+      pass.apply(buffer, buffer, @time, @frame)
+    when 13
+      # Composite Background Plasma
+      bg_pass = Opal::Shader::PlasmaPass.new(region: viewport_region, scale: 0.12, speed: 1.2)
       bg_pass.apply(buffer, buffer, @time, @frame)
     end
 
-    # 2. Render the OPAQUE telemetry window OVER the shader!
-    # The box fills its rectangle solidly with bg: rgb(18, 22, 34), occluding the shader underneath
-    # and bouncing dynamically like a DVD screensaver!
-    card_w = 46
-    card_h = 9
-    win_x = @bouncing ? (x + @win_x.to_i).clamp(x + 2, x + w - card_w - 2) : (x + 4)
-    win_y = @bouncing ? (y + @win_y.to_i).clamp(y + 3, y + h - card_h - 1) : (y + 3)
+    # Render floating telemetry window if enabled
+    if @bouncing
+      card_w = 38
+      card_h = 7
+      win_x = (x + @win_x.to_i).clamp(content_x + 1, content_x + content_w - card_w - 1)
+      win_y = (y + @win_y.to_i).clamp(cur_y + 1, cur_y + content_h - card_h - 1)
 
-    b = Opal::UI::Box.new(
-      child: Opal::UI::Text.new(
-        "CYBERNETIC TELEMETRY NODE // ACTIVE\n\n" \
-        "Neural Gateway : Synchronized (10 Gbps)\n" \
-        "Core Flux      : 99.2% Nominal | T: #{@time.round(1)}s\n" \
-        "Buffer Frame   : ##{@frame} | Layer: Opaque\n" \
-        "[1-9] Shaders • [B] Bounce (#{(@bouncing ? "ON" : "OFF")})",
-        fg: Opal::Color.bright_white
-      ),
-      border: :rounded,
-      border_fg: Opal::Color.cyan,
-      title: "Core Telemetry",
-      title_fg: Opal::Color.bright_cyan,
-      bg: Opal::Color.rgb(18, 22, 34) # Solid opaque background!
-    )
-    b.render(buffer, win_x, win_y, card_w, card_h)
+      b = Opal::UI::Box.new(
+        child: Opal::UI::Text.new(
+          "TELEMETRY NODE // ACTIVE\n" \
+          "Throughput: 10 Gbps | Time: #{@time.round(1)}s\n" \
+          "Frame: ##{@frame} | Layer: Opaque\n" \
+          "[B] Toggle Window",
+          fg: Opal::Color.bright_white
+        ),
+        border: :rounded,
+        border_fg: Opal::Color.cyan,
+        title: "Node Status",
+        title_fg: Opal::Color.bright_cyan,
+        bg: Opal::Color.rgb(18, 22, 34)
+      )
+      b.render(buffer, win_x, win_y, card_w, card_h)
+    end
 
-    # 3. Screen-space post-processing shaders (CRT, Glitch, Vignette) applied after window
+    # Screen-space post-processing passes applied after base rendering
     case @mode
     when 2
-      pass = Opal::Shader::CrtPass.new(region: slide_region, intensity: 0.45, scanline_gap: 2, phosphor_tint: Opal::Color.green)
+      pass = Opal::Shader::CrtPass.new(region: viewport_region, intensity: 0.45, scanline_gap: 2, phosphor_tint: Opal::Color.green)
       pass.apply(buffer, buffer, @time, @frame)
     when 4
-      pass = Opal::Shader::GlitchPass.new(region: slide_region, intensity: 0.28, slice_height: 3)
+      pass = Opal::Shader::GlitchPass.new(region: viewport_region, intensity: 0.28, slice_height: 3)
       pass.apply(buffer, buffer, @time, @frame)
-    when 9
-      # Composite overlay passes: CRT + Vignette
+    when 13
       overlay_pipe = Opal.shader_pipeline do |p|
-        p.crt(region: slide_region, intensity: 0.35, scanline_gap: 2)
-        p.vignette(region: slide_region, radius: 0.85, falloff: 0.4)
+        p.crt(region: viewport_region, intensity: 0.35, scanline_gap: 2)
+        p.vignette(region: viewport_region, radius: 0.85, falloff: 0.4)
       end
       overlay_pipe.apply(buffer, @time, @frame)
     end
@@ -1818,7 +1947,7 @@ class AsciiImageSlide < ShowcaseSlide
                else        "Custom"
                end
 
-    buffer.put_string(x + 2, cur_y, "🖼️ Image to ASCII Engine ── [Mode: #{mode_desc}]", fg: Opal::Color.cyan, bold: true)
+    buffer.put_string(x + 2, cur_y, ">> Image to ASCII Engine ── [Mode: #{mode_desc}]", fg: Opal::Color.cyan, bold: true)
     cur_y += 1
     buffer.put_string(x + 2, cur_y, "Filtering: #{interp_desc} │ Subject: #{img_name} │ Color: #{(@colorize ? "TrueColor" : "Monochrome")}", fg: Opal::Color.bright_black)
     cur_y += 1
@@ -1880,32 +2009,503 @@ class AsciiImageSlide < ShowcaseSlide
 end
 
 # -----------------------------------------------------------------------------
-# Slide 26: Grand Finale & Conclusion (Markdown Summary)
+# Slide 26: Interactive Controls Studio (Buttons, Dropdown, ScrollBars - NEW)
+# -----------------------------------------------------------------------------
+class ControlsSlide < ShowcaseSlide
+  getter btn_primary : Opal::UI::Button
+  getter btn_secondary : Opal::UI::Button
+  getter btn_toggle : Opal::UI::Button
+  getter btn_danger : Opal::UI::Button
+  getter dropdown : Opal::UI::Dropdown
+  getter v_scrollbar : Opal::UI::ScrollBar
+  getter h_scrollbar : Opal::UI::ScrollBar
+  property active_control_idx : Int32 = 0
+  property status_msg : String = "Interact with controls using Tab, Enter, Space, or Mouse Click/Drag."
+
+  def initialize
+    @btn_primary = Opal::UI::Button.new("Deploy Service", variant: :primary)
+    @btn_secondary = Opal::UI::Button.new("View Logs", variant: :secondary)
+    @btn_toggle = Opal::UI::Button.new("Auto-Scale", variant: :toggle)
+    @btn_danger = Opal::UI::Button.new("Purge Cache", variant: :danger)
+
+    @dropdown = Opal::UI::Dropdown.new(
+      items: ["Production (us-east-1)", "Staging (eu-central-1)", "Development (local)", "Disaster Recovery (ap-northeast)"],
+      selected_index: 0
+    )
+
+    @v_scrollbar = Opal::UI::ScrollBar.new(orientation: Opal::UI::ScrollBar::Orientation::Vertical, min_value: 0, max_value: 100, value: 15, page_size: 20)
+    @h_scrollbar = Opal::UI::ScrollBar.new(orientation: Opal::UI::ScrollBar::Orientation::Horizontal, min_value: 0, max_value: 100, value: 30, page_size: 25)
+
+    @btn_primary.on_click { @status_msg = "Primary Button Clicked: Deployment Triggered!" }
+    @btn_secondary.on_click { @status_msg = "Secondary Button Clicked: Streaming Logs..." }
+    @btn_toggle.on_click { |b| @status_msg = "Auto-Scale Toggled: #{b.active? ? "ENABLED" : "DISABLED"}" }
+    @btn_danger.on_click { @status_msg = "Danger Button Clicked: Cache Cleared!" }
+    @dropdown.on_change = ->(idx : Int32, item : String) {
+      @status_msg = "Dropdown Selected: #{item} (index #{idx})"
+      nil
+    }
+    @v_scrollbar.on_change { |off| @status_msg = "Vertical ScrollBar moved to offset #{off}" }
+    @h_scrollbar.on_change { |off| @status_msg = "Horizontal ScrollBar moved to offset #{off}" }
+
+    @btn_primary.focus
+  end
+
+  def title : String
+    "Interactive UI Controls"
+  end
+
+  def category : String
+    "Controls & Widgets (New)"
+  end
+
+  def hints : String
+    "[Tab] Next Control   [Enter/Space] Activate / Toggle   [↑/↓] Dropdown/Scroll   [Mouse] Click & Drag"
+  end
+
+  private def controls
+    [@btn_primary, @btn_secondary, @btn_toggle, @btn_danger, @dropdown, @v_scrollbar, @h_scrollbar]
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    if key.name == "tab"
+      controls[@active_control_idx].unfocus
+      @active_control_idx = (key.shift? ? @active_control_idx - 1 : @active_control_idx + 1)
+      @active_control_idx = (@active_control_idx % controls.size + controls.size) % controls.size
+      controls[@active_control_idx].focus
+      return true
+    end
+
+    controls[@active_control_idx].handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    [@dropdown, @v_scrollbar, @h_scrollbar, @btn_primary, @btn_secondary, @btn_toggle, @btn_danger].each do |c|
+      if c.handle_mouse(event)
+        idx = controls.index(c)
+        if idx && idx != @active_control_idx
+          controls[@active_control_idx].unfocus
+          @active_control_idx = idx
+          c.focus
+        end
+        return true
+      end
+    end
+    false
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    cur_y = y + 1
+    buffer.put_string(x + 2, cur_y, ">> Interactive Controls Studio ── Buttons, Dropdowns & ScrollBars", fg: Opal::Color.cyan, bold: true)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "Status: #{@status_msg}", fg: Opal::Color.green, italic: true)
+    cur_y += 2
+
+    col1_w = (w - 8) // 3
+    b_card = Opal::UI::Box.new(border: :rounded, title: "Button Variants", border_fg: Opal::Color.cyan)
+    b_card.render(buffer, x + 2, cur_y, col1_w, 14)
+
+    @btn_primary.render(buffer, x + 4, cur_y + 2, col1_w - 4, 1)
+    @btn_secondary.render(buffer, x + 4, cur_y + 4, col1_w - 4, 1)
+    @btn_toggle.render(buffer, x + 4, cur_y + 6, col1_w - 4, 1)
+    @btn_danger.render(buffer, x + 4, cur_y + 8, col1_w - 4, 1)
+
+    col2_x = x + 2 + col1_w + 2
+    d_card = Opal::UI::Box.new(border: :rounded, title: "Dropdown & Select", border_fg: Opal::Color.cyan)
+    d_card.render(buffer, col2_x, cur_y, col1_w, 14)
+
+    buffer.put_string(col2_x + 2, cur_y + 2, "Select Target Deployment:", fg: Opal::Color.white, bold: true)
+    @dropdown.render(buffer, col2_x + 2, cur_y + 4, col1_w - 4, 1)
+
+    buffer.put_string(col2_x + 2, cur_y + 7, "Selected Region:", fg: Opal::Color.bright_black)
+    buffer.put_string(col2_x + 2, cur_y + 8, @dropdown.selected_item, fg: Opal::Color.yellow, bold: true)
+    buffer.put_string(col2_x + 2, cur_y + 10, "Auto-upward flipping near edge.", fg: Opal::Color.bright_black)
+
+    col3_x = col2_x + col1_w + 2
+    s_card = Opal::UI::Box.new(border: :rounded, title: "ScrollBars", border_fg: Opal::Color.cyan)
+    s_card.render(buffer, col3_x, cur_y, col1_w, 14)
+
+    buffer.put_string(col3_x + 2, cur_y + 2, "Vertical (Drag/Click):", fg: Opal::Color.white)
+    @v_scrollbar.render(buffer, col3_x + 2, cur_y + 4, 1, 8)
+
+    buffer.put_string(col3_x + 6, cur_y + 4, "Value: #{@v_scrollbar.value}/#{@v_scrollbar.max_value}", fg: Opal::Color.bright_cyan)
+    buffer.put_string(col3_x + 6, cur_y + 6, "Proportional thumb", fg: Opal::Color.bright_black)
+
+    buffer.put_string(col3_x + 2, cur_y + 10, "Horizontal ScrollBar:", fg: Opal::Color.white)
+    @h_scrollbar.render(buffer, col3_x + 2, cur_y + 12, col1_w - 4, 1)
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 27: 2D Vector Graphics Primitives (NEW)
+# -----------------------------------------------------------------------------
+class Primitives2DSlide < ShowcaseSlide
+  property time : Float64 = 0.0
+  property? animating : Bool = true
+  property radius : Int32 = 6
+
+  def title : String
+    "2D Vector Graphics Primitives"
+  end
+
+  def category : String
+    "Graphics & Rendering (New)"
+  end
+
+  def hints : String
+    "[Space] Pause Animation   [+/-] Adjust Radius"
+  end
+
+  def tick : Nil
+    @time += 0.06 if @animating
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "space", " "
+      @animating = !@animating
+      true
+    when "+", "="
+      @radius = Math.min(14, @radius + 1)
+      true
+    when "-", "_"
+      @radius = Math.max(2, @radius - 1)
+      true
+    else
+      false
+    end
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    cur_y = y + 1
+    buffer.put_string(x + 2, cur_y, ">> 2D Graphics Primitives ── Lines, Circles, Rectangles & Triangles", fg: Opal::Color.cyan, bold: true)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "Bresenham algorithms with 2:1 character aspect compensation and clip protection.", fg: Opal::Color.bright_black)
+    cur_y += 2
+
+    pane_w = (w - 8) // 3
+    pane_h = Math.max(12, h - 5)
+
+    p1 = Opal::UI::Box.new(border: :rounded, title: "Lines & Shadows", border_fg: Opal::Color.cyan)
+    p1.render(buffer, x + 2, cur_y, pane_w, pane_h)
+
+    cx1 = x + 2 + pane_w // 2
+    cy1 = cur_y + 4
+    len = 7.0
+    lx = (cx1 + Math.cos(@time) * len).round.to_i
+    ly = (cy1 + Math.sin(@time) * len * 0.5).round.to_i
+    Opal::Graphics::Primitives2D.line(buffer, cx1, cy1, lx, ly, char: '•', fg: Opal::Color.bright_cyan)
+    Opal::Graphics::Primitives2D.line(buffer, x + 4, cur_y + 8, x + pane_w - 2, cur_y + 8, style: :dashed, fg: Opal::Color.yellow)
+    Opal::Graphics::Primitives2D.rect_with_shadow(buffer, x + 4, cur_y + 10, pane_w - 8, 4, border_fg: Opal::Color.green, title: "Box")
+
+    p2_x = x + 2 + pane_w + 2
+    p2 = Opal::UI::Box.new(border: :rounded, title: "Circles & Ellipses", border_fg: Opal::Color.cyan)
+    p2.render(buffer, p2_x, cur_y, pane_w, pane_h)
+
+    cx2 = p2_x + pane_w // 2
+    cy2 = cur_y + pane_h // 2
+    Opal::Graphics::Primitives2D.circle(buffer, cx2, cy2, @radius, char: '○', fg: Opal::Color.magenta)
+    Opal::Graphics::Primitives2D.ellipse(buffer, cx2, cy2, @radius + 4, @radius // 2 + 1, char: '·', fg: Opal::Color.bright_black)
+    buffer.put_char(cx2, cy2, '+', fg: Opal::Color.bright_white)
+    buffer.put_string(p2_x + 2, cur_y + pane_h - 2, "Radius: #{@radius}", fg: Opal::Color.bright_black)
+
+    p3_x = p2_x + pane_w + 2
+    p3 = Opal::UI::Box.new(border: :rounded, title: "Filled Polygons", border_fg: Opal::Color.cyan)
+    p3.render(buffer, p3_x, cur_y, pane_w, pane_h)
+
+    t_offset = Math.sin(@time * 1.5) * 4.0
+    x0 = p3_x + pane_w // 2 + t_offset.round.to_i
+    y0 = cur_y + 2
+    x1 = p3_x + 4
+    y1 = cur_y + pane_h - 3
+    x2 = p3_x + pane_w - 4
+    y2 = cur_y + pane_h - 3
+    Opal::Graphics::Primitives2D.fill_triangle(buffer, x0, y0, x1, y1, x2, y2, char: '▓', fg: Opal::Color.blue)
+    Opal::Graphics::Primitives2D.line(buffer, x0, y0, x1, y1, fg: Opal::Color.bright_cyan)
+    Opal::Graphics::Primitives2D.line(buffer, x1, y1, x2, y2, fg: Opal::Color.bright_cyan)
+    Opal::Graphics::Primitives2D.line(buffer, x2, y2, x0, y0, fg: Opal::Color.bright_cyan)
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 28: 3D Mesh Viewport & Primitives (NEW)
+# -----------------------------------------------------------------------------
+class Mesh3DSlide < ShowcaseSlide
+  getter mesh_view : Opal::UI::Mesh3D
+
+  def initialize
+    @mesh_view = Opal::UI::Mesh3D.new(shape: :cube, auto_rotate: true)
+  end
+
+  def title : String
+    "3D Mesh Viewport & Primitives"
+  end
+
+  def category : String
+    "3D Graphics Engine (New)"
+  end
+
+  def hints : String
+    "[Right-Drag] Rotate   [Wheel] Zoom   [1-5] Shape (Cube/Sphere/Cyl/Pyr/Torus)   [Space] Wireframe   [r] Auto-Spin"
+  end
+
+  def tick : Nil
+    @mesh_view.tick
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    @mesh_view.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @mesh_view.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    @mesh_view.render(buffer, x + 2, y + 1, w - 4, h - 2)
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 29: Windowing & Multi-Layer Compositing (NEW)
+# -----------------------------------------------------------------------------
+class WindowingSlide < ShowcaseSlide
+  getter window : Opal::UI::Window
+
+  def initialize
+    @window = Opal::UI::Window.new(
+      title: "Cluster Service Node #07",
+      x: 14,
+      y: 6,
+      width: 48,
+      height: 12,
+      content: Opal::UI::Text.new("CONTAINER RUNTIME // ACTIVE\n\nPod ID: k8s-mesh-091a\nStatus: 100% Nominal\nIP: 10.244.1.42\nCPU: 24% | Mem: 412 MB\n\nDrag title bar to move.\nDrag borders to resize.", fg: Opal::Color.bright_white)
+    )
+  end
+
+  def title : String
+    "Windowing & Multi-Layer Compositing"
+  end
+
+  def category : String
+    "Overlays & Layers (New)"
+  end
+
+  def hints : String
+    "[Drag Title] Move Window   [Drag Borders] Resize   [Click [-]/[^]/[x]] Window Controls"
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @window.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    cur_y = y + 1
+    buffer.put_string(x + 2, cur_y, ">> Multi-Layer Compositing ── Draggable Windows & Buffer Clipping", fg: Opal::Color.cyan, bold: true)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "LayerStack isolates transparent buffers across depth tiers with clipping protection.", fg: Opal::Color.bright_black)
+    cur_y += 2
+
+    # Draw background content grid (Desktop layer)
+    (cur_y...y + h - 1).each do |by|
+      (x + 2...x + w - 2).step(14) do |bx|
+        buffer.put_string(bx, by, "+---[NODE]---+", fg: Opal::Color.rgb(40, 50, 70), dim: true)
+      end
+    end
+
+    bg_box = Opal::UI::Box.new(
+      child: Opal::UI::Text.new("BACKGROUND SERVICE MESH:\n\nCluster IP: 10.244.0.1\nThroughput: 8.4 Gbps\nStatus: Healthy\nLatency: 1.2ms", fg: Opal::Color.white),
+      border: :single,
+      border_fg: Opal::Color.bright_black,
+      title: "Infrastructure Monitor"
+    )
+    bg_box.render(buffer, x + 4, cur_y + 1, 38, 10)
+
+    # Render floating Window on top
+    @window.render(buffer, 0, 0, w, h)
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 30: Theme Store & WCAG Contrast Studio (NEW)
+# -----------------------------------------------------------------------------
+class ThemeStoreSlide < ShowcaseSlide
+  property theme_index : Int32 = 0
+  @theme_names : Array(String)
+
+  def initialize
+    @theme_names = Opal.theme_store.names
+  end
+
+  def title : String
+    "Theme Store & WCAG Contrast Studio"
+  end
+
+  def category : String
+    "Design System (New)"
+  end
+
+  def hints : String
+    "[↑/↓] or [←/→] Select Theme Preset   [Space] Next Theme   [r] Reset"
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "right", "down", "space", "j", "l"
+      @theme_index = (@theme_index + 1) % @theme_names.size
+      Opal.theme = @theme_names[@theme_index]
+      true
+    when "left", "up", "k", "h"
+      @theme_index = (@theme_index - 1 + @theme_names.size) % @theme_names.size
+      Opal.theme = @theme_names[@theme_index]
+      true
+    when "r"
+      @theme_index = 0
+      Opal.theme = @theme_names[0]
+      true
+    else
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @theme_index = (@theme_index - 1 + @theme_names.size) % @theme_names.size
+      Opal.theme = @theme_names[@theme_index]
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @theme_index = (@theme_index + 1) % @theme_names.size
+      Opal.theme = @theme_names[@theme_index]
+      true
+    else
+      false
+    end
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    cur_y = y + 1
+    theme_name = @theme_names[@theme_index]? || @theme_names[0]
+    theme = Opal.theme_store.get(theme_name)
+
+    buffer.put_string(x + 2, cur_y, ">> Theme Store Studio ── [Preset #{@theme_index + 1}/#{@theme_names.size}: :#{theme_name}]", fg: theme.primary, bold: true)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "16 high-fidelity themes with real-time WCAG 2.1 relative luminance and contrast auditing.", fg: theme.text_muted)
+    cur_y += 2
+
+    list_w = 24
+    list_h = Math.max(12, h - 5)
+    l_box = Opal::UI::Box.new(border: :rounded, title: "Theme Presets", border_fg: theme.border, title_fg: theme.primary)
+    l_box.render(buffer, x + 2, cur_y, list_w, list_h)
+
+    @theme_names.each_with_index do |name, idx|
+      row_y = cur_y + 1 + idx
+      break if row_y >= cur_y + list_h - 1
+      is_active = (idx == @theme_index)
+      prefix = is_active ? "> " : "  "
+      str = "#{prefix}:#{name}"
+      if is_active
+        buffer.put_string(x + 3, row_y, str.ljust(list_w - 2), fg: theme.background, bg: theme.primary, bold: true)
+      else
+        buffer.put_string(x + 3, row_y, str, fg: theme.text_muted)
+      end
+    end
+
+    mid_x = x + 2 + list_w + 2
+    mid_w = 32
+    m_box = Opal::UI::Box.new(border: :rounded, title: "Semantic Swatches", border_fg: theme.border, title_fg: theme.accent)
+    m_box.render(buffer, mid_x, cur_y, mid_w, list_h)
+
+    tokens = [
+      {"Primary", theme.primary},
+      {"Secondary", theme.secondary},
+      {"Accent", theme.accent},
+      {"Background", theme.background},
+      {"Surface", theme.surface},
+      {"Text", theme.text},
+      {"Muted Text", theme.text_muted},
+      {"Border", theme.border},
+      {"Success", theme.success},
+      {"Warning", theme.warning},
+      {"Danger", theme.danger},
+      {"Info", theme.info},
+    ]
+
+    tokens.each_with_index do |(t_name, t_col), idx|
+      swatch_y = cur_y + 1 + idx
+      break if swatch_y >= cur_y + list_h - 1
+      buffer.put_string(mid_x + 2, swatch_y, "████", fg: t_col)
+      buffer.put_string(mid_x + 7, swatch_y, t_name.ljust(11), fg: theme.text, bold: true)
+      buffer.put_string(mid_x + 19, swatch_y, t_col.to_hex, fg: theme.text_muted)
+    end
+
+    right_x = mid_x + mid_w + 2
+    right_w = Math.max(22, w - right_x - 2)
+    r_box = Opal::UI::Box.new(border: :rounded, title: "WCAG 2.1 Contrast Audit", border_fg: theme.border, title_fg: theme.success)
+    r_box.render(buffer, right_x, cur_y, right_w, list_h)
+
+    ratio_main = theme.text.contrast_ratio(theme.background)
+    ratio_muted = theme.text_muted.contrast_ratio(theme.background)
+    ratio_pri = theme.primary.contrast_ratio(theme.background)
+
+    audit_row = cur_y + 2
+    buffer.put_string(right_x + 2, audit_row, "Text on Background:", fg: theme.text, bold: true)
+    audit_row += 1
+    badge_main = ratio_main >= 7.0 ? "[AAA 7.0+]" : (ratio_main >= 4.5 ? "[AA 4.5+]" : "[FAIL]")
+    badge_col = ratio_main >= 4.5 ? theme.success : theme.danger
+    buffer.put_string(right_x + 2, audit_row, "Ratio: #{ratio_main.round(1)}:1  #{badge_main}", fg: badge_col, bold: true)
+    audit_row += 2
+
+    buffer.put_string(right_x + 2, audit_row, "Muted on Background:", fg: theme.text_muted)
+    audit_row += 1
+    badge_muted = ratio_muted >= 4.5 ? "[AA 4.5+]" : (ratio_muted >= 3.0 ? "[AA-Large]" : "[LOW]")
+    buffer.put_string(right_x + 2, audit_row, "Ratio: #{ratio_muted.round(1)}:1  #{badge_muted}", fg: theme.text_muted)
+    audit_row += 2
+
+    buffer.put_string(right_x + 2, audit_row, "Primary on Background:", fg: theme.primary, bold: true)
+    audit_row += 1
+    badge_pri = ratio_pri >= 4.5 ? "[AA 4.5+]" : "[FAIL]"
+    buffer.put_string(right_x + 2, audit_row, "Ratio: #{ratio_pri.round(1)}:1  #{badge_pri}", fg: theme.primary)
+    audit_row += 2
+
+    buffer.put_string(right_x + 2, audit_row, "Readable against BG?", fg: theme.text)
+    audit_row += 1
+    is_readable = theme.text.readable_against?(theme.background)
+    buffer.put_string(right_x + 2, audit_row, is_readable ? "[OK] Accessible & Compliant" : "[!] Contrast Warning", fg: is_readable ? theme.success : theme.warning, bold: true)
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 31: Grand Finale & Conclusion (Markdown Summary)
 # -----------------------------------------------------------------------------
 class FinaleSlide < ShowcaseSlide
   getter viewer : Opal::UI::MarkdownViewer
 
   def initialize
     doc = <<-MD
-    # 💎 You Have Completed the Opal TUI Tour!
+    # [*] You Have Completed the Opal TUI Tour!
 
     All core capabilities have been showcased:
-    - ✔ **Multi-Field Form Wizard** with live inline validation & tab navigation
-    - ✔ **Live Keystroke Fuzzy Search & Split Preview**
-    - ✔ **Interactive FileDialog / FilePicker** with icons & split preview
-    - ✔ **TrueColor 24-Bit ColorPicker** with RGB sliders & palette studio
-    - ✔ **2D/3D Rotatable Color Spectrum & Cube/Sphere Picker**
-    - ✔ **Image to ASCII Art Engine** with half-block & nearest-char luminance modes
-    - ✔ **Text Shader Engine & Compositing FX** with bouncing layered windows
-    - ✔ **Cluster Data Visualizations** (Sparklines, BarCharts, PieCharts, LineGraphs, Gauges, Trees)
-    - ✔ **Zebra Data Tables & Scrollable Viewports**
-    - ✔ **CodeView Syntax Highlighter & Hex Binary Inspector**
-    - ✔ **Double-Buffered Split Views & Theme Engine**
-    - ✔ **Modals, Toasts, Command Palette & Autocomplete**
-    - ✔ **OSC 8 Hyperlinks & OSC 52 Desktop Clipboard**
-    - ✔ **The Elm Architecture (TEA) Reactive Engine**
+    - [OK] **Interactive Controls** (Buttons, Dropdowns, ScrollBars)
+    - [OK] **Multi-Field Form Wizard** with live inline validation & tab navigation
+    - [OK] **Live Keystroke Fuzzy Search & Split Preview**
+    - [OK] **Interactive FileDialog / FilePicker** with split preview
+    - [OK] **TrueColor 24-Bit ColorPicker** with RGB sliders & palette studio
+    - [OK] **2D/3D Rotatable Color Spectrum & Cube/Sphere Picker**
+    - [OK] **2D Graphics Primitives** (Lines, Circles, Rectangles, Triangles)
+    - [OK] **3D Mesh Viewport & Primitives** (Cube, Sphere, Torus, Cylinder, Pyramid)
+    - [OK] **Windowing & Multi-Layer Compositing** (Floating windows, layers, clipping)
+    - [OK] **Theme Store & Contrast Studio** (16 presets, WCAG 2.1 compliance)
+    - [OK] **Image to ASCII Art Engine** with half-block & nearest-char luminance modes
+    - [OK] **Text Shader Engine & Compositing FX** with 13 procedural shaders
+    - [OK] **Cluster Data Visualizations** (Sparklines, BarCharts, PieCharts, LineGraphs, Gauges, Trees)
+    - [OK] **Zebra Data Tables & Scrollable Viewports**
+    - [OK] **CodeView Syntax Highlighter & Hex Binary Inspector**
+    - [OK] **Double-Buffered Split Views & Theme Engine**
+    - [OK] **Modals, Toasts, Command Palette & Autocomplete**
+    - [OK] **OSC 8 Hyperlinks & OSC 52 Desktop Clipboard**
+    - [OK] **The Elm Architecture (TEA) Reactive Engine**
 
-    ### 🚀 Getting Started
+    ### >> Getting Started
     Add Opal to your `shard.yml`:
     ```yaml
     dependencies:
@@ -1981,6 +2581,11 @@ class ShowcaseAppModel
       TextShaderSlide.new,
       ColorPicker3DSlide.new,
       AsciiImageSlide.new,
+      ControlsSlide.new,
+      Primitives2DSlide.new,
+      Mesh3DSlide.new,
+      WindowingSlide.new,
+      ThemeStoreSlide.new,
       FinaleSlide.new,
     ]
   end
@@ -2074,7 +2679,7 @@ class ShowcaseAppModel
     buffer.fill(0, 0, cols, rows, ' ')
 
     # Top Header Banner
-    header_text = " 💎 OPAL TUI SHOWCASE ── Slide #{@current_idx + 1}/#{@slides.size}: [#{active.title}] ── [#{active.category}]"
+    header_text = " [*] OPAL TUI SHOWCASE ── Slide #{@current_idx + 1}/#{@slides.size}: [#{active.title}] ── [#{active.category}]"
     buffer.put_string(0, 0, header_text, fg: Opal::Color.bright_cyan, bold: true)
     buffer.put_string(0, 1, "─" * cols, fg: Opal::Color.bright_black)
 
