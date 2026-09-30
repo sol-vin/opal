@@ -7,34 +7,40 @@ module Opal
   module UI
     # A centered floating modal dialog component with backdrop dimming and button choices.
     class Modal < Element
-      getter title : String
-      getter message : String
-      getter buttons : Array(String)
+      property title : String
+      property message : String
+      property buttons : Array(String)
       property selected_button : Int32
-      getter border_fg : Color
-      getter title_fg : Color
-      getter button_fg : Color
-      getter selected_fg : Color
-      getter selected_bg : Color
-      getter dim_backdrop : Bool
+      property border_fg : Color?
+      property title_fg : Color?
+      property button_fg : Color?
+      property selected_fg : Color?
+      property selected_bg : Color?
+      property bg : Color?
+      property border_style : Border?
+      property dim_backdrop : Bool
 
       def initialize(
         @title : String,
         @message : String,
         @buttons : Array(String) = ["OK"],
         @selected_button : Int32 = 0,
-        border_fg : Color | Symbol | String = :cyan,
-        title_fg : Color | Symbol | String = :bright_white,
-        button_fg : Color | Symbol | String = :white,
-        selected_fg : Color | Symbol | String = :black,
-        selected_bg : Color | Symbol | String = :cyan,
+        border_fg : Color | Symbol | String | Nil = nil,
+        title_fg : Color | Symbol | String | Nil = nil,
+        button_fg : Color | Symbol | String | Nil = nil,
+        selected_fg : Color | Symbol | String | Nil = nil,
+        selected_bg : Color | Symbol | String | Nil = nil,
+        bg : Color | Symbol | String | Nil = nil,
+        border_style : Border | Symbol | String | Nil = nil,
         @dim_backdrop : Bool = true,
       )
-        @border_fg = Color.from(border_fg)
-        @title_fg = Color.from(title_fg)
-        @button_fg = Color.from(button_fg)
-        @selected_fg = Color.from(selected_fg)
-        @selected_bg = Color.from(selected_bg)
+        @border_fg = border_fg ? Color.from(border_fg) : nil
+        @title_fg = title_fg ? Color.from(title_fg) : nil
+        @button_fg = button_fg ? Color.from(button_fg) : nil
+        @selected_fg = selected_fg ? Color.from(selected_fg) : nil
+        @selected_bg = selected_bg ? Color.from(selected_bg) : nil
+        @bg = bg ? Color.from(bg) : nil
+        @border_style = border_style ? Border.from(border_style) : nil
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
@@ -42,12 +48,14 @@ module Opal
         msg_w = (msg_lines.map { |l| VisualWidth.width(l) }.max? || 0)
         btn_w = @buttons.map { |b| VisualWidth.width(b) + 4 }.sum + (@buttons.size - 1) * 2
         content_w = [VisualWidth.width(@title) + 4, msg_w, btn_w].max
-        modal_w = (content_w + 6).clamp(30, available_w)
-        modal_h = (msg_lines.size + 6).clamp(6, available_h)
+        modal_w = (content_w + 6).clamp(Math.min(30, available_w), available_w)
+        modal_h = (msg_lines.size + 6).clamp(Math.min(6, available_h), available_h)
         {modal_w, modal_h}
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
+        return if width <= 0 || height <= 0
+
         # Dim background if requested
         buffer.dim_all if @dim_backdrop
 
@@ -58,46 +66,59 @@ module Opal
         # Create isolated sub-buffer for modal card
         modal_buf = Buffer.new(modal_w, modal_h)
 
-        # Draw box border
-        b = Border.rounded
-        # Top border
-        modal_buf.put_string(0, 0, b.top_left, fg: @border_fg)
-        modal_buf.put_string(1, 0, b.top * (modal_w - 2), fg: @border_fg)
-        modal_buf.put_string(modal_w - 1, 0, b.top_right, fg: @border_fg)
+        th = current_theme
+        b_fg = @border_fg || th.primary
+        t_fg = @title_fg || th.accent
+        btn_fg = @button_fg || th.text
+        s_fg = @selected_fg || th.background
+        s_bg = @selected_bg || th.accent
+        card_bg = @bg || th.background
+        b = @border_style || Border.rounded
 
-        # Side borders & solid background fill
+        # Fill background
+        Graphics::Primitives2D.fill_rect(modal_buf, 0, 0, modal_w, modal_h, ' ', fg: Color.none, bg: card_bg)
+
+        # Draw box border with pattern support
+        modal_buf.put_string(0, 0, b.top_left, fg: b_fg, bg: card_bg)
+        modal_buf.put_string(1, 0, b.top_segment(modal_w - 2), fg: b_fg, bg: card_bg)
+        modal_buf.put_string(modal_w - 1, 0, b.top_right, fg: b_fg, bg: card_bg)
+
+        # Side borders
         (1...(modal_h - 1)).each do |cur_y|
-          modal_buf.put_string(0, cur_y, b.left, fg: @border_fg)
-          modal_buf.put_string(1, cur_y, " " * (modal_w - 2))
-          modal_buf.put_string(modal_w - 1, cur_y, b.right, fg: @border_fg)
+          modal_buf.put_char(0, cur_y, b.left_char(cur_y - 1), fg: b_fg, bg: card_bg)
+          modal_buf.put_char(modal_w - 1, cur_y, b.right_char(cur_y - 1), fg: b_fg, bg: card_bg)
         end
 
         # Bottom border
-        modal_buf.put_string(0, modal_h - 1, b.bottom_left, fg: @border_fg)
-        modal_buf.put_string(1, modal_h - 1, b.bottom * (modal_w - 2), fg: @border_fg)
-        modal_buf.put_string(modal_w - 1, modal_h - 1, b.bottom_right, fg: @border_fg)
+        modal_buf.put_string(0, modal_h - 1, b.bottom_left, fg: b_fg, bg: card_bg)
+        modal_buf.put_string(1, modal_h - 1, b.bottom_segment(modal_w - 2), fg: b_fg, bg: card_bg)
+        modal_buf.put_string(modal_w - 1, modal_h - 1, b.bottom_right, fg: b_fg, bg: card_bg)
 
-        # Title
-        title_str = " #{@title} "
-        modal_buf.put_string(2, 0, title_str, fg: @title_fg, bold: true)
+        # Title safely clamped
+        avail_t = Math.max(0, modal_w - 4)
+        if avail_t > 0
+          modal_buf.put_string(2, 0, " #{@title} ", fg: t_fg, bg: card_bg, bold: true, max_width: avail_t)
+        end
 
-        # Message text
+        # Message text safely clamped
         msg_lines = @message.split('\n')
         msg_lines.each_with_index do |line, idx|
           break if idx >= modal_h - 4
-          modal_buf.put_string(3, 2 + idx, line, fg: @button_fg)
+          modal_buf.put_string(3, 2 + idx, line, fg: btn_fg, bg: card_bg, max_width: modal_w - 6)
         end
 
         # Buttons at bottom
         btn_y = modal_h - 2
         cur_btn_x = 3
         @buttons.each_with_index do |btn, idx|
+          break if cur_btn_x >= modal_w - 3
           is_active = (idx == @selected_button)
           btn_text = "[ #{btn} ]"
+          avail_btn_w = Math.max(0, (modal_w - 2) - cur_btn_x)
           if is_active
-            modal_buf.put_string(cur_btn_x, btn_y, btn_text, fg: @selected_fg, bg: @selected_bg, bold: true)
+            modal_buf.put_string(cur_btn_x, btn_y, btn_text, fg: s_fg, bg: s_bg, bold: true, max_width: avail_btn_w)
           else
-            modal_buf.put_string(cur_btn_x, btn_y, btn_text, fg: @button_fg)
+            modal_buf.put_string(cur_btn_x, btn_y, btn_text, fg: btn_fg, bg: card_bg, max_width: avail_btn_w)
           end
           cur_btn_x += VisualWidth.width(btn_text) + 2
         end

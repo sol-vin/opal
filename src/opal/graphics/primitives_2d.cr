@@ -162,18 +162,18 @@ module Opal
 
         # Top border
         buffer.put_string(x, y, b.top_left, fg: fg, bg: bg)
-        buffer.put_string(x + 1, y, b.top * (width - 2), fg: fg, bg: bg)
+        buffer.put_string(x + 1, y, b.top_segment(width - 2), fg: fg, bg: bg)
         buffer.put_string(x + width - 1, y, b.top_right, fg: fg, bg: bg)
 
         # Side borders
         (1...(height - 1)).each do |row|
-          buffer.put_string(x, y + row, b.left, fg: fg, bg: bg)
-          buffer.put_string(x + width - 1, y + row, b.right, fg: fg, bg: bg)
+          buffer.put_char(x, y + row, b.left_char(row - 1), fg: fg, bg: bg)
+          buffer.put_char(x + width - 1, y + row, b.right_char(row - 1), fg: fg, bg: bg)
         end
 
         # Bottom border
         buffer.put_string(x, y + height - 1, b.bottom_left, fg: fg, bg: bg)
-        buffer.put_string(x + 1, y + height - 1, b.bottom * (width - 2), fg: fg, bg: bg)
+        buffer.put_string(x + 1, y + height - 1, b.bottom_segment(width - 2), fg: fg, bg: bg)
         buffer.put_string(x + width - 1, y + height - 1, b.bottom_right, fg: fg, bg: bg)
       end
 

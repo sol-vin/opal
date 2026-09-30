@@ -20,6 +20,19 @@ module Opal
       property? show_arrows : Bool
       property on_change : Proc(Int32, Nil)?
 
+      # Manipulable theme properties and character swaps
+      property track_fg : Color? = nil
+      property track_bg : Color? = nil
+      property thumb_fg : Color? = nil
+      property thumb_bg : Color? = nil
+      property arrow_fg : Color? = nil
+      property track_char : Char? = nil
+      property thumb_char : Char? = nil
+      property arrow_up_char : Char? = nil
+      property arrow_down_char : Char? = nil
+      property arrow_left_char : Char? = nil
+      property arrow_right_char : Char? = nil
+
       # Rendering & hit-testing state
       @render_x : Int32 = 0
       @render_y : Int32 = 0
@@ -32,7 +45,7 @@ module Opal
       @dragging : Bool = false
 
       def initialize(
-        @orientation : Orientation = Orientation::Vertical,
+        orientation : Orientation | Symbol = Orientation::Vertical,
         @min_value : Int32 = 0,
         @max_value : Int32 = 100,
         @value : Int32 = 0,
@@ -40,6 +53,14 @@ module Opal
         @show_arrows : Bool = true,
         @on_change : Proc(Int32, Nil)? = nil,
       )
+        @orientation = case orientation
+                       when Orientation
+                         orientation
+                       when :horizontal
+                         Orientation::Horizontal
+                       else
+                         Orientation::Vertical
+                       end
         super()
         clamp_value
       end
@@ -222,10 +243,19 @@ module Opal
         @render_w = width
         @render_h = height
 
-        theme = Theme.current
-        arrow_fg = focused? ? theme.primary : theme.text_muted
-        track_fg = theme.border
-        thumb_fg = focused? ? theme.accent : theme.primary
+        th = current_theme
+        glyphs = th.glyphs
+
+        c_arrow_fg = @arrow_fg || (focused? ? th.primary : th.text_muted)
+        c_track_fg = @track_fg || th.border
+        c_thumb_fg = @thumb_fg || (focused? ? th.accent : th.primary)
+        c_thumb_ch = @thumb_char || glyphs.scrollbar_thumb
+        c_track_ch = @track_char || glyphs.scrollbar_track
+
+        up_ch = @arrow_up_char || glyphs.scrollbar_arrow_up
+        down_ch = @arrow_down_char || glyphs.scrollbar_arrow_down
+        left_ch = @arrow_left_char || glyphs.scrollbar_arrow_left
+        right_ch = @arrow_right_char || glyphs.scrollbar_arrow_right
 
         range = Math.max(1, @max_value - @min_value)
 
@@ -243,19 +273,19 @@ module Opal
           @thumb_start = (val_offset * available_slack).round.to_i
 
           # 1. Top arrow
-          buffer.put_char(x, y, '▲', fg: arrow_fg) if @show_arrows
+          buffer.put_char(x, y, up_ch, fg: c_arrow_fg) if @show_arrows
 
           # 2. Track & Thumb
           (0...@track_length).each do |t_idx|
             cur_y = y + arrow_offset + t_idx
             is_thumb = (t_idx >= @thumb_start) && (t_idx < @thumb_start + @thumb_length)
-            char = is_thumb ? '█' : '░'
-            fg = is_thumb ? thumb_fg : track_fg
-            buffer.put_char(x, cur_y, char, fg: fg)
+            char = is_thumb ? c_thumb_ch : c_track_ch
+            fg = is_thumb ? c_thumb_fg : c_track_fg
+            buffer.put_char(x, cur_y, char, fg: fg, bg: is_thumb ? (@thumb_bg || Color.none) : (@track_bg || Color.none))
           end
 
           # 3. Bottom arrow
-          buffer.put_char(x, y + total_len - 1, '▼', fg: arrow_fg) if @show_arrows
+          buffer.put_char(x, y + total_len - 1, down_ch, fg: c_arrow_fg) if @show_arrows
         else
           total_len = width
           arrow_offset = @show_arrows ? 1 : 0
@@ -270,19 +300,19 @@ module Opal
           @thumb_start = (val_offset * available_slack).round.to_i
 
           # 1. Left arrow
-          buffer.put_char(x, y, '<', fg: arrow_fg) if @show_arrows
+          buffer.put_char(x, y, left_ch, fg: c_arrow_fg) if @show_arrows
 
           # 2. Track & Thumb
           (0...@track_length).each do |t_idx|
             cur_x = x + arrow_offset + t_idx
             is_thumb = (t_idx >= @thumb_start) && (t_idx < @thumb_start + @thumb_length)
-            char = is_thumb ? '█' : '░'
-            fg = is_thumb ? thumb_fg : track_fg
-            buffer.put_char(cur_x, y, char, fg: fg)
+            char = is_thumb ? c_thumb_ch : c_track_ch
+            fg = is_thumb ? c_thumb_fg : c_track_fg
+            buffer.put_char(cur_x, y, char, fg: fg, bg: is_thumb ? (@thumb_bg || Color.none) : (@track_bg || Color.none))
           end
 
           # 3. Right arrow
-          buffer.put_char(x + total_len - 1, y, '>', fg: arrow_fg) if @show_arrows
+          buffer.put_char(x + total_len - 1, y, right_ch, fg: c_arrow_fg) if @show_arrows
         end
       end
     end

@@ -34,6 +34,20 @@ module Opal
       @saved_w : Int32 = 0
       @saved_h : Int32 = 0
 
+      # Manipulable theme styling and character swaps
+      property title_fg : Color? = nil
+      property border_fg : Color? = nil
+      property active_border_fg : Color? = nil
+      property inactive_border_fg : Color? = nil
+      property bg : Color? = nil
+      property border : Border? = nil
+      property close_glyph : String? = nil
+      property maximize_glyph : String? = nil
+      property minimize_glyph : String? = nil
+      property resize_glyph : Char? = nil
+      property shadow_fg : Color? = nil
+      property shadow_char : Char? = nil
+
       # Mouse dragging and resizing tracking
       @dragging_title : Bool = false
       @resizing : Bool = false
@@ -54,11 +68,27 @@ module Opal
         @resizable : Bool = true,
         @content : Element? = nil,
         @on_close : Proc(Window, Nil)? = nil,
+        title_fg : Color | Symbol | String | Nil = nil,
+        border_fg : Color | Symbol | String | Nil = nil,
+        active_border_fg : Color | Symbol | String | Nil = nil,
+        inactive_border_fg : Color | Symbol | String | Nil = nil,
+        bg : Color | Symbol | String | Nil = nil,
+        border : Border | Symbol | String | Nil = nil,
+        @close_glyph : String? = nil,
+        @maximize_glyph : String? = nil,
+        @minimize_glyph : String? = nil,
+        @resize_glyph : Char? = nil,
       )
         super()
         @minimized = false
         @maximized = false
         @active = true
+        @title_fg = title_fg ? Color.from(title_fg) : nil
+        @border_fg = border_fg ? Color.from(border_fg) : nil
+        @active_border_fg = active_border_fg ? Color.from(active_border_fg) : nil
+        @inactive_border_fg = inactive_border_fg ? Color.from(inactive_border_fg) : nil
+        @bg = bg ? Color.from(bg) : nil
+        @border = border ? Border.from(border) : nil
       end
 
       # Closes the window and triggers callback
@@ -71,6 +101,22 @@ module Opal
       def toggle_minimize : self
         @minimized = !@minimized
         @on_minimize.try(&.call(self))
+        self
+      end
+
+      def minimize! : self
+        @minimized = true
+        self
+      end
+
+      def maximize!(max_w : Int32 = 80, max_h : Int32 = 24) : self
+        toggle_maximize(max_w, max_h) unless @maximized
+        self
+      end
+
+      def restore!(max_w : Int32 = 80, max_h : Int32 = 24) : self
+        @minimized = false
+        toggle_maximize(max_w, max_h) if @maximized
         self
       end
 
@@ -189,45 +235,78 @@ module Opal
 
         return if win_w <= 0 || win_h <= 0
 
-        theme = Theme.current
-        border_c = @active ? theme.primary : theme.border
-        title_c = @active ? theme.accent : theme.text
-        btn_c = theme.text_muted
+        th = current_theme
+        glyphs = th.glyphs
+        c_close = @close_glyph || glyphs.window_close
+        c_max = @maximize_glyph || glyphs.window_maximize
+        c_min = @minimize_glyph || glyphs.window_minimize
+        c_resize = @resize_glyph || glyphs.window_resize
+
+        border_style = @border || (@active ? th.window_border : Border.rounded)
+        border_c = @border_fg || (@active ? (@active_border_fg || th.primary) : (@inactive_border_fg || th.border))
+        title_c = @title_fg || (@active ? th.accent : th.text)
+        bg_c = @bg || th.background
+        btn_c = th.text_muted
 
         if @minimized
           # Render minimized title pill
+          min_btn_str = "#{c_min} ]"
+          min_btn_w = VisualWidth.width(min_btn_str)
           buffer.put_string(win_x, win_y, "[ ", fg: border_c)
-          buffer.put_string(win_x + 2, win_y, @title, fg: title_c, bold: true)
-          buffer.put_string(win_x + win_w - 6, win_y, "[-] ]", fg: border_c)
+          avail_title = Math.max(0, win_w - min_btn_w - 4)
+          display_title = truncate_title(@title, avail_title)
+          buffer.put_string(win_x + 2, win_y, display_title, fg: title_c, bold: true, max_width: avail_title)
+          btn_x = Math.max(win_x + 2, win_x + win_w - min_btn_w - 1)
+          buffer.put_string(btn_x, win_y, min_btn_str, fg: border_c)
           return
         end
 
         # 1. Drop shadow for 3D depth
-        Graphics::Primitives2D.draw_shadow(buffer, win_x, win_y, win_w, win_h)
+        sh_c = @shadow_fg || Color.rgb(40, 40, 40)
+        sh_ch = @shadow_char || '░'
+        Graphics::Primitives2D.draw_shadow(buffer, win_x, win_y, win_w, win_h, shadow_char: sh_ch, fg: sh_c)
 
         # 2. Solid background fill inside window
-        Graphics::Primitives2D.fill_rect(buffer, win_x, win_y, win_w, win_h, ' ', fg: Color.none, bg: theme.background)
+        Graphics::Primitives2D.fill_rect(buffer, win_x, win_y, win_w, win_h, ' ', fg: Color.none, bg: bg_c)
 
         # 3. Window Border
-        border_style = @active ? Border.double : Border.rounded
         Graphics::Primitives2D.draw_rect(buffer, win_x, win_y, win_w, win_h, border: border_style, fg: border_c)
 
-        # 4. Title & Header Buttons
-        title_str = " #{@title} "
-        buffer.put_string(win_x + 2, win_y, title_str, fg: title_c, bold: true)
-
-        # Draw buttons on title bar: [-] [^] [x]
+        # 4. Header Buttons & Title (placed from right to left to avoid collision)
         btn_offset = win_x + win_w - 2
-        if @closable
-          buffer.put_string(btn_offset - 3, win_y, "[x]", fg: theme.danger, bold: true)
-          btn_offset -= 4
+
+        # Draw buttons if space permits
+        show_close = @closable && (btn_offset - VisualWidth.width(c_close) >= win_x + 3)
+        if show_close
+          w = VisualWidth.width(c_close)
+          buffer.put_string(btn_offset - w, win_y, c_close, fg: th.danger, bold: true)
+          btn_offset -= (w + 1)
         end
-        if @maximizable
-          buffer.put_string(btn_offset - 3, win_y, "[^]", fg: btn_c)
-          btn_offset -= 4
+
+        show_max = @maximizable && (btn_offset - VisualWidth.width(c_max) >= win_x + 3)
+        if show_max
+          w = VisualWidth.width(c_max)
+          buffer.put_string(btn_offset - w, win_y, c_max, fg: btn_c)
+          btn_offset -= (w + 1)
         end
-        if @minimizable
-          buffer.put_string(btn_offset - 3, win_y, "[-]", fg: btn_c)
+
+        show_min = @minimizable && (btn_offset - VisualWidth.width(c_min) >= win_x + 3)
+        if show_min
+          w = VisualWidth.width(c_min)
+          buffer.put_string(btn_offset - w, win_y, c_min, fg: btn_c)
+          btn_offset -= (w + 1)
+        end
+
+        # Title: clamp strictly to space between left border (win_x + 2) and leftmost button (btn_offset)
+        title_start_x = win_x + 2
+        avail_title_w = Math.max(0, (btn_offset - 1) - title_start_x)
+        if !@title.empty? && avail_title_w > 0
+          display_title = if avail_title_w > 2
+                            " #{truncate_title(@title, avail_title_w - 2)} "
+                          else
+                            truncate_title(@title, avail_title_w)
+                          end
+          buffer.put_string(title_start_x, win_y, display_title, fg: title_c, bold: true, max_width: avail_title_w)
         end
 
         # 5. Client area clipping & Content rendering
@@ -244,8 +323,26 @@ module Opal
 
         # 6. Resize handle glyph at bottom-right corner if resizable
         if @resizable && !@maximized
-          buffer.put_char(win_x + win_w - 1, win_y + win_h - 1, '◢', fg: border_c)
+          buffer.put_char(win_x + win_w - 1, win_y + win_h - 1, c_resize, fg: border_c)
         end
+      end
+
+      private def truncate_title(text : String, max_w : Int32) : String
+        return "" if max_w <= 0
+        return text if VisualWidth.width(text) <= max_w
+        return "…" if max_w == 1
+
+        avail = max_w - 1
+        res = IO::Memory.new
+        cur_w = 0
+        text.each_char do |ch|
+          cw = VisualWidth.char_width(ch)
+          break if cur_w + cw > avail
+          res << ch
+          cur_w += cw
+        end
+        res << "…"
+        res.to_s
       end
     end
   end

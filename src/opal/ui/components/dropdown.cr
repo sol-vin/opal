@@ -27,6 +27,33 @@ module Opal
       @popup_h : Int32 = 0
       @flipped_up : Bool = false
 
+      # Manipulable theme properties and character swaps
+      property normal_fg : Color? = nil
+      property normal_bg : Color? = nil
+      property selected_fg : Color? = nil
+      property selected_bg : Color? = nil
+      property border_fg : Color? = nil
+      property popup_bg : Color? = nil
+      property arrow_down_glyph : String? = nil
+      property arrow_up_glyph : String? = nil
+      property border_style : Border? = nil
+
+      def arrow_glyph : String?
+        @arrow_down_glyph
+      end
+
+      def arrow_glyph=(g : String?)
+        @arrow_down_glyph = g
+      end
+
+      def border : Border?
+        @border_style
+      end
+
+      def border=(b : Border?)
+        @border_style = b
+      end
+
       def initialize(
         @items : Array(String),
         @selected_index : Int32 = 0,
@@ -217,9 +244,15 @@ module Opal
         @header_y = y
         @header_w = width
 
-        theme = Theme.current
-        border_c = focused? ? theme.primary : theme.border
-        text_c = @items.empty? ? theme.text_muted : theme.text
+        th = current_theme
+        glyphs = th.glyphs
+        border_c = @border_fg || (focused? ? th.primary : th.border)
+        text_c = @normal_fg || (@items.empty? ? th.text_muted : th.text)
+        bg_c = @normal_bg || Color.none
+        sel_fg = @selected_fg || th.primary
+        sel_bg = @selected_bg || th.surface
+        pop_bg = @popup_bg || th.background
+        b_style = @border_style || Border.single
 
         # 1. Determine popup orientation (auto-flip if near screen bottom)
         visible_count = Math.min(@items.size, @max_visible_items)
@@ -227,17 +260,19 @@ module Opal
         space_below = buffer.height - (y + 1)
         @flipped_up = (space_below < popup_total_h) && (y >= popup_total_h)
 
-        chevron = @expanded ? (@flipped_up ? "▲" : "▼") : "▼"
+        arrow_d = @arrow_down_glyph || glyphs.dropdown_arrow
+        arrow_u = @arrow_up_glyph || glyphs.dropdown_arrow_up
+        chevron = @expanded ? (@flipped_up ? arrow_u : arrow_d) : arrow_d
 
         # 2. Render Collapsed Header Box
         inner_w = Math.max(0, width - 4)
         disp_text = VisualWidth.truncate(selected_item, inner_w)
         padding_spaces = Math.max(0, inner_w - VisualWidth.width(disp_text))
 
-        buffer.put_string(x, y, "[ ", fg: border_c)
-        buffer.put_string(x + 2, y, disp_text, fg: text_c, bold: focused?)
-        buffer.put_string(x + 2 + VisualWidth.width(disp_text), y, " " * padding_spaces)
-        buffer.put_string(x + width - 2, y, "#{chevron} ]", fg: border_c, bold: true)
+        buffer.put_string(x, y, "[ ", fg: border_c, bg: bg_c)
+        buffer.put_string(x + 2, y, disp_text, fg: text_c, bg: bg_c, bold: focused?)
+        buffer.put_string(x + 2 + VisualWidth.width(disp_text), y, " " * padding_spaces, bg: bg_c)
+        buffer.put_string(x + width - 2, y, "#{chevron} ]", fg: border_c, bg: bg_c, bold: true)
 
         # 3. Render Expanded Popup List if opened
         if @expanded && !@items.empty?
@@ -246,11 +281,13 @@ module Opal
           @popup_w = width
           @popup_h = popup_total_h
 
+          # Fill popup solid background
+          Graphics::Primitives2D.fill_rect(buffer, @popup_x, @popup_y, @popup_w, @popup_h, ' ', fg: Color.none, bg: pop_bg)
+
           # Draw popup box
-          b = Border.single
-          buffer.put_string(@popup_x, @popup_y, b.top_left, fg: border_c)
-          buffer.put_string(@popup_x + 1, @popup_y, b.top * (@popup_w - 2), fg: border_c)
-          buffer.put_string(@popup_x + @popup_w - 1, @popup_y, b.top_right, fg: border_c)
+          buffer.put_string(@popup_x, @popup_y, b_style.top_left, fg: border_c, bg: pop_bg)
+          buffer.put_string(@popup_x + 1, @popup_y, b_style.top_segment(@popup_w - 2), fg: border_c, bg: pop_bg)
+          buffer.put_string(@popup_x + @popup_w - 1, @popup_y, b_style.top_right, fg: border_c, bg: pop_bg)
 
           (0...visible_count).each do |row_idx|
             item_idx = @scroll_offset + row_idx
@@ -258,7 +295,7 @@ module Opal
             item_text = @items[item_idx]? || ""
             is_sel = (item_idx == @selected_index)
 
-            buffer.put_string(@popup_x, cur_y, b.left, fg: border_c)
+            buffer.put_char(@popup_x, cur_y, b_style.left_char(row_idx), fg: border_c, bg: pop_bg)
 
             # Fill item row
             row_inner_w = @popup_w - 2
@@ -266,19 +303,19 @@ module Opal
             row_pad = Math.max(0, row_inner_w - 2 - VisualWidth.width(trunc_item))
 
             if is_sel
-              buffer.put_string(@popup_x + 1, cur_y, " #{trunc_item}#{" " * row_pad} ", fg: theme.primary, bg: theme.surface, bold: true)
+              buffer.put_string(@popup_x + 1, cur_y, " #{trunc_item}#{" " * row_pad} ", fg: sel_fg, bg: sel_bg, bold: true)
             else
-              buffer.put_string(@popup_x + 1, cur_y, " #{trunc_item}#{" " * row_pad} ", fg: theme.text)
+              buffer.put_string(@popup_x + 1, cur_y, " #{trunc_item}#{" " * row_pad} ", fg: text_c, bg: pop_bg)
             end
 
-            buffer.put_string(@popup_x + @popup_w - 1, cur_y, b.right, fg: border_c)
+            buffer.put_char(@popup_x + @popup_w - 1, cur_y, b_style.right_char(row_idx), fg: border_c, bg: pop_bg)
           end
 
           # Bottom border
           bottom_y = @popup_y + popup_total_h - 1
-          buffer.put_string(@popup_x, bottom_y, b.bottom_left, fg: border_c)
-          buffer.put_string(@popup_x + 1, bottom_y, b.bottom * (@popup_w - 2), fg: border_c)
-          buffer.put_string(@popup_x + @popup_w - 1, bottom_y, b.bottom_right, fg: border_c)
+          buffer.put_string(@popup_x, bottom_y, b_style.bottom_left, fg: border_c, bg: pop_bg)
+          buffer.put_string(@popup_x + 1, bottom_y, b_style.bottom_segment(@popup_w - 2), fg: border_c, bg: pop_bg)
+          buffer.put_string(@popup_x + @popup_w - 1, bottom_y, b_style.bottom_right, fg: border_c, bg: pop_bg)
         end
       end
     end

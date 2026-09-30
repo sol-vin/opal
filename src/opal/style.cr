@@ -1,6 +1,7 @@
 require "./style/color"
 require "./style/visual_width"
 require "./style/border"
+require "./style/glyph_set"
 require "./style/style"
 require "./style/layout"
 require "./style/theme"

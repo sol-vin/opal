@@ -70,11 +70,13 @@ module Opal
         @toasts.reverse_each do |toast|
           badge_label, badge_color = toast.level_badge
 
-          line_width = [VisualWidth.width(toast.title) + 12, VisualWidth.width(toast.message) + 4].max
-          card_w = line_width.clamp(28, buffer.width - 4)
+          raw_w = Math.max(VisualWidth.width(toast.title) + 12, VisualWidth.width(toast.message) + 4)
+          max_possible_w = Math.max(10, buffer.width - 4)
+          min_req_w = Math.min(28, max_possible_w)
+          card_w = raw_w.clamp(min_req_w, max_possible_w)
           card_h = toast.message.empty? ? 3 : 4
 
-          card_x = buffer.width - card_w - 2
+          card_x = Math.max(0, buffer.width - card_w - 2)
           card_y = position == :bottom_right ? cur_y - card_h : cur_y
 
           break if card_y < 0 || card_y + card_h > buffer.height
@@ -85,17 +87,17 @@ module Opal
           # Draw rounded card with solid fill
           b = Border.rounded
           toast_buf.put_string(0, 0, b.top_left, fg: badge_color)
-          toast_buf.put_string(1, 0, b.top * (card_w - 2), fg: badge_color)
+          toast_buf.put_string(1, 0, b.top_segment(card_w - 2), fg: badge_color)
           toast_buf.put_string(card_w - 1, 0, b.top_right, fg: badge_color)
 
           (1...(card_h - 1)).each do |y|
-            toast_buf.put_string(0, y, b.left, fg: badge_color)
+            toast_buf.put_char(0, y, b.left_char(y - 1), fg: badge_color)
             toast_buf.put_string(1, y, " " * (card_w - 2))
-            toast_buf.put_string(card_w - 1, y, b.right, fg: badge_color)
+            toast_buf.put_char(card_w - 1, y, b.right_char(y - 1), fg: badge_color)
           end
 
           toast_buf.put_string(0, card_h - 1, b.bottom_left, fg: badge_color)
-          toast_buf.put_string(1, card_h - 1, b.bottom * (card_w - 2), fg: badge_color)
+          toast_buf.put_string(1, card_h - 1, b.bottom_segment(card_w - 2), fg: badge_color)
           toast_buf.put_string(card_w - 1, card_h - 1, b.bottom_right, fg: badge_color)
 
           # Header: badge + title

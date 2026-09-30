@@ -17,6 +17,16 @@ module Opal
       property shortcut_char : Char?
       property on_click : Proc(Button, Nil)?
 
+      # Manipulable theme properties
+      property fg : Color? = nil
+      property bg : Color? = nil
+      property hover_fg : Color? = nil
+      property hover_bg : Color? = nil
+      property active_fg : Color? = nil
+      property active_bg : Color? = nil
+      property border_fg : Color? = nil
+      property border_style : Border? = nil
+
       # Internal render coordinates for mouse hit testing
       @last_x : Int32 = 0
       @last_y : Int32 = 0
@@ -122,13 +132,21 @@ module Opal
 
         fg, bg = button_colors
 
+        # Truncate label if button text exceeds width
+        display_label = @label
+        raw_w = VisualWidth.width(@label) + (@icon ? VisualWidth.width(@icon.not_nil!) + 1 : 0) + 4
+        if raw_w > width && width > 4
+          avail_lbl = Math.max(1, width - (@icon ? VisualWidth.width(@icon.not_nil!) + 1 : 0) - 5)
+          display_label = truncate_text(@label, avail_lbl)
+        end
+
         btn_text = String.build do |io|
           io << "["
           io << " "
           if ic = @icon
             io << ic << " "
           end
-          io << @label
+          io << display_label
           io << " "
           io << "]"
         end
@@ -146,9 +164,27 @@ module Opal
         )
       end
 
-      private def button_colors : {Color, Color}
-        theme = Theme.current
+      def effective_fg : Color
+        button_colors[0]
+      end
+
+      def effective_bg : Color
+        button_colors[1]
+      end
+
+      protected def button_colors : {Color, Color}
+        theme = current_theme
         return {theme.text_muted, Color.none} if @disabled
+
+        if @active
+          eff_fg = @active_fg || @fg
+          eff_bg = @active_bg || @bg
+          if eff_fg || eff_bg
+            return {eff_fg || Color.bright_white, eff_bg || theme.accent}
+          end
+        elsif @fg || @bg
+          return {@fg || theme.text, @bg || Color.none}
+        end
 
         case @variant
         when :primary
@@ -180,6 +216,24 @@ module Opal
         else # :ghost
           {theme.text_muted, Color.none}
         end
+      end
+
+      private def truncate_text(text : String, max_w : Int32) : String
+        return "" if max_w <= 0
+        return text if VisualWidth.width(text) <= max_w
+        return "…" if max_w == 1
+
+        avail = max_w - 1
+        res = IO::Memory.new
+        cur_w = 0
+        text.each_char do |ch|
+          cw = VisualWidth.char_width(ch)
+          break if cur_w + cw > avail
+          res << ch
+          cur_w += cw
+        end
+        res << "…"
+        res.to_s
       end
     end
   end

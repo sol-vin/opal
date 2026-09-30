@@ -114,6 +114,103 @@ module Opal
       theme
     end
 
+    # Exports a theme to a clean, human-readable key-value (.theme) string.
+    def self.export_kv(theme : Theme) : String
+      String.build do |sb|
+        sb.puts "# Opal Theme: #{theme.name}"
+        sb.puts "name = #{theme.name}"
+        sb.puts "primary = #{theme.primary.to_hex}"
+        sb.puts "secondary = #{theme.secondary.to_hex}"
+        sb.puts "accent = #{theme.accent.to_hex}"
+        sb.puts "background = #{theme.background.to_hex}"
+        sb.puts "surface = #{theme.surface.to_hex}"
+        sb.puts "text = #{theme.text.to_hex}"
+        sb.puts "text_muted = #{theme.text_muted.to_hex}"
+        sb.puts "border = #{theme.border.to_hex}"
+        sb.puts "success = #{theme.success.to_hex}"
+        sb.puts "warning = #{theme.warning.to_hex}"
+        sb.puts "danger = #{theme.danger.to_hex}"
+        sb.puts "info = #{theme.info.to_hex}"
+        sb.puts "window_border = #{theme.window_border.top.size > 1 ? "pattern:#{theme.window_border.top}" : "rounded"}"
+        sb.puts "box_border = #{theme.box_border.top.size > 1 ? "pattern:#{theme.box_border.top}" : "rounded"}"
+        sb.puts "glyph_window_close = #{theme.glyphs.window_close}"
+        sb.puts "glyph_window_maximize = #{theme.glyphs.window_maximize}"
+        sb.puts "glyph_window_minimize = #{theme.glyphs.window_minimize}"
+        sb.puts "glyph_cursor = #{theme.glyphs.cursor}"
+        sb.puts "glyph_dropdown_arrow = #{theme.glyphs.dropdown_arrow}"
+        sb.puts "glyph_scrollbar_thumb = #{theme.glyphs.scrollbar_thumb}"
+      end
+    end
+
+    # Imports a theme from a key-value (.theme) string representation.
+    def self.import_kv(kv_str : String) : Theme
+      map = Hash(String, String).new
+      kv_str.each_line do |line|
+        trimmed = line.strip
+        next if trimmed.empty? || trimmed.starts_with?("#") || trimmed.starts_with?(";")
+        parts = trimmed.split('=', 2)
+        if parts.size == 2
+          map[parts[0].strip.downcase] = parts[1].strip
+        end
+      end
+
+      name = map["name"]? || "custom_imported"
+      pri = map["primary"]? ? Color.hex(map["primary"]) : Color.hex("#6C5CE7")
+      bg = map["background"]? ? Color.hex(map["background"]) : Color.hex("#1E1E2E")
+
+      glyphs = GlyphSet.new(
+        window_close: map["glyph_window_close"]? || "[x]",
+        window_maximize: map["glyph_window_maximize"]? || "[^]",
+        window_minimize: map["glyph_window_minimize"]? || "[-]",
+        cursor: map["glyph_cursor"]? || "▶ ",
+        dropdown_arrow: map["glyph_dropdown_arrow"]? || "▼",
+        scrollbar_thumb: map["glyph_scrollbar_thumb"]?.try(&.[0]?) || '█'
+      )
+      window_b = map["window_border"]? ? Border.from(map["window_border"]) : Border.rounded
+      box_b = map["box_border"]? ? Border.from(map["box_border"]) : Border.rounded
+
+      theme = Theme.new(
+        name: name,
+        primary: pri,
+        secondary: map["secondary"]? ? Color.hex(map["secondary"]) : pri.darken(0.15),
+        accent: map["accent"]? ? Color.hex(map["accent"]) : pri.lighten(0.2),
+        background: bg,
+        surface: map["surface"]? ? Color.hex(map["surface"]) : bg.lighten(0.08),
+        text: map["text"]? ? Color.hex(map["text"]) : Color.white,
+        text_muted: map["text_muted"]? ? Color.hex(map["text_muted"]) : Color.gray,
+        border: map["border"]? ? Color.hex(map["border"]) : Color.gray,
+        success: map["success"]? ? Color.hex(map["success"]) : Color.hex("#10B981"),
+        warning: map["warning"]? ? Color.hex(map["warning"]) : Color.hex("#F59E0B"),
+        danger: map["danger"]? ? Color.hex(map["danger"]) : Color.hex("#EF4444"),
+        info: map["info"]? ? Color.hex(map["info"]) : Color.hex("#3B82F6"),
+        window_border: window_b,
+        box_border: box_b,
+        glyphs: glyphs
+      )
+      register(theme)
+      theme
+    end
+
+    # Loads a theme from either a JSON (.json) or key-value (.theme) file.
+    def self.load_file(path : String) : Theme
+      content = File.read(path)
+      if path.ends_with?(".json") || content.strip.starts_with?("{")
+        import_json(content)
+      else
+        import_kv(content)
+      end
+    end
+
+    # Saves a theme to a file on disk (auto-detects JSON or KV based on file extension).
+    def self.save_file(theme : Theme, path : String) : Nil
+      content = if path.ends_with?(".json")
+                  export_json(theme)
+                else
+                  export_kv(theme)
+                end
+      File.write(path, content)
+    end
+
     # Calculates WCAG 2.1 contrast ratios for key UI color pairings in a theme.
     def self.contrast_analysis(theme : Theme) : Hash(String, Float64)
       {

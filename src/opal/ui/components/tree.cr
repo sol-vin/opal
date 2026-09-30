@@ -108,10 +108,15 @@ module Opal
         icon_str = node.icon ? "#{node.icon} " : ""
         line = "#{prefix}#{connector}#{icon_str}#{node.label}"
 
-        # Draw connector in bright_black, then label in node color
-        conn_w = VisualWidth.width("#{prefix}#{connector}")
-        buffer.put_string(x, y, "#{prefix}#{connector}", fg: Color.bright_black)
-        buffer.put_string(x + conn_w, y, "#{icon_str}#{node.label}", fg: node.color, max_width: w - conn_w)
+        # Draw connector in bright_black, then label in node color safely clamped to w
+        conn_str = "#{prefix}#{connector}"
+        conn_w = VisualWidth.width(conn_str)
+        buffer.put_string(x, y, conn_str, fg: Color.bright_black, max_width: w)
+
+        avail_label = Math.max(0, w - conn_w)
+        if avail_label > 0
+          buffer.put_string(x + conn_w, y, "#{icon_str}#{node.label}", fg: node.color, max_width: avail_label)
+        end
 
         next_y = y + 1
         new_prefix = prefix + (is_last ? "    " : "│   ")

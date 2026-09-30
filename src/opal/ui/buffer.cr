@@ -137,28 +137,28 @@ module Opal
         clean_text = VisualWidth.strip_ansi(text)
 
         clean_text.each_char do |ch|
+          cw = VisualWidth.char_width(ch)
+          next if cw <= 0
+
           break if cur_x >= @width
           if cr = @clip_rect
-            break if cur_x >= cr.right
+            break if cur_x + cw > cr.right
           end
           if mw = max_width
-            break if (cur_x - x) >= mw
+            break if (cur_x - x) + cw > mw
           end
 
-          cw = VisualWidth.char_width(ch)
-          if cw > 0
-            if cur_x >= 0 && (cr.nil? || cur_x >= cr.not_nil!.x)
-              put_char(
-                cur_x, y, ch,
-                fg: fg, bg: bg,
-                bold: bold, dim: dim,
-                italic: italic, underline: underline,
-                reverse: reverse,
-                keep_bg: keep_bg
-              )
-            end
-            cur_x += cw
+          if cur_x >= 0 && (cr.nil? || cur_x >= cr.not_nil!.x)
+            put_char(
+              cur_x, y, ch,
+              fg: fg, bg: bg,
+              bold: bold, dim: dim,
+              italic: italic, underline: underline,
+              reverse: reverse,
+              keep_bg: keep_bg
+            )
           end
+          cur_x += cw
         end
 
         Math.max(0, cur_x - x)
@@ -275,8 +275,25 @@ module Opal
 
       # Applies dimming attribute to all cells within the given rectangle.
       def dim_rect(x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-        (y...(y + h)).each do |cur_y|
-          (x...(x + w)).each do |cur_x|
+        return if w <= 0 || h <= 0
+        min_y = Math.max(0, y)
+        max_y = Math.min(@height, y + h)
+        if cr = @clip_rect
+          min_y = Math.max(min_y, cr.y)
+          max_y = Math.min(max_y, cr.bottom)
+        end
+        return if min_y >= max_y
+
+        min_x = Math.max(0, x)
+        max_x = Math.min(@width, x + w)
+        if cr = @clip_rect
+          min_x = Math.max(min_x, cr.x)
+          max_x = Math.min(max_x, cr.right)
+        end
+        return if min_x >= max_x
+
+        (min_y...max_y).each do |cur_y|
+          (min_x...max_x).each do |cur_x|
             cell = get(cur_x, cur_y)
             set(cur_x, cur_y, Cell.new(
               char: cell.char,
@@ -286,7 +303,8 @@ module Opal
               dim: true,
               italic: cell.italic?,
               underline: cell.underline?,
-              reverse: cell.reverse?
+              reverse: cell.reverse?,
+              continuation: cell.continuation?
             ))
           end
         end

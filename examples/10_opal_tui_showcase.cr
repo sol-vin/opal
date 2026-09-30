@@ -2471,6 +2471,15 @@ class ThemeStoreSlide < ShowcaseSlide
     audit_row += 1
     is_readable = theme.text.readable_against?(theme.background)
     buffer.put_string(right_x + 2, audit_row, is_readable ? "[OK] Accessible & Compliant" : "[!] Contrast Warning", fg: is_readable ? theme.success : theme.warning, bold: true)
+    audit_row += 2
+
+    if audit_row < cur_y + list_h - 2
+      buffer.put_string(right_x + 2, audit_row, "Borders & Character Swaps:", fg: theme.accent, bold: true)
+      audit_row += 1
+      buffer.put_string(right_x + 2, audit_row, "Top: #{theme.window_border.top}  Thumb: #{theme.glyphs.scrollbar_thumb}", fg: theme.text_muted)
+      audit_row += 1
+      buffer.put_string(right_x + 2, audit_row, "Win: #{theme.glyphs.window_close} #{theme.glyphs.window_maximize}  Cursor: #{theme.glyphs.cursor}", fg: theme.text_muted)
+    end
   end
 end
 

@@ -15,9 +15,9 @@ module Opal
       property highlighted_line : Int32?
       property scroll_offset : Int32
       property? show_line_numbers : Bool
-      property gutter_fg : Color
-      property cursor_fg : Color
-      property cursor_indicator : String
+      property gutter_fg : Color?
+      property cursor_fg : Color?
+      property cursor_indicator : String?
 
       def initialize(
         @code : String = "",
@@ -26,12 +26,12 @@ module Opal
         @highlighted_line : Int32? = nil,
         @scroll_offset : Int32 = 0,
         @show_line_numbers : Bool = true,
-        gutter_fg : Color | Symbol | String = :dark_gray,
-        cursor_fg : Color | Symbol | String = :yellow,
-        @cursor_indicator : String = "▶ ",
+        gutter_fg : Color | Symbol | String | Nil = nil,
+        cursor_fg : Color | Symbol | String | Nil = nil,
+        @cursor_indicator : String? = nil,
       )
-        @gutter_fg = Color.from(gutter_fg)
-        @cursor_fg = Color.from(cursor_fg)
+        @gutter_fg = gutter_fg ? Color.from(gutter_fg) : nil
+        @cursor_fg = cursor_fg ? Color.from(cursor_fg) : nil
       end
 
       def lines : Array(String)
@@ -58,6 +58,12 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0
 
+        th = current_theme
+        glyphs = th.glyphs
+        gutter_c = @gutter_fg || th.text_muted
+        cursor_c = @cursor_fg || th.warning
+        indicator = @cursor_indicator || glyphs.cursor
+
         # Erase entire code view viewport with spaces to eliminate dirty trailing cells
         buffer.fill(x, y, width, height, ' ')
 
@@ -77,15 +83,16 @@ module Opal
           if @show_line_numbers && gutter_w > 0
             num_str = line_num.to_s
             pad_w = gutter_w - 3 # account for ' │ '
-            padded_num = num_str.rjust(pad_w)
+            indicator_w = VisualWidth.width(indicator)
 
             if is_highlighted
-              buffer.put_string(x, cur_y, @cursor_indicator, fg: @cursor_fg, bold: true)
-              buffer.put_string(x + 2, cur_y, padded_num[2..]? || padded_num, fg: @cursor_fg, bold: true)
-              buffer.put_string(x + gutter_w - 3, cur_y, " │ ", fg: @gutter_fg)
+              rem_w = Math.max(0, pad_w - indicator_w)
+              buffer.put_string(x, cur_y, indicator, fg: cursor_c, bold: true)
+              buffer.put_string(x + indicator_w, cur_y, num_str.rjust(rem_w), fg: cursor_c, bold: true)
+              buffer.put_string(x + pad_w, cur_y, " │ ", fg: gutter_c)
             else
-              buffer.put_string(x, cur_y, padded_num, fg: @gutter_fg)
-              buffer.put_string(x + pad_w, cur_y, " │ ", fg: @gutter_fg)
+              buffer.put_string(x, cur_y, num_str.rjust(pad_w), fg: gutter_c)
+              buffer.put_string(x + pad_w, cur_y, " │ ", fg: gutter_c)
             end
           end
 
@@ -121,13 +128,15 @@ module Opal
           tokens = [{line, Color.none, false, false}]
         end
 
+        hl_fg = @cursor_fg || current_theme.warning
+
         tokens.each do |text, fg, bold, dim|
           break if cur_x >= start_x + max_width
           avail = (start_x + max_width) - cur_x
 
           buffer.put_string(
             cur_x, y, text,
-            fg: highlight ? (fg.type == Color::Type::None ? @cursor_fg : fg) : fg,
+            fg: highlight ? (fg.type == Color::Type::None ? hl_fg : fg) : fg,
             bold: highlight ? true : bold,
             dim: dim,
             max_width: avail

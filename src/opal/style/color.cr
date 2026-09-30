@@ -113,6 +113,14 @@ module Opal
       ansi(90)
     end # Gray
 
+    def self.gray
+      bright_black
+    end
+
+    def self.grey
+      bright_black
+    end
+
     def self.bright_red
       ansi(91)
     end
@@ -309,6 +317,38 @@ module Opal
     # Returns true if the contrast ratio meets or exceeds the required WCAG threshold (default 4.5 for AA normal text)
     def readable_against?(bg : Color, min_ratio : Float64 = 4.5) : Bool
       contrast_ratio(bg) >= min_ratio
+    end
+
+    # Lightens the color toward white by factor (0.0 to 1.0)
+    def lighten(factor : Float64) : Color
+      r_u, g_u, b_u = to_rgb
+      r = (r_u.to_f + (255.0 - r_u.to_f) * factor.clamp(0.0, 1.0)).round.to_u8
+      g = (g_u.to_f + (255.0 - g_u.to_f) * factor.clamp(0.0, 1.0)).round.to_u8
+      b = (b_u.to_f + (255.0 - b_u.to_f) * factor.clamp(0.0, 1.0)).round.to_u8
+      Color.rgb(r, g, b)
+    end
+
+    # Darkens the color toward black by factor (0.0 to 1.0)
+    def darken(factor : Float64) : Color
+      r_u, g_u, b_u = to_rgb
+      mult = (1.0 - factor.clamp(0.0, 1.0))
+      r = (r_u.to_f * mult).round.to_u8
+      g = (g_u.to_f * mult).round.to_u8
+      b = (b_u.to_f * mult).round.to_u8
+      Color.rgb(r, g, b)
+    end
+
+    # Adjusts luminance until contrast ratio against bg meets or exceeds min_ratio
+    def ensure_contrast(bg : Color, min_ratio : Float64 = 4.5) : Color
+      return self if contrast_ratio(bg) >= min_ratio
+      is_bg_dark = bg.relative_luminance < 0.5
+      step = 0.08
+      adjusted = self
+      15.times do
+        adjusted = is_bg_dark ? adjusted.lighten(step) : adjusted.darken(step)
+        return adjusted if adjusted.contrast_ratio(bg) >= min_ratio
+      end
+      is_bg_dark ? Color.white : Color.black
     end
   end
 end

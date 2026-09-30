@@ -24,25 +24,42 @@ module Opal
     # Tabbed navigation header component for multi-view interfaces.
     class Tabs < Element
       property items : Array(TabItem)
-      property active_index : Int32
-      property active_fg : Color
-      property active_bg : Color
-      property inactive_fg : Color
+      property active_index : Int32 = 0
+      property active_fg : Color?
+      property active_bg : Color?
+      property inactive_fg : Color?
+      property inactive_bg : Color?
       property spacing : Int32
       property? pill_style : Bool
 
       def initialize(
         @items : Array(TabItem) = [] of TabItem,
         @active_index : Int32 = 0,
-        active_fg : Color | Symbol | String = :bright_white,
-        active_bg : Color | Symbol | String = :blue,
-        inactive_fg : Color | Symbol | String = :gray,
+        active_fg : Color | Symbol | String | Nil = nil,
+        active_bg : Color | Symbol | String | Nil = nil,
+        inactive_fg : Color | Symbol | String | Nil = nil,
+        inactive_bg : Color | Symbol | String | Nil = nil,
         @spacing : Int32 = 2,
         @pill_style : Bool = false,
       )
-        @active_fg = Color.from(active_fg)
-        @active_bg = Color.from(active_bg)
-        @inactive_fg = Color.from(inactive_fg)
+        @active_fg = active_fg ? Color.from(active_fg) : nil
+        @active_bg = active_bg ? Color.from(active_bg) : nil
+        @inactive_fg = inactive_fg ? Color.from(inactive_fg) : nil
+        @inactive_bg = inactive_bg ? Color.from(inactive_bg) : nil
+      end
+
+      def self.new(
+        labels : Array(String),
+        active_index : Int32 = 0,
+        active_fg : Color | Symbol | String | Nil = nil,
+        active_bg : Color | Symbol | String | Nil = nil,
+        inactive_fg : Color | Symbol | String | Nil = nil,
+        inactive_bg : Color | Symbol | String | Nil = nil,
+        spacing : Int32 = 2,
+        pill_style : Bool = false,
+      ) : Tabs
+        items = labels.map { |l| TabItem.new(l.downcase, l) }
+        new(items, active_index, active_fg, active_bg, inactive_fg, inactive_bg, spacing, pill_style)
       end
 
       def self.from_labels(labels : Array(String), active : Int32 = 0) : Tabs
@@ -132,15 +149,21 @@ module Opal
         is_active : Bool,
         max_w : Int32,
       ) : Nil
+        th = current_theme
+        a_fg = @active_fg || (pill_style? ? th.background : th.primary)
+        a_bg = @active_bg || (pill_style? ? th.primary : Color.none)
+        i_fg = @inactive_fg || th.text_muted
+        i_bg = @inactive_bg || Color.none
+
         text = tab_string(item)
         if is_active
           if @pill_style
-            buffer.put_string(x, y, text, fg: @active_fg, bg: @active_bg, bold: true, max_width: max_w)
+            buffer.put_string(x, y, text, fg: a_fg, bg: a_bg, bold: true, max_width: max_w)
           else
-            buffer.put_string(x, y, text, fg: @active_fg, bold: true, underline: true, max_width: max_w)
+            buffer.put_string(x, y, text, fg: a_fg, bold: true, underline: true, max_width: max_w)
           end
         else
-          buffer.put_string(x, y, text, fg: @inactive_fg, dim: true, max_width: max_w)
+          buffer.put_string(x, y, text, fg: i_fg, bg: i_bg, dim: true, max_width: max_w)
         end
       end
     end

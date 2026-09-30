@@ -9,41 +9,59 @@ module Opal
     class Table < Control
       property headers : Array(String)
       property rows : Array(Array(String))
-      property header_fg : Color
-      property border_fg : Color
+      property header_fg : Color?
+      property header_bg : Color?
+      property border_fg : Color?
       property selected_index : Int32?
       property visible_rows : Int32?
       property scroll_offset : Int32
       property? truncate : Bool
       property? zebra : Bool
-      property selected_fg : Color
-      property selected_bg : Color
-      property cursor_char : String
+      property selected_fg : Color?
+      property selected_bg : Color?
+      property zebra_bg : Color?
+      property cursor_char : String?
+      property divider_char : String?
+      property horizontal_char : Char?
+      property junction_char : Char?
+      property vertical_char : Char?
+      property border_style : Border?
 
       def initialize(
         @headers : Array(String) = [] of String,
         @rows : Array(Array(String)) = [] of Array(String),
-        header_fg : Color | Symbol | String = :cyan,
-        border_fg : Color | Symbol | String = Color.none,
+        header_fg : Color | Symbol | String | Nil = nil,
+        header_bg : Color | Symbol | String | Nil = nil,
+        border_fg : Color | Symbol | String | Nil = nil,
         @selected_index : Int32? = nil,
         @visible_rows : Int32? = nil,
         @scroll_offset : Int32 = 0,
         @truncate : Bool = true,
         @zebra : Bool = false,
-        selected_fg : Color | Symbol | String = :black,
-        selected_bg : Color | Symbol | String = :cyan,
-        @cursor_char : String = "▶ ",
+        selected_fg : Color | Symbol | String | Nil = nil,
+        selected_bg : Color | Symbol | String | Nil = nil,
+        zebra_bg : Color | Symbol | String | Nil = nil,
+        @cursor_char : String? = nil,
+        @divider_char : String? = nil,
+        border_style : Border | Symbol | String | Nil = nil,
       )
-        @header_fg = Color.from(header_fg)
-        @border_fg = Color.from(border_fg)
-        @selected_fg = Color.from(selected_fg)
-        @selected_bg = Color.from(selected_bg)
+        @header_fg = header_fg ? Color.from(header_fg) : nil
+        @header_bg = header_bg ? Color.from(header_bg) : nil
+        @border_fg = border_fg ? Color.from(border_fg) : nil
+        @selected_fg = selected_fg ? Color.from(selected_fg) : nil
+        @selected_bg = selected_bg ? Color.from(selected_bg) : nil
+        @zebra_bg = zebra_bg ? Color.from(zebra_bg) : nil
+        @border_style = border_style ? Border.from(border_style) : nil
         super()
       end
 
       def row(cells : Array(String)) : self
         @rows << cells
         self
+      end
+
+      def add_row(cells : Array(String)) : self
+        row(cells)
       end
 
       def select(idx : Int32?) : self
@@ -137,6 +155,15 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0
 
+        th = current_theme
+        glyphs = th.glyphs
+        h_fg = @header_fg || th.primary
+        h_bg = @header_bg || Color.none
+        b_fg = @border_fg || th.border
+        s_fg = @selected_fg || th.background
+        s_bg = @selected_bg || th.accent
+        z_bg = @zebra_bg || (th.background.relative_luminance < 0.5 ? th.background.lighten(0.04) : th.background.darken(0.04))
+
         # Erase entire table viewport with spaces to eliminate dirty trailing cells
         buffer.fill(x, y, width, height, ' ')
 
@@ -145,16 +172,19 @@ module Opal
 
         # Render Header
         unless @headers.empty?
-          render_row(buffer, x, cur_y, @headers, col_widths, fg: @header_fg, bold: true, width: width)
+          render_row(buffer, x, cur_y, @headers, col_widths, fg: h_fg, bg: h_bg, bold: true, width: width)
           cur_y += 1
 
-          # Divider line
+          # Divider line: mathematical alignment with columns!
           divider_str = IO::Memory.new
+          horiz_char = @horizontal_char || glyphs.table_horizontal
+          junc_char = @junction_char || glyphs.table_junction
+          div_char = @divider_char || "#{horiz_char}#{junc_char}#{horiz_char}"
           col_widths.each_with_index do |cw, idx|
-            divider_str << (idx == 0 ? "─" : "─┼─")
-            divider_str << ("─" * cw)
+            divider_str << div_char if idx > 0
+            divider_str << (horiz_char.to_s * cw)
           end
-          buffer.put_string(x, cur_y, divider_str.to_s, fg: @border_fg, max_width: width)
+          buffer.put_string(x, cur_y, divider_str.to_s, fg: b_fg, max_width: width)
           cur_y += 1
         end
 
@@ -168,14 +198,21 @@ module Opal
           break if cur_y >= y + height
           actual_idx = @scroll_offset + offset_idx
           is_selected = (@selected_index == actual_idx)
-          dim = @zebra ? (actual_idx.odd? && !is_selected) : false
+          row_bg = if is_selected
+                     s_bg
+                   elsif @zebra && actual_idx.odd?
+                     z_bg
+                   else
+                     Color.none
+                   end
+          row_fg = is_selected ? s_fg : Color.none
 
           render_row(
             buffer, x, cur_y, r, col_widths,
-            fg: is_selected ? @selected_fg : Color.none,
-            bg: is_selected ? @selected_bg : Color.none,
+            fg: row_fg,
+            bg: row_bg,
             bold: is_selected,
-            dim: dim,
+            dim: @zebra && actual_idx.odd? && !is_selected && @zebra_bg.nil?,
             width: width,
             is_selected: is_selected
           )
@@ -227,20 +264,22 @@ module Opal
             end
           end
 
-          # If selected, fill background across column
-          if is_selected
+          # If selected or row background, fill background across column strictly within width
+          if bg.type != Color::Type::None
             (0...cw).each do |cx|
+              break if cur_x + cx >= x + width
               buffer.put_char(cur_x + cx, y, ' ', fg: fg, bg: bg)
             end
           end
 
+          avail_w = Math.min(cw, Math.max(0, (x + width) - cur_x))
           buffer.put_string(
             cur_x, y, display_text,
             fg: fg,
             bg: bg,
             bold: bold,
             dim: dim,
-            max_width: cw
+            max_width: avail_w
           )
 
           cur_x += cw + 3 # 3 spaces padding between columns
