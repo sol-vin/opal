@@ -55,7 +55,7 @@ module Opal
 
     # Interactive file and directory picker with directory traversal,
     # file/folder icons, live filter search, and split preview pane.
-    class FileDialog < Element
+    class FileDialog < Control
       getter current_path : String
       getter? show_hidden : Bool
       property filter_query : String = ""
@@ -74,6 +74,7 @@ module Opal
       )
         @current_path = File.expand_path(initial_path)
         load_entries
+        super()
       end
 
       def entries : Array(FileEntry)
@@ -241,6 +242,19 @@ module Opal
               return true
             end
           end
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          cursor_up
+          true
+        when Terminal::MouseButton::WheelDown
+          cursor_down
+          true
+        else
           false
         end
       end

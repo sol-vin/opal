@@ -6,7 +6,7 @@ module Opal
   module UI
     # Formatted data table component with column alignment, headers,
     # row selection cursor, windowed scrolling pagination, and cell truncation.
-    class Table < Element
+    class Table < Control
       property headers : Array(String)
       property rows : Array(Array(String))
       property header_fg : Color
@@ -38,6 +38,7 @@ module Opal
         @border_fg = Color.from(border_fg)
         @selected_fg = Color.from(selected_fg)
         @selected_bg = Color.from(selected_bg)
+        super()
       end
 
       def row(cells : Array(String)) : self
@@ -73,6 +74,44 @@ module Opal
 
       def page_down(count : Int32 = 10) : self
         move_down(count)
+      end
+
+      def handle_key(key : Terminal::KeyEvent) : Bool
+        case key.name
+        when "up", "ctrl+p"
+          move_up
+          true
+        when "down", "ctrl+n"
+          move_down
+          true
+        when "pageup", "page_up"
+          page_up
+          true
+        when "pagedown", "page_down"
+          page_down
+          true
+        when "home"
+          self.select(0)
+          true
+        when "end"
+          self.select(@rows.size - 1)
+          true
+        else
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          move_up(3)
+          true
+        when Terminal::MouseButton::WheelDown
+          move_down(3)
+          true
+        else
+          false
+        end
       end
 
       private def ensure_visible_selection : Nil

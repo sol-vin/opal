@@ -9,3 +9,7 @@ module Opal
     end
   end
 end
+
+require "./input_hookable"
+require "./control"
+require "./engine"

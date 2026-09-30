@@ -9,7 +9,7 @@ module Opal
   module UI
     # Interactive TrueColor 24-bit color picker with RGB channel sliders,
     # live TrueColor preview swatches, hex calculations, and preset palettes.
-    class ColorPicker < Element
+    class ColorPicker < Control
       property r : Int32
       property g : Int32
       property b : Int32
@@ -48,6 +48,7 @@ module Opal
         @g = g_u.to_i
         @b = b_u.to_i
         @preset_swatches = presets || DEFAULT_PALETTE
+        super()
       end
 
       def color : Color

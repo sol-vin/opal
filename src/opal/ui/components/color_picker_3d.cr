@@ -25,7 +25,7 @@ module Opal
 
     # Interactive 2D/3D Color Picker featuring rotatable 3D RGB cubes, 3D color spheres,
     # 2D polar circle color wheels, and square spectrums with virtual cursor raycasting.
-    class ColorPicker3D < Element
+    class ColorPicker3D < Control
       property shape : ColorPickerShape
       property pitch : Float64 # Rotation around X-axis (radians)
       property yaw : Float64   # Rotation around Y-axis (radians)
@@ -50,6 +50,7 @@ module Opal
         @selected_color = initial_color
         @cursor_x = 12
         @cursor_y = 6
+        super()
       end
 
       # Helper to convert HSL to 24-bit RGB Color

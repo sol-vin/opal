@@ -9,7 +9,7 @@ require "../../terminal/driver"
 module Opal
   module UI
     # Interactive fuzzy filterable list with search query and optional preview pane.
-    class FilterList < Element
+    class FilterList < Control
       getter title : String?
       getter items : Array(String)
       property query : String = ""
@@ -21,6 +21,7 @@ module Opal
         @title : String? = nil,
         @preview_fn : Proc(String, String)? = nil,
       )
+        super()
       end
 
       def matches : Array(Input::FuzzyMatch(String))
@@ -52,6 +53,51 @@ module Opal
         return if @query.empty?
         @query = @query[0...-1]
         @cursor = 0
+      end
+
+      def handle_key(key : Terminal::KeyEvent) : Bool
+        case key.name
+        when "up", "ctrl+p"
+          cursor_up
+          true
+        when "down", "ctrl+n"
+          cursor_down
+          true
+        when "backspace"
+          backspace
+          true
+        when "escape"
+          if @query.empty?
+            false
+          else
+            @query = ""
+            @cursor = 0
+            true
+          end
+        else
+          if key.name.size == 1
+            append_char(key.name[0])
+            true
+          elsif (ch = key.char) && !key.ctrl? && !key.alt?
+            append_char(ch)
+            true
+          else
+            false
+          end
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          cursor_up
+          true
+        when Terminal::MouseButton::WheelDown
+          cursor_down
+          true
+        else
+          false
+        end
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}

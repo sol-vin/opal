@@ -85,6 +85,7 @@ require "opal"
 - [Fluent Styling & Layout](#-fluent-styling--layout)
 - [Interactive Prompts](#-interactive-prompts)
 - [Autocomplete & Ghost Text DSL](#-autocomplete--ghost-text-dsl)
+- [Interactive Controls & Puppeting Engine](#-interactive-controls--puppeting-engine)
 - [KeyMap & MouseMap DSLs](#-keymap--mousemap-dsls)
 - [The Elm Architecture (TEA)](#-the-elm-architecture-tea)
 - [Testing with MockDriver](#-testing-with-mockdriver)
@@ -533,6 +534,67 @@ input.autocomplete = engine
 # Press [Tab] to accept ghost completion
 # Press [Enter] to submit
 ```
+
+---
+
+## 🎮 Interactive Controls & Puppeting Engine
+
+> [!NOTE]
+> For in-depth architectural design, sequence diagrams, and lifecycle specifications, see the [Architecture Guide: Controls, Input Hooks & Engine](docs/architecture/input_hooks_and_engine.md).
+
+Every interactive widget in Opal (`Table`, `FilterList`, `ColorPicker`, `ColorPicker3D`, `FileDialog`, and custom widgets) inherits from `Opal::UI::Control < Opal::UI::Element`. They implement standard input lifecycles, per-control input overrides, and code puppeting:
+
+### 1. Default Inputs Lifecycle
+Controls initialize standard keyboard and mouse bindings via `setup_default_inputs`:
+```crystal
+picker = Opal::UI::ColorPicker.new
+# Standard arrow keys, tabs, numbers, and mouse scrubbing work out of the box!
+```
+
+### 2. Custom Input Hooks & Interceptors (`on_input`)
+Intercept or augment input handling per control without subclassing:
+```crystal
+picker.on_input do |ctrl, event|
+  if event.is_a?(Opal::Terminal::KeyEvent) && event.name == "x"
+    ctrl.color = Opal::Color.hex("#FF0000") # Custom shortcut: Instant red
+    true # Consumed!
+  else
+    false # Fall back to default inputs (+, -, arrows, tabs)
+  end
+end
+```
+
+### 3. Programmatic Puppeting from Code (`puppet`)
+Automate controls without physical user input (e.g. background ticker or playback script):
+```crystal
+table = Opal::UI::Table.new(headers: ["Job", "Status"])
+table.puppet do |tbl, event|
+  if event.is_a?(Opal::Terminal::KeyEvent) && event.name == "auto_tick"
+    cur = tbl.selected_index || 0
+    tbl.select((cur + 1) % tbl.rows.size)
+    true
+  else
+    false
+  end
+end
+
+# Drive the control programmatically:
+table.handle_input(Opal::Terminal::KeyEvent.new("auto_tick"))
+```
+
+### 4. Multi-Control Focus Orchestration with `Opal::UI::Engine`
+```crystal
+engine = Opal::UI::Engine.new([table, picker])
+
+# Tab / Shift+Tab cycles focus automatically:
+engine.handle_key(Opal::Terminal::KeyEvent.new("tab"))
+
+# Inject synthetic inputs for headless tests:
+engine.send_key("down")
+engine.send_mouse(15, 10, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press)
+```
+
+For a complete runnable demonstration, check out [`examples/13_control_input_hooks_and_puppeting.cr`](examples/13_control_input_hooks_and_puppeting.cr).
 
 ---
 
