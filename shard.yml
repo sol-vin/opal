@@ -10,6 +10,12 @@ crystal: ">= 1.10.0"
 targets:
   opal:
     main: src/opal.cr
+  opal-demo:
+    main: examples/10_opal_tui_showcase.cr
+  opal-shaders:
+    main: examples/11_text_shaders.cr
+  opal-color3d:
+    main: examples/12_3d_color_picker.cr
 
 development_dependencies:
   # Zero external dependencies for core library!

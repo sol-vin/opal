@@ -70,6 +70,10 @@ require "opal"
 - [Quick Start](#-quick-start)
 - [Multi-Field Form & Wizard DSL](#-multi-field-form--wizard-dsl)
 - [Live Fuzzy Search & Filter](#-live-fuzzy-search--filter)
+- [Interactive File Dialog & Explorer](#-interactive-file-dialog--explorer)
+- [TrueColor 24-Bit Color Picker](#-truecolor-24-bit-color-picker)
+- [2D & 3D Spatial Color Picker](#-2d--3d-spatial-color-picker)
+- [Text Shaders & Terminal FX](#-text-shaders--terminal-fx)
 - [Data Visualizations](#-data-visualizations)
 - [Buffer Blitting, Modals & Toasts](#-buffer-blitting-modals--toasts)
 - [Terminal Markdown Viewer](#-terminal-markdown-viewer)
@@ -185,6 +189,98 @@ choice = Opal.filter(
   title: "Fuzzy File Finder",
   preview: ->(path : String) { File.read(path).lines.first(15).join("\n") }
 )
+```
+
+---
+
+## 📁 Interactive File Dialog & Explorer
+
+Browse file systems with folder/file icons, formatted human-readable file sizes, live directory search filtering, and split file preview:
+
+```crystal
+# Standalone interactive file picker
+selected_file = Opal.file_dialog(initial_path: "./src", mode: :open_file)
+puts "Chosen file: #{selected_file}" if selected_file
+
+# Declaratively inside a layout tree
+Opal.render_ui(width: 80, height: 20) do |ui|
+  ui.file_dialog(initial_path: ".")
+end
+```
+
+---
+
+## 🎨 TrueColor 24-Bit Color Picker
+
+Interactive color palette studio with Red, Green, Blue channel sliders, live TrueColor preview swatches, hex `#RRGGBB` calculations, luminance, and designer preset swatches:
+
+```crystal
+# Standalone interactive color picker
+picked_color = Opal.pick_color(Opal::Color.hex("#89B4FA"))
+if c = picked_color
+  puts "Selected color: #{c.to_hex} (RGB: #{c.to_rgb})"
+end
+
+# Declaratively in an element tree
+Opal.render_ui(width: 60, height: 16) do |ui|
+  ui.color_picker(initial_color: Opal::Color.cyan)
+end
+```
+
+---
+
+## 🧊 2D & 3D Spatial Color Picker
+
+Choose colors in continuous 2D and 3D geometric spaces. Features real-time pitch/yaw rotation (`w/a/s/d`), virtual cursor raycasting (`↑/↓/←/→`), depth buffering (Z-buffer), and surface sampling across multiple projection shapes:
+
+- **3D RGB Cube**: Full TrueColor volume with 6 colored faces and rotatable perspective camera.
+- **3D RGB Sphere**: Latitude/longitude polar mapping rendered as an orthographic 3D globe.
+- **2D Hue Circle Wheel**: Radial hue spectrum with saturation-based center blend.
+- **2D RGB Square Spectrum**: Continuous 2D gradient field.
+
+```crystal
+# Launch standalone interactive 3D color picker
+chosen = Opal.pick_color_3d(initial_color: Opal::Color.hex("#F38BA8"), shape: :cube_3d)
+if c = chosen
+  puts "Selected color: #{c.to_hex} (R: #{c.r}, G: #{c.g}, B: #{c.b})"
+end
+
+# Declaratively in a UI tree
+Opal.render_ui(width: 80, height: 24) do |ui|
+  ui.color_picker_3d(shape: :sphere_3d, scale: 7.0)
+end
+```
+
+---
+
+## ✨ Text Shaders & Terminal FX
+
+Manipulate the character buffer like a GPU fragment shader. Opal brings pixel-shader thinking to text terminals with normalized UV coordinates `(u, v) ∈ [0, 1]`, double-buffered ping-pong rendering, composable multi-pass pipelines, and sub-region scoping:
+
+- **Mathematical Helpers**: `uv`, `time`, `dist_center`, `wave`, `noise`, and neighbor sampling (`sample`, `sample_left`, `sample_right`).
+- **Sub-Region Scoping**: Apply shaders to full screen or restrict execution to any bounding `Rect(x, y, w, h)`.
+- **Built-in Presets**: `matrix_rain`, `crt_terminal`, `glitch_pass`, `plasma_waves`, `fire_effect`, and `vignette`.
+
+```crystal
+# Compose a multi-pass post-processing pipeline
+pipeline = Opal.shader_pipeline do |pipe|
+  # Procedural plasma wave background
+  pipe.plasma(speed: 2.5, scale: 6.0)
+
+  # Custom fragment shader modifying character and colors
+  pipe.fragment(label: "tint_and_dissolve") do |ctx|
+    if ctx.noise(ctx.u * 10, ctx.v * 10) > 0.6
+      ctx.fg = Opal::Color.hex("#89DCEB")
+      ctx.char = '✦'
+    end
+  end
+
+  # Terminal retro scanlines and curvature vignette
+  pipe.crt(scanline_opacity: 0.25, curvature: 0.15)
+end
+
+# Execute over an Opal Buffer
+pipeline.render(buffer, time: 1.5)
 ```
 
 ---
@@ -528,13 +624,16 @@ Explore all runnable examples in the [`examples/`](examples/) directory:
 - [`07_fuzzy_finder.cr`](examples/07_fuzzy_finder.cr) — Live fuzzy search list with rune highlighting and split preview pane.
 - [`08_dataviz_dashboard.cr`](examples/08_dataviz_dashboard.cr) — Rich analytics dashboard with Sparklines, BarCharts, Gauges, Trees, and Themes.
 - [`09_markdown_and_overlays.cr`](examples/09_markdown_and_overlays.cr) — Terminal Markdown viewer, Modal dialogs, and floating Toast notifications.
+- [`10_opal_tui_showcase.cr`](examples/10_opal_tui_showcase.cr) — **Full-featured 23-slide linear TUI showcase tour** displaying every Opal feature with interactive mini-apps, file dialogs, 2D/3D color pickers, and live text shaders.
+- [`11_text_shaders.cr`](examples/11_text_shaders.cr) — Realtime text shader playground demonstrating Matrix Rain, CRT scanlines, Glitch, Plasma waves, Fire FX, and multi-pass pipeline compositing.
+- [`12_3d_color_picker.cr`](examples/12_3d_color_picker.cr) — Interactive 3D RGB Cube, 3D Sphere, 2D Wheel, and Spectrum color pickers with pitch/yaw rotation and surface raycasting.
 
 Run any example:
 
 ```bash
-crystal run examples/06_rich_form_wizard.cr
-crystal run examples/08_dataviz_dashboard.cr
-crystal run examples/09_markdown_and_overlays.cr
+crystal run examples/10_opal_tui_showcase.cr
+crystal run examples/11_text_shaders.cr
+crystal run examples/12_3d_color_picker.cr
 ```
 
 ---

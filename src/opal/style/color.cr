@@ -251,5 +251,11 @@ module Opal
 
       rgb(r, g, b)
     end
+
+    # Formats color as hex string "#RRGGBB"
+    def to_hex : String
+      r_u, g_u, b_u = to_rgb
+      sprintf("#%02X%02X%02X", r_u, g_u, b_u)
+    end
   end
 end

@@ -19,6 +19,9 @@ require "./components/split_view"
 require "./components/code_view"
 require "./components/tabs"
 require "./components/hex_viewer"
+require "./components/file_dialog"
+require "./components/color_picker"
+require "./components/color_picker_3d"
 
 module Opal
   module UI
@@ -288,6 +291,56 @@ module Opal
         el
       end
 
+      def file_dialog(
+        initial_path : String = ".",
+        mode : Symbol = :open_file,
+        show_hidden : Bool = false,
+        preview_fn : Proc(String, String)? = nil,
+      ) : FileDialog
+        el = FileDialog.new(
+          initial_path: initial_path,
+          mode: mode,
+          show_hidden: show_hidden,
+          preview_fn: preview_fn
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def color_picker(
+        initial_color : Color = Color.hex("#89B4FA"),
+        active_channel : Symbol = :red,
+        presets : Array(Color)? = nil,
+      ) : ColorPicker
+        el = ColorPicker.new(
+          initial_color: initial_color,
+          active_channel: active_channel,
+          presets: presets
+        )
+        set_root_or_child(el)
+        el
+      end
+
+      def color_picker_3d(
+        shape : ColorPickerShape = ColorPickerShape::Cube3D,
+        pitch : Float64 = 0.42,
+        yaw : Float64 = 0.58,
+        auto_rotate : Bool = false,
+        initial_color : Color = Color.hex("#89B4FA"),
+        size : Int32 = 12,
+      ) : ColorPicker3D
+        el = ColorPicker3D.new(
+          shape: shape,
+          pitch: pitch,
+          yaw: yaw,
+          auto_rotate: auto_rotate,
+          initial_color: initial_color,
+          size: size
+        )
+        set_root_or_child(el)
+        el
+      end
+
       private def set_root_or_child(el : Element) : Nil
         @root ||= el
       end
@@ -536,6 +589,56 @@ module Opal
           bytes_per_row: bytes_per_row,
           scroll_offset: scroll_offset,
           selected_byte: selected_byte
+        )
+        add(el)
+        el
+      end
+
+      def file_dialog(
+        initial_path : String = ".",
+        mode : Symbol = :open_file,
+        show_hidden : Bool = false,
+        preview_fn : Proc(String, String)? = nil,
+      ) : FileDialog
+        el = FileDialog.new(
+          initial_path: initial_path,
+          mode: mode,
+          show_hidden: show_hidden,
+          preview_fn: preview_fn
+        )
+        add(el)
+        el
+      end
+
+      def color_picker(
+        initial_color : Color = Color.hex("#89B4FA"),
+        active_channel : Symbol = :red,
+        presets : Array(Color)? = nil,
+      ) : ColorPicker
+        el = ColorPicker.new(
+          initial_color: initial_color,
+          active_channel: active_channel,
+          presets: presets
+        )
+        add(el)
+        el
+      end
+
+      def color_picker_3d(
+        shape : ColorPickerShape = ColorPickerShape::Cube3D,
+        pitch : Float64 = 0.42,
+        yaw : Float64 = 0.58,
+        auto_rotate : Bool = false,
+        initial_color : Color = Color.hex("#89B4FA"),
+        size : Int32 = 12,
+      ) : ColorPicker3D
+        el = ColorPicker3D.new(
+          shape: shape,
+          pitch: pitch,
+          yaw: yaw,
+          auto_rotate: auto_rotate,
+          initial_color: initial_color,
+          size: size
         )
         add(el)
         el

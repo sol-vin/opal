@@ -13,6 +13,9 @@ require "./ui/components/split_view"
 require "./ui/components/code_view"
 require "./ui/components/tabs"
 require "./ui/components/hex_viewer"
+require "./ui/components/file_dialog"
+require "./ui/components/color_picker"
+require "./ui/components/color_picker_3d"
 require "./ui/dsl"
 
 module Opal

@@ -203,6 +203,29 @@ module Opal
           io.puts unless y == @height - 1
         end
       end
+
+      # Applies a custom text shader block to this buffer (or a specific region)
+      def shade(
+        region : Shader::Rect? = nil,
+        time : Float64 = 0.0,
+        frame : UInt64 = 0_u64,
+        &block : Shader::ShaderContext -> Nil
+      ) : self
+        pass = Shader::FragmentPass.new(region, &block)
+        apply_shader(pass, time, frame)
+      end
+
+      # Applies a shader pass to this buffer
+      def apply_shader(pass : Shader::Pass, time : Float64 = 0.0, frame : UInt64 = 0_u64) : self
+        dst = clone
+        pass.apply(self, dst, time, frame)
+        (0...@height).each do |y|
+          (0...@width).each do |x|
+            set(x, y, dst.get(x, y))
+          end
+        end
+        self
+      end
     end
   end
 end
