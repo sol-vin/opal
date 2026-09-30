@@ -32,7 +32,7 @@ module Opal
       width : Int32 = 80,
       height : Int32 = 24,
       title : String = "Opal Session",
-      time_advance : Float64 = 0.05
+      time_advance : Float64 = 0.05,
     ) : Driver
       Driver.new(width: width, height: height, title: title, time_advance: time_advance)
     end
