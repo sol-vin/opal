@@ -57,3 +57,6 @@ jobs:
           crystal build examples/07_fuzzy_finder.cr -o bin/example7
           crystal build examples/08_dataviz_dashboard.cr -o bin/example8
           crystal build examples/09_markdown_and_overlays.cr -o bin/example9
+          crystal build examples/10_opal_tui_showcase.cr -o bin/example10
+          crystal build examples/11_text_shaders.cr -o bin/example11
+          crystal build examples/12_3d_color_picker.cr -o bin/example12

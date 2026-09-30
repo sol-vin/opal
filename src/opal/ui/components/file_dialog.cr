@@ -41,13 +41,13 @@ module Opal
           "📁"
         else
           case File.extname(@name).downcase
-          when ".cr"                  then "💎"
+          when ".cr"                    then "💎"
           when ".yml", ".yaml", ".json" then "⚙️"
-          when ".md", ".txt"          then "📝"
-          when ".png", ".jpg", ".svg"  then "🖼️"
-          when ".exe", ".bat", ".cmd"  then "⚡"
-          when ".lock"                then "🔒"
-          else                             "📄"
+          when ".md", ".txt"            then "📝"
+          when ".png", ".jpg", ".svg"   then "🖼️"
+          when ".exe", ".bat", ".cmd"   then "⚡"
+          when ".lock"                  then "🔒"
+          else                               "📄"
           end
         end
       end

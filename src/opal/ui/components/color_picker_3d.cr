@@ -120,7 +120,7 @@ module Opal
         when "d"
           @yaw += 0.12
           true
-        # Virtual cursor movement
+          # Virtual cursor movement
         when "up"
           @cursor_y = Math.max(0, @cursor_y - 1)
           true
@@ -133,7 +133,7 @@ module Opal
         when "right"
           @cursor_x = Math.min(32, @cursor_x + 1)
           true
-        # Mode & Controls
+          # Mode & Controls
         when "m"
           cycle_shape
           true
@@ -280,7 +280,7 @@ module Opal
         cy : Int32,
         cw : Int32,
         ch : Int32,
-        z_buf : Array(Float64)
+        z_buf : Array(Float64),
       ) : Nil
         center_x = cx + (cw // 2)
         center_y = cy + (ch // 2)
@@ -368,7 +368,7 @@ module Opal
         cy : Int32,
         cw : Int32,
         ch : Int32,
-        z_buf : Array(Float64)
+        z_buf : Array(Float64),
       ) : Nil
         center_x = cx + (cw // 2)
         center_y = cy + (ch // 2)
