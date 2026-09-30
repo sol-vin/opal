@@ -1542,7 +1542,7 @@ class ShowcaseAppModel
 
     buffer = Opal::UI::Buffer.new(cols, rows)
     render(buffer)
-    buffer.to_s
+    buffer.render_to_string(with_ansi: true)
   end
 
   private def schedule_tick : Opal::TEA::Cmd
@@ -1555,6 +1555,6 @@ end
 # Launch demo application if run directly
 if PROGRAM_NAME.includes?("10_opal_tui_showcase") || PROGRAM_NAME.ends_with?("opal-demo")
   puts "Launching Opal TUI Showcase..."
-  Opal.run_tea(ShowcaseAppModel.new, alt_screen: true)
+  Opal.run_tea(ShowcaseAppModel.new, alt_screen: true, diff_render: true)
   puts "Opal TUI Showcase terminated cleanly. Terminal restored."
 end

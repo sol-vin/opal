@@ -39,6 +39,9 @@ module Opal
             curr_cell = buffer.get(x, y)
             prev_cell = prev.get(x, y)
 
+            # Skip continuation cells
+            next if curr_cell.continuation?
+
             # Skip unchanged cells!
             next if curr_cell == prev_cell
 
@@ -76,7 +79,8 @@ module Opal
 
             # Write character
             io << curr_cell.char
-            cursor_x += 1
+            cw = VisualWidth.char_width(curr_cell.char)
+            cursor_x += (cw > 0 ? cw : 1)
           end
         end
 
@@ -96,15 +100,29 @@ module Opal
 
         (0...buffer.height).each do |y|
           io << "\e[#{y + 1};1H"
+          last_fg = Color.none
+          last_bg = Color.none
+          last_bold = false
+          last_dim = false
+
           (0...buffer.width).each do |x|
             cell = buffer.get(x, y)
-            io << cell.fg.fg_escape
-            io << cell.bg.bg_escape
-            io << "\e[1m" if cell.bold?
-            io << "\e[2m" if cell.dim?
+            next if cell.continuation?
+
+            if cell.bold? != last_bold || cell.dim? != last_dim || cell.fg != last_fg || cell.bg != last_bg
+              io << "\e[0m"
+              io << "\e[1m" if cell.bold?
+              io << "\e[2m" if cell.dim?
+              io << cell.fg.fg_escape
+              io << cell.bg.bg_escape
+              last_bold = cell.bold?
+              last_dim = cell.dim?
+              last_fg = cell.fg
+              last_bg = cell.bg
+            end
             io << cell.char
-            io << "\e[0m"
           end
+          io << "\e[0m"
         end
 
         @driver.write(io.to_s)

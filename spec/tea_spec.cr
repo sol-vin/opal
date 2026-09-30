@@ -108,5 +108,17 @@ describe Opal::TEA do
       final_model.result.should eq("async_loaded")
       driver.stripped_output.should contain("Status: async_loaded")
     end
+
+    it "runs with diff_render without clearing screen on frame updates" do
+      driver = create_mock_driver
+      driver.inject_key("+")
+      driver.inject_key("q")
+
+      program = Opal::TEA::Program.new(CounterModel.new, driver: driver, alt_screen: false, diff_render: true)
+      final_model = program.run.as(CounterModel)
+      final_model.count.should eq(1)
+
+      driver.output.should_not contain(Opal::Terminal::Screen::CLEAR_ALL)
+    end
   end
 end

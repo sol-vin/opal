@@ -34,7 +34,11 @@ module Opal
 
         @driver.raw_mode do
           begin
-            @driver.enter_alternate_screen if @alt_screen
+            if @alt_screen
+              @driver.enter_alternate_screen
+              @driver.write(Terminal::Screen::CLEAR_ALL)
+              @driver.write(Terminal::Screen::CURSOR_HOME)
+            end
             @driver.hide_cursor
             @driver.enable_mouse if @mouse_enabled
 
@@ -118,7 +122,6 @@ module Opal
           dr.render(buffer)
         else
           @driver.write(Terminal::Screen::CURSOR_HOME)
-          @driver.write(Terminal::Screen::CLEAR_ALL)
           @driver.write(@model.view)
           @driver.flush
         end
