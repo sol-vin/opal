@@ -392,11 +392,15 @@ class ColorPickerSlide < ShowcaseSlide
   end
 
   def hints : String
-    "[Tab] Channel   [←/→] Adjust Value / Step Swatches   [1-9] Direct Preset"
+    "[Click/Drag] Sliders & Presets   [Tab] Channel   [←/→] Adjust   [1-9] Preset"
   end
 
   def handle_key(key : Opal::Terminal::KeyEvent) : Bool
     @picker.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @picker.handle_mouse(event)
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil

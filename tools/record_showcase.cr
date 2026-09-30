@@ -160,14 +160,22 @@ module Opal
         render_frame(0.3)
         send_key("+", advance: 0.15)
         send_key("+", advance: 0.15)
-        send_key("down", advance: 0.15) # Green
-        send_key("-", advance: 0.15)
-        send_key("-", advance: 0.15)
-        send_key("down", advance: 0.15) # Blue
-        send_key("+", advance: 0.15)
-        send_key("+", advance: 0.15)
-        # Pick Catppuccin Peach preset
-        send_key("3", advance: 0.3)
+        # Click on Green slider choice bar
+        send_mouse(24, 11, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.18)
+        # Drag along Green slider bar
+        send_mouse(28, 11, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.18)
+        send_mouse(28, 11, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.12)
+        # Click on Blue slider choice bar
+        send_mouse(18, 12, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.18)
+        send_mouse(18, 12, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.12)
+        # Click on Preset swatch 2 (Peach)
+        send_mouse(21, 14, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.25)
+        send_mouse(21, 14, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.12)
+        # Click on Preset swatch 6 (Sapphire / Blue)
+        send_mouse(33, 14, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.25)
+        send_mouse(33, 14, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.12)
+        # Mouse wheel up on Red slider
+        send_mouse(16, 10, Opal::Terminal::MouseButton::WheelUp, Opal::Terminal::MouseAction::Press, advance: 0.18)
         next_slide(1.0)
 
         # =====================================================================

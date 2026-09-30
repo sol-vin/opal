@@ -178,6 +178,165 @@ module Opal
         end
       end
 
+      property last_x : Int32 = 0
+      property last_y : Int32 = 0
+      property last_w : Int32 = 40
+      property last_h : Int32 = 14
+      property last_slider_x : Int32 = 7
+      property last_track_w : Int32 = 16
+      property last_red_y : Int32 = 6
+      property last_green_y : Int32 = 7
+      property last_blue_y : Int32 = 8
+      property last_preset_y : Int32 = 10
+      property last_preset_start_x : Int32 = 11
+      property last_preset_count : Int32 = 10
+
+      @dragging_channel : Symbol? = nil
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        # Convert terminal coordinates (1-indexed) to buffer coordinates (0-indexed)
+        # Also tolerate 0-indexed coordinates if passed in test calls
+        by = event.y - 1
+        bx = event.x - 1
+
+        matched_row : Symbol? = nil
+        if by == @last_red_y
+          matched_row = :red
+        elsif by == @last_green_y
+          matched_row = :green
+        elsif by == @last_blue_y
+          matched_row = :blue
+        elsif by == @last_preset_y
+          matched_row = :preset
+        elsif event.y == @last_red_y
+          by = event.y
+          bx = event.x
+          matched_row = :red
+        elsif event.y == @last_green_y
+          by = event.y
+          bx = event.x
+          matched_row = :green
+        elsif event.y == @last_blue_y
+          by = event.y
+          bx = event.x
+          matched_row = :blue
+        elsif event.y == @last_preset_y
+          by = event.y
+          bx = event.x
+          matched_row = :preset
+        end
+
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          case matched_row
+          when :red
+            @active_channel = :red
+            @r = (@r + 5).clamp(0, 255)
+          when :green
+            @active_channel = :green
+            @g = (@g + 5).clamp(0, 255)
+          when :blue
+            @active_channel = :blue
+            @b = (@b + 5).clamp(0, 255)
+          when :preset
+            adjust_active(1)
+          else
+            adjust_active(5)
+          end
+          true
+        when Terminal::MouseButton::WheelDown
+          case matched_row
+          when :red
+            @active_channel = :red
+            @r = (@r - 5).clamp(0, 255)
+          when :green
+            @active_channel = :green
+            @g = (@g - 5).clamp(0, 255)
+          when :blue
+            @active_channel = :blue
+            @b = (@b - 5).clamp(0, 255)
+          when :preset
+            adjust_active(-1)
+          else
+            adjust_active(-5)
+          end
+          true
+        when Terminal::MouseButton::Left
+          if event.action == Terminal::MouseAction::Release
+            @dragging_channel = nil
+            return true
+          end
+
+          active_drag = @dragging_channel
+          target_channel = active_drag || matched_row
+
+          case target_channel
+          when :preset
+            swatch_start_x = @last_preset_start_x
+            if bx >= swatch_start_x
+              s_idx = (bx - swatch_start_x) // 3
+              if s_idx >= 0 && s_idx < Math.min(@last_preset_count, @preset_swatches.size)
+                select_preset(s_idx)
+                return true
+              end
+              false
+            else
+              @active_channel = :palette
+              select_preset(@palette_cursor)
+              return true
+            end
+          when :red, :green, :blue
+            slider_x = @last_slider_x
+            track_w = @last_track_w
+            chan = target_channel.not_nil!
+
+            if event.action == Terminal::MouseAction::Press
+              @dragging_channel = chan
+            end
+
+            @active_channel = chan
+
+            if bx >= slider_x && track_w > 1
+              ratio = (bx - slider_x).to_f / (track_w - 1).to_f
+              new_val = (ratio.clamp(0.0, 1.0) * 255.0).round.to_i.clamp(0, 255)
+              case target_channel
+              when :red   then @r = new_val
+              when :green then @g = new_val
+              when :blue  then @b = new_val
+              end
+            end
+            true
+          else
+            false
+          end
+        when Terminal::MouseButton::None
+          if (drag_chan = @dragging_channel) && event.action == Terminal::MouseAction::Motion
+            slider_x = @last_slider_x
+            track_w = @last_track_w
+            if track_w > 1
+              ratio = (bx - slider_x).to_f / (track_w - 1).to_f
+              new_val = (ratio.clamp(0.0, 1.0) * 255.0).round.to_i.clamp(0, 255)
+              case drag_chan
+              when :red   then @r = new_val
+              when :green then @g = new_val
+              when :blue  then @b = new_val
+              end
+            end
+            true
+          elsif event.action == Terminal::MouseAction::Release
+            @dragging_channel = nil
+            true
+          else
+            false
+          end
+        else
+          if event.action == Terminal::MouseAction::Release
+            @dragging_channel = nil
+          end
+          false
+        end
+      end
+
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
         {Math.min(available_w, 60), Math.min(available_h, 16)}
       end
@@ -186,6 +345,10 @@ module Opal
         return if width < 25 || height < 8
 
         cur_y = y
+        @last_x = x
+        @last_y = y
+        @last_w = width
+        @last_h = height
 
         # 1. Header Title
         title_str = "🎨 Color Picker & TrueColor Studio"
@@ -220,6 +383,9 @@ module Opal
 
         # 3. Sliders for Red, Green, Blue
         track_w = (width - 24).clamp(10, 24)
+        slider_x = x + 7
+        @last_slider_x = slider_x
+        @last_track_w = track_w
 
         render_slider = ->(label : String, val : Int32, channel_sym : Symbol, chan_color : Color) {
           return if cur_y >= y + height - 2
@@ -234,7 +400,6 @@ module Opal
           filled_len = (track_w * ratio).round.to_i.clamp(0, track_w)
           empty_len = track_w - filled_len
 
-          slider_x = x + 7
           buffer.put_string(slider_x, cur_y, "█" * filled_len, fg: chan_color)
           buffer.put_string(slider_x + filled_len, cur_y, "░" * empty_len, fg: Color.bright_black)
 
@@ -245,20 +410,27 @@ module Opal
           cur_y += 1
         }
 
+        @last_red_y = cur_y
         render_slider.call("[R]", @r, :red, Color.red)
+        @last_green_y = cur_y
         render_slider.call("[G]", @g, :green, Color.green)
+        @last_blue_y = cur_y
         render_slider.call("[B]", @b, :blue, Color.blue)
         cur_y += 1
 
         # 4. Preset Palette Swatches
         if cur_y < y + height - 2
+          @last_preset_y = cur_y
           is_pal_active = (@active_channel == :palette)
           p_prefix = is_pal_active ? "▶ " : "  "
           buffer.put_string(x, cur_y, p_prefix, fg: Color.cyan, bold: true)
           buffer.put_string(x + 2, cur_y, "Presets: ", fg: is_pal_active ? Color.bright_white : Color.bright_black, bold: is_pal_active)
 
           swatch_start_x = x + 11
-          @preset_swatches.first(Math.min(10, @preset_swatches.size)).each_with_index do |swatch, s_idx|
+          @last_preset_start_x = swatch_start_x
+          @last_preset_count = Math.min(10, @preset_swatches.size)
+
+          @preset_swatches.first(@last_preset_count).each_with_index do |swatch, s_idx|
             col_x = swatch_start_x + (s_idx * 3)
             break if col_x >= x + width - 3
 
@@ -279,7 +451,7 @@ module Opal
         # 5. Footer Instructions
         buffer.put_string(x, cur_y, "─" * Math.min(width, 50), fg: Color.bright_black)
         cur_y += 1
-        hints = " [Tab] Next   [←/→] +/-5   [+/-] 1   [1-9] Preset   [Enter] OK "
+        hints = " [Click/Drag] Sliders & Presets   [Tab] Next   [←/→] +/-5   [+/-] 1   [1-9] Preset   [Enter] OK "
         buffer.put_string(x, Math.min(cur_y, buffer.height - 1), hints, fg: Color.bright_black)
       end
     end
@@ -307,6 +479,7 @@ module Opal
 
     drv.raw_mode do
       drv.hide_cursor
+      drv.enable_mouse
       render_frame.call
 
       loop do
@@ -327,11 +500,20 @@ module Opal
               break
             end
           end
+        when Terminal::MouseEvent
+          if picker.handle_mouse(event)
+            should_redraw = true
+            if picker.confirmed?
+              result = picker.color
+              break
+            end
+          end
         end
 
         render_frame.call if should_redraw
       end
     ensure
+      drv.disable_mouse
       drv.show_cursor
     end
 
