@@ -65,8 +65,47 @@ module Opal
         write("\e[#{row};#{col}H", advance)
       end
 
+      # Draws a full Buffer into the cast without clearing the screen,
+      # ensuring rock-solid, flicker-free terminal updates with full ANSI color.
+      def draw_buffer(buf : UI::Buffer, advance : Float64 = 0.05) : Nil
+        io = IO::Memory.new
+        io << "\e[H" # cursor home (1,1)
+        (0...buf.height).each do |y|
+          io << "\e[#{y + 1};1H" # position at start of row
+          last_fg = Color.none
+          last_bg = Color.none
+          last_bold = false
+          last_dim = false
+
+          (0...buf.width).each do |x|
+            cell = buf.get(x, y)
+            if cell.bold? != last_bold || cell.dim? != last_dim || cell.fg != last_fg || cell.bg != last_bg
+              io << "\e[0m"
+              io << "\e[1m" if cell.bold?
+              io << "\e[2m" if cell.dim?
+              io << cell.fg.fg_escape
+              io << cell.bg.bg_escape
+              last_bold = cell.bold?
+              last_dim = cell.dim?
+              last_fg = cell.fg
+              last_bg = cell.bg
+            end
+            io << cell.char
+          end
+          io << "\e[0m"
+        end
+        write(io.to_s, advance)
+      end
+
       # Saves the asciicast file (UTF-8 without BOM)
       def save(filename : String) : Nil
+        # Ensure final frame hold is recorded in event timeline
+        if @lines.size > 1
+          # Record hold event at final elapsed timestamp
+          event = [@elapsed.round(3), "o", ""]
+          @lines << event.to_json
+        end
+
         # Ensure parent directory exists
         dir = File.dirname(filename)
         Dir.mkdir_p(dir) unless Dir.exists?(dir)

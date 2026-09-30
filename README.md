@@ -13,7 +13,7 @@
 
 <br/>
 
-[![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh)
+[![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO)
 
 </div>
 
@@ -134,11 +134,11 @@ Real, live recordings captured directly from Opal running in terminal sessions (
 
 | Feature Demo | Live Terminal Asciicast |
 | :--- | :--- |
-| **Multi-Field Form Wizard**<br/>• Tab / Shift+Tab focus navigation<br/>• Masked secret/password inputs<br/>• Live inline validation feedback<br/>• Multi-select checkboxes | [![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh) |
-| **Live Fuzzy Search & Split Preview**<br/>• Realtime sub-millisecond filtering<br/>• Word-boundary rune highlighting<br/>• Instant split details pane | [![asciicast](https://asciinema.org/a/gTYV0YhRKibHgGAF.svg)](https://asciinema.org/a/gTYV0YhRKibHgGAF) |
-| **Cluster Analytics Dashboard**<br/>• Rolling Unicode Sparklines<br/>• Colorized percentage Gauges<br/>• Horizontal BarCharts & Trees<br/>• Catppuccin Mocha theme | [![asciicast](https://asciinema.org/a/VtRuehsfqGqgDCns.svg)](https://asciinema.org/a/VtRuehsfqGqgDCns) |
-| **Ghost-Text Autocomplete & Line Editor**<br/>• Modern fish/zsh inline suggestions<br/>• Single-keystroke `Tab` expansion<br/>• Full interactive line editing | [![asciicast](https://asciinema.org/a/LrkoOiO2aFSD2eeY.svg)](https://asciinema.org/a/LrkoOiO2aFSD2eeY) |
-| **CLI Toolchain & Auto Help**<br/>• Colored help generator<br/>• Animated ANSI spinner<br/>• In-place Unicode progress bar | [![asciicast](https://asciinema.org/a/sWDcfvepKjRj9OV9.svg)](https://asciinema.org/a/sWDcfvepKjRj9OV9) |
+| **Multi-Field Form Wizard**<br/>• Tab / Shift+Tab focus navigation<br/>• Masked secret/password inputs<br/>• Live inline validation feedback<br/>• Multi-select checkboxes | [![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO) |
+| **Live Fuzzy Search & Split Preview**<br/>• Realtime sub-millisecond filtering<br/>• Word-boundary rune highlighting<br/>• Instant split details pane | [![asciicast](https://asciinema.org/a/CdgldnJvhRGBGEuE.svg)](https://asciinema.org/a/CdgldnJvhRGBGEuE) |
+| **Cluster Analytics Dashboard**<br/>• Rolling Unicode Sparklines<br/>• Colorized percentage Gauges<br/>• Horizontal BarCharts & Trees<br/>• Catppuccin Mocha theme | [![asciicast](https://asciinema.org/a/J87u80gsmyKUwKx9.svg)](https://asciinema.org/a/J87u80gsmyKUwKx9) |
+| **Ghost-Text Autocomplete & Line Editor**<br/>• Modern fish/zsh inline suggestions<br/>• Single-keystroke `Tab` expansion<br/>• Full interactive line editing | [![asciicast](https://asciinema.org/a/7awRfosHKkYInRIP.svg)](https://asciinema.org/a/7awRfosHKkYInRIP) |
+| **CLI Toolchain & Auto Help**<br/>• Colored help generator<br/>• Animated ANSI spinner<br/>• In-place Unicode progress bar | [![asciicast](https://asciinema.org/a/hZWeL8pGlqZAp65r.svg)](https://asciinema.org/a/hZWeL8pGlqZAp65r) |
 
 > [!TIP]
 > All recordings are managed under installation ID `93d19fef-0835-4ebf-b218-cda99edbe21b`. You can permanently link them to your asciinema account via [https://asciinema.org/connect/93d19fef-0835-4ebf-b218-cda99edbe21b](https://asciinema.org/connect/93d19fef-0835-4ebf-b218-cda99edbe21b).
@@ -147,7 +147,7 @@ Real, live recordings captured directly from Opal running in terminal sessions (
 
 ## 📝 Multi-Field Form & Wizard DSL
 
-[![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh)
+[![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO)
 
 Traditional CLI prompts ask one question at a time and prevent reviewing earlier inputs. `Opal.form` presents an interactive card where all fields are visible simultaneously, users navigate using `Tab` / `Shift+Tab`, and live validation catches mistakes instantly.
 
@@ -171,7 +171,7 @@ end
 
 ## 🔍 Live Fuzzy Search & Filter
 
-[![asciicast](https://asciinema.org/a/gTYV0YhRKibHgGAF.svg)](https://asciinema.org/a/gTYV0YhRKibHgGAF)
+[![asciicast](https://asciinema.org/a/CdgldnJvhRGBGEuE.svg)](https://asciinema.org/a/CdgldnJvhRGBGEuE)
 
 Fast, keystroke-responsive fuzzy filtering inspired by `fzf`:
 
@@ -191,7 +191,7 @@ choice = Opal.filter(
 
 ## 📊 Data Visualizations
 
-[![asciicast](https://asciinema.org/a/VtRuehsfqGqgDCns.svg)](https://asciinema.org/a/VtRuehsfqGqgDCns)
+[![asciicast](https://asciinema.org/a/J87u80gsmyKUwKx9.svg)](https://asciinema.org/a/J87u80gsmyKUwKx9)
 
 Render rich dashboards and metrics without graphics libraries:
 
@@ -342,7 +342,7 @@ current_c    = Opal::Color.lerp(normal_color, alert_color, 0.75)
 
 ## 🛠️ CLI Application DSL
 
-[![asciicast](https://asciinema.org/a/sWDcfvepKjRj9OV9.svg)](https://asciinema.org/a/sWDcfvepKjRj9OV9)
+[![asciicast](https://asciinema.org/a/hZWeL8pGlqZAp65r.svg)](https://asciinema.org/a/hZWeL8pGlqZAp65r)
 
 ```crystal
 app = Opal.cli("deployer", "Cloud deployment manager", "0.4.0") do
@@ -420,7 +420,7 @@ end
 
 ## 🔮 Autocomplete & Ghost Text DSL
 
-[![asciicast](https://asciinema.org/a/LrkoOiO2aFSD2eeY.svg)](https://asciinema.org/a/LrkoOiO2aFSD2eeY)
+[![asciicast](https://asciinema.org/a/7awRfosHKkYInRIP.svg)](https://asciinema.org/a/7awRfosHKkYInRIP)
 
 Provide rich inline suggestions and command completion with zero terminal lag:
 
