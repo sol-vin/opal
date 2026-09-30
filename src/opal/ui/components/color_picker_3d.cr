@@ -272,7 +272,7 @@ module Opal
       end
 
       # -----------------------------------------------------------------------
-      # 3D RGB Cube Rendering with Rotation & Depth Buffering
+      # 3D RGB Cube Rendering (Screen-space Raycasting for 100% Gap-Free Silhouette)
       # -----------------------------------------------------------------------
       private def render_3d_cube(
         buffer : Buffer,
@@ -291,77 +291,97 @@ module Opal
         cos_p = Math.cos(@pitch)
         sin_p = Math.sin(@pitch)
 
-        # 6 Faces of the Cube with Normal vectors
-        faces = [
-          { {0.0, 0.0, 1.0}, :z, 1.0 },   # Front
-          { {0.0, 0.0, -1.0}, :z, -1.0 }, # Back
-          { {0.0, -1.0, 0.0}, :y, -1.0 }, # Top
-          { {0.0, 1.0, 0.0}, :y, 1.0 },   # Bottom
-          { {-1.0, 0.0, 0.0}, :x, -1.0 }, # Left
-          { {1.0, 0.0, 0.0}, :x, 1.0 },   # Right
-        ]
+        # Ray direction in camera space is (0, 0, 1)
+        # Transform direction into object space via inverse rotation (-pitch then -yaw):
+        dy_1 = sin_p
+        dz_1 = cos_p
+        dx_obj = -dz_1 * sin_y
+        dy_obj = dy_1
+        dz_obj = dz_1 * cos_y
 
-        steps_u = (scale * 6.0).round.to_i.clamp(32, 64)
-        steps_v = (scale * 3.5).round.to_i.clamp(20, 36)
-        faces.each do |face_normal, axis, axis_val|
-          nx, ny, nz = face_normal
+        (0...ch).each do |ly|
+          sy = cy + ly
+          dy = sy - center_y
+          y_c = dy.to_f / scale
 
-          # Rotate normal
-          nx1 = nx * cos_y + nz * sin_y
-          nz1 = -nx * sin_y + nz * cos_y
-          ny2 = ny * cos_p - nz1 * sin_p
-          nz2 = ny * sin_p + nz1 * cos_p
+          (0...cw).each do |lx|
+            sx = cx + lx
+            dx = sx - center_x
+            x_c = dx.to_f / (scale * 2.0) # Aspect ratio compensation
 
-          # Back-face culling: only draw faces pointing towards viewer
-          next if nz2 <= 0.0
+            # Ray origin in camera space: (x_c, y_c, -5.0)
+            # Transform origin into object space:
+            oy_1 = y_c * cos_p - 5.0 * sin_p
+            oz_1 = -y_c * sin_p - 5.0 * cos_p
+            ox_obj = x_c * cos_y - oz_1 * sin_y
+            oy_obj = oy_1
+            oz_obj = x_c * sin_y + oz_1 * cos_y
 
-          (0..steps_u).each do |si|
-            u_coord = (si.to_f / steps_u.to_f) * 2.0 - 1.0
-            (0..steps_v).each do |sj|
-              v_coord = (sj.to_f / steps_v.to_f) * 2.0 - 1.0
+            # Ray-AABB intersection against [-1, 1]^3
+            t_min = -1e9
+            t_max = 1e9
+            hit = true
 
-              # Compute 3D point (x, y, z) on face
-              px, py, pz = case axis
-                           when :z then {u_coord, v_coord, axis_val}
-                           when :y then {u_coord, axis_val, v_coord}
-                           else         {axis_val, u_coord, v_coord}
-                           end
+            # X slab
+            if dx_obj.abs > 1e-6
+              t1 = (-1.0 - ox_obj) / dx_obj
+              t2 = (1.0 - ox_obj) / dx_obj
+              t_near = Math.min(t1, t2)
+              t_far = Math.max(t1, t2)
+              t_min = Math.max(t_min, t_near)
+              t_max = Math.min(t_max, t_far)
+            else
+              hit = false if ox_obj < -1.0 || ox_obj > 1.0
+            end
 
-              # Rotate point
-              px1 = px * cos_y + pz * sin_y
-              pz1 = -px * sin_y + pz * cos_y
-
-              py2 = py * cos_p - pz1 * sin_p
-              pz2 = py * sin_p + pz1 * cos_p
-
-              # Terminal Aspect Ratio Correction (~2:1)
-              sx = center_x + (px1 * scale * 2.0).round.to_i
-              sy = center_y + (py2 * scale).round.to_i
-
-              local_canvas_x = sx - cx
-              local_canvas_y = sy - cy
-
-              if local_canvas_x >= 0 && local_canvas_x < cw && local_canvas_y >= 0 && local_canvas_y < ch
-                buf_idx = local_canvas_y * cw + local_canvas_x
-                if pz2 > z_buf[buf_idx]
-                  z_buf[buf_idx] = pz2
-
-                  # Map point coordinate to TrueColor RGB
-                  r_byte = ((px + 1.0) * 127.5).clamp(0.0, 255.0).to_u8
-                  g_byte = ((py + 1.0) * 127.5).clamp(0.0, 255.0).to_u8
-                  b_byte = ((pz + 1.0) * 127.5).clamp(0.0, 255.0).to_u8
-                  cube_color = Color.rgb(r_byte, g_byte, b_byte)
-
-                  buffer.put_char(sx, sy, '█', fg: cube_color)
-                end
+            # Y slab
+            if hit
+              if dy_obj.abs > 1e-6
+                t1 = (-1.0 - oy_obj) / dy_obj
+                t2 = (1.0 - oy_obj) / dy_obj
+                t_near = Math.min(t1, t2)
+                t_far = Math.max(t1, t2)
+                t_min = Math.max(t_min, t_near)
+                t_max = Math.min(t_max, t_far)
+              else
+                hit = false if oy_obj < -1.0 || oy_obj > 1.0
               end
+            end
+
+            # Z slab
+            if hit
+              if dz_obj.abs > 1e-6
+                t1 = (-1.0 - oz_obj) / dz_obj
+                t2 = (1.0 - oz_obj) / dz_obj
+                t_near = Math.min(t1, t2)
+                t_far = Math.max(t1, t2)
+                t_min = Math.max(t_min, t_near)
+                t_max = Math.min(t_max, t_far)
+              else
+                hit = false if oz_obj < -1.0 || oz_obj > 1.0
+              end
+            end
+
+            if hit && t_min <= t_max && t_max > 0.0
+              t = t_min > 0.0 ? t_min : t_max
+              px = (ox_obj + t * dx_obj).clamp(-1.0, 1.0)
+              py = (oy_obj + t * dy_obj).clamp(-1.0, 1.0)
+              pz = (oz_obj + t * dz_obj).clamp(-1.0, 1.0)
+
+              # Map 3D coordinates [-1, 1] to TrueColor RGB [0, 255]
+              r_byte = ((px + 1.0) * 127.5).round.to_u8
+              g_byte = ((py + 1.0) * 127.5).round.to_u8
+              b_byte = ((pz + 1.0) * 127.5).round.to_u8
+              cube_color = Color.rgb(r_byte, g_byte, b_byte)
+
+              buffer.put_char(sx, sy, '█', fg: cube_color)
             end
           end
         end
       end
 
       # -----------------------------------------------------------------------
-      # 3D Color Sphere Rendering with Rotation & Depth Buffering
+      # 3D Color Sphere Rendering (Screen-space Raycasting for 100% Gap-Free Silhouette)
       # -----------------------------------------------------------------------
       private def render_3d_sphere(
         buffer : Buffer,
@@ -380,44 +400,39 @@ module Opal
         cos_p = Math.cos(@pitch)
         sin_p = Math.sin(@pitch)
 
-        lat_steps = 28
-        lon_steps = 56
+        (0...ch).each do |ly|
+          sy = cy + ly
+          dy = sy - center_y
+          y_c = dy.to_f / radius
 
-        (0..lat_steps).each do |lat_i|
-          phi = (lat_i.to_f / lat_steps.to_f) * Math::PI - (Math::PI / 2.0) # -PI/2 .. PI/2
-          lightness_val = (lat_i.to_f / lat_steps.to_f)
+          (0...cw).each do |lx|
+            sx = cx + lx
+            dx = sx - center_x
+            x_c = dx.to_f / (radius * 2.0) # Aspect ratio compensation
 
-          (0..lon_steps).each do |lon_i|
-            theta = (lon_i.to_f / lon_steps.to_f) * 2.0 * Math::PI
-            hue_val = (theta * 180.0 / Math::PI)
+            d2 = x_c * x_c + y_c * y_c
+            next if d2 > 1.0 # Outside sphere bounds
 
-            px = Math.cos(phi) * Math.cos(theta)
-            py = Math.sin(phi)
-            pz = Math.cos(phi) * Math.sin(theta)
+            z_c = Math.sqrt(1.0 - d2) # Front hemisphere
 
-            # Rotate point
-            px1 = px * cos_y + pz * sin_y
-            pz1 = -px * sin_y + pz * cos_y
+            # Rotate camera space point (x_c, y_c, z_c) back to object space
+            py1 = y_c * cos_p + z_c * sin_p
+            pz1 = -y_c * sin_p + z_c * cos_p
+            px1 = x_c
 
-            py2 = py * cos_p - pz1 * sin_p
-            pz2 = py * sin_p + pz1 * cos_p
+            px_obj = px1 * cos_y - pz1 * sin_y
+            py_obj = py1
+            pz_obj = px1 * sin_y + pz1 * cos_y
 
-            next if pz2 <= 0.0 # Back-face cull
+            # Compute latitude / longitude on sphere
+            phi = Math.asin(py_obj.clamp(-1.0, 1.0))
+            lightness_val = (phi / Math::PI) + 0.5
+            theta = Math.atan2(pz_obj, px_obj)
+            hue_val = (theta * 180.0 / Math::PI) % 360.0
+            hue_val += 360.0 if hue_val < 0.0
 
-            sx = center_x + (px1 * radius * 2.0).round.to_i
-            sy = center_y + (py2 * radius).round.to_i
-
-            local_canvas_x = sx - cx
-            local_canvas_y = sy - cy
-
-            if local_canvas_x >= 0 && local_canvas_x < cw && local_canvas_y >= 0 && local_canvas_y < ch
-              buf_idx = local_canvas_y * cw + local_canvas_x
-              if pz2 > z_buf[buf_idx]
-                z_buf[buf_idx] = pz2
-                sphere_c = ColorPicker3D.hsl_to_rgb(hue_val, 1.0, lightness_val)
-                buffer.put_char(sx, sy, '█', fg: sphere_c)
-              end
-            end
+            sphere_c = ColorPicker3D.hsl_to_rgb(hue_val, 1.0, lightness_val)
+            buffer.put_char(sx, sy, '█', fg: sphere_c)
           end
         end
       end

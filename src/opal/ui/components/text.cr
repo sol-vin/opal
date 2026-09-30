@@ -51,7 +51,8 @@ module Opal
             dim: @dim,
             italic: @italic,
             underline: @underline,
-            max_width: width
+            max_width: width,
+            keep_bg: true
           )
           cur_y += 1
         end

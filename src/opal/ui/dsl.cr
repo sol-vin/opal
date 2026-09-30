@@ -66,6 +66,7 @@ module Opal
         padding : Int32 = 0,
         title : String? = nil,
         title_fg : Color | Symbol | String = :cyan,
+        bg : Color | Symbol | String = Color.none,
         &block : Builder -> Nil
       ) : Box
         sub_builder = Builder.new
@@ -76,7 +77,8 @@ module Opal
           border_fg: border_fg,
           padding: padding,
           title: title,
-          title_fg: title_fg
+          title_fg: title_fg,
+          bg: bg
         )
         set_root_or_child(el)
         el
@@ -147,6 +149,61 @@ module Opal
         block.call(bb)
         set_root_or_child(chart)
         chart
+      end
+
+      def pie_chart(
+        title : String? = nil,
+        donut : Bool = false,
+        &block : PieChartBuilder -> Nil
+      ) : PieChart
+        chart = PieChart.new(title: title, donut: donut)
+        pb = PieChartBuilder.new(chart)
+        block.call(pb)
+        set_root_or_child(chart)
+        chart
+      end
+
+      def line_graph(
+        title : String? = nil,
+        min_y : Float64? = nil,
+        max_y : Float64? = nil,
+        show_grid : Bool = true,
+        show_legend : Bool = true,
+        &block : LineGraphBuilder -> Nil
+      ) : LineGraph
+        graph = LineGraph.new(
+          title: title,
+          min_y: min_y,
+          max_y: max_y,
+          show_grid: show_grid,
+          show_legend: show_legend
+        )
+        gb = LineGraphBuilder.new(graph)
+        block.call(gb)
+        set_root_or_child(graph)
+        graph
+      end
+
+      def ascii_image(
+        image : Opal::Image::PixelBuffer,
+        mode : Symbol | AsciiRenderMode = :half_block,
+        interpolation : Symbol | Opal::Image::Interpolation = :bilinear,
+        ramp : String = AsciiImage::RAMP_STANDARD,
+        colorize : Bool = true,
+        bold : Bool = false,
+        bg : Color | Symbol | String = Color.none,
+      ) : AsciiImage
+        el = AsciiImage.new(
+          image: image,
+          mode: mode,
+          interpolation: interpolation,
+          ramp: ramp,
+          colorize: colorize,
+          bold: bold,
+          bg: bg
+        )
+        set_root_or_child(el)
+        el
       end
 
       def gauge(
@@ -408,6 +465,7 @@ module Opal
         padding : Int32 = 0,
         title : String? = nil,
         title_fg : Color | Symbol | String = :cyan,
+        bg : Color | Symbol | String = Color.none,
         &block : Builder -> Nil
       ) : Box
         b = Builder.new
@@ -418,7 +476,8 @@ module Opal
           border_fg: border_fg,
           padding: padding,
           title: title,
-          title_fg: title_fg
+          title_fg: title_fg,
+          bg: bg
         )
         add(el)
         el
@@ -643,6 +702,61 @@ module Opal
         add(el)
         el
       end
+
+      def pie_chart(
+        title : String? = nil,
+        donut : Bool = false,
+        &block : PieChartBuilder -> Nil
+      ) : PieChart
+        chart = PieChart.new(title: title, donut: donut)
+        pb = PieChartBuilder.new(chart)
+        block.call(pb)
+        add(chart)
+        chart
+      end
+
+      def line_graph(
+        title : String? = nil,
+        min_y : Float64? = nil,
+        max_y : Float64? = nil,
+        show_grid : Bool = true,
+        show_legend : Bool = true,
+        &block : LineGraphBuilder -> Nil
+      ) : LineGraph
+        graph = LineGraph.new(
+          title: title,
+          min_y: min_y,
+          max_y: max_y,
+          show_grid: show_grid,
+          show_legend: show_legend
+        )
+        gb = LineGraphBuilder.new(graph)
+        block.call(gb)
+        add(graph)
+        graph
+      end
+
+      def ascii_image(
+        image : Opal::Image::PixelBuffer,
+        mode : Symbol | AsciiRenderMode = :half_block,
+        interpolation : Symbol | Opal::Image::Interpolation = :bilinear,
+        ramp : String = AsciiImage::RAMP_STANDARD,
+        colorize : Bool = true,
+        bold : Bool = false,
+        bg : Color | Symbol | String = Color.none,
+      ) : AsciiImage
+        el = AsciiImage.new(
+          image: image,
+          mode: mode,
+          interpolation: interpolation,
+          ramp: ramp,
+          colorize: colorize,
+          bold: bold,
+          bg: bg
+        )
+        add(el)
+        el
+      end
     end
 
     # Builder for table rows
@@ -662,6 +776,26 @@ module Opal
 
       def bar(label : String, value : Float64 | Int32, color : Color | Symbol | String = :cyan, formatted : String? = nil) : Nil
         @chart.add(label, value.to_f, color, formatted)
+      end
+    end
+
+    # Builder for pie charts
+    class PieChartBuilder
+      def initialize(@chart : PieChart)
+      end
+
+      def slice(label : String, value : Float64 | Int32, color : Color | Symbol | String = :cyan, formatted : String? = nil) : Nil
+        @chart.add(label, value.to_f, color, formatted)
+      end
+    end
+
+    # Builder for line graphs
+    class LineGraphBuilder
+      def initialize(@graph : LineGraph)
+      end
+
+      def series(name : String, data : Array(Float64), color : Color | Symbol | String = :cyan) : LineSeries
+        @graph.add_series(name, data, color)
       end
     end
 

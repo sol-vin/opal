@@ -2,9 +2,9 @@ require "./spec_helper"
 require "../examples/10_opal_tui_showcase"
 
 describe ShowcaseAppModel do
-  it "initializes with 23 slides" do
+  it "initializes with 26 slides" do
     app = ShowcaseAppModel.new
-    app.slides.size.should eq(23)
+    app.slides.size.should eq(26)
     app.current_idx.should eq(0)
   end
 
@@ -20,33 +20,39 @@ describe ShowcaseAppModel do
     end
   end
 
-  it "advances linearly through all slides via ESC key" do
+  it "advances linearly through all slides via Shift+Right key" do
     app = ShowcaseAppModel.new
-    esc_msg = Opal::TEA::KeyMsg.new("escape")
+    shift_right_msg = Opal::TEA::KeyMsg.new("right", shift: true)
 
-    23.times do |step|
+    26.times do |step|
       app.current_idx.should eq(step)
-      app.update(esc_msg)
+      app.update(shift_right_msg)
     end
 
     # Wraps around to 0
     app.current_idx.should eq(0)
   end
 
-  it "supports backward navigation via p or pageup" do
+  it "supports backward navigation via Shift+Left" do
     app = ShowcaseAppModel.new
-    app.update(Opal::TEA::KeyMsg.new("escape"))
+    app.update(Opal::TEA::KeyMsg.new("right", shift: true))
     app.current_idx.should eq(1)
 
-    app.update(Opal::TEA::KeyMsg.new("p"))
+    app.update(Opal::TEA::KeyMsg.new("left", shift: true))
     app.current_idx.should eq(0)
+  end
+
+  it "quits on escape key" do
+    app = ShowcaseAppModel.new
+    _model, cmd = app.update(Opal::TEA::KeyMsg.new("escape"))
+    cmd.quit?.should be_true
   end
 
   it "renders full view buffer with header and footer" do
     app = ShowcaseAppModel.new
     view_out = app.view
     view_out.should contain("OPAL TUI SHOWCASE")
-    view_out.should contain("Slide 1/23")
+    view_out.should contain("Slide 1/26")
     view_out.should contain("Next")
     view_out.should contain("Quit")
   end

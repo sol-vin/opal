@@ -16,6 +16,9 @@ require "./ui/components/hex_viewer"
 require "./ui/components/file_dialog"
 require "./ui/components/color_picker"
 require "./ui/components/color_picker_3d"
+require "./ui/components/pie_chart"
+require "./ui/components/line_graph"
+require "./ui/components/ascii_image"
 require "./ui/dsl"
 
 module Opal

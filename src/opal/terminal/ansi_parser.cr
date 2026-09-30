@@ -31,7 +31,13 @@ module Opal
         return false unless @shift == expected_shift
 
         name_lower = @name.downcase
-        if name_lower == base_name || (name_lower == "escape" && base_name == "esc") || (name_lower == "esc" && base_name == "escape")
+        if name_lower == base_name ||
+           (name_lower == "escape" && base_name == "esc") ||
+           (name_lower == "esc" && base_name == "escape") ||
+           (name_lower == "page_up" && base_name == "pageup") ||
+           (name_lower == "pageup" && base_name == "page_up") ||
+           (name_lower == "page_down" && base_name == "pagedown") ||
+           (name_lower == "pagedown" && base_name == "page_down")
           true
         elsif @char && @char.to_s.downcase == base_name
           true
@@ -189,11 +195,22 @@ module Opal
           end
         end
 
-        # Modified sequences like \e[1;5A (Ctrl+Up)
-        if body =~ /^(\d+);(\d+)([A-Z~])$/
-          code = $1.to_i? || 1
-          modifier = $2.to_i? || 1
-          key_code = $3
+        # rxvt Shift+Arrow sequences: \e[a (Shift+Up), \e[b (Shift+Down), \e[c (Shift+Right), \e[d (Shift+Left)
+        case body
+        when "a" then return KeyEvent.new("up", shift: true)
+        when "b" then return KeyEvent.new("down", shift: true)
+        when "c" then return KeyEvent.new("right", shift: true)
+        when "d" then return KeyEvent.new("left", shift: true)
+        end
+
+        # Modified sequences like \e[1;2C (Shift+Right), \e[1;5A (Ctrl+Up), or \e[2C (Shift+Right)
+        if body =~ /^(\d+)(?:;(\d+))?([A-Za-z~])$/
+          first_num = $1.to_i? || 1
+          second_num = $2?.try(&.to_i?)
+          key_code = $3.upcase
+
+          modifier = second_num || first_num
+          code = second_num ? first_num : 1
 
           ctrl = (modifier - 1) & 4 != 0
           alt = (modifier - 1) & 2 != 0

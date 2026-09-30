@@ -98,14 +98,18 @@ module Opal
         when :blue
           @b = (@b + delta).clamp(0, 255)
         when :palette
-          @palette_cursor = (@palette_cursor + delta).clamp(0, @preset_swatches.size - 1)
+          max_idx = Math.min(10, @preset_swatches.size) - 1
+          step = delta > 0 ? 1 : -1
+          @palette_cursor = (@palette_cursor + step).clamp(0, max_idx)
           select_preset(@palette_cursor)
         end
       end
 
       def select_preset(idx : Int32) : Nil
         return if @preset_swatches.empty?
-        @palette_cursor = idx.clamp(0, @preset_swatches.size - 1)
+        max_idx = Math.min(10, @preset_swatches.size) - 1
+        @palette_cursor = idx.clamp(0, max_idx)
+        @active_channel = :palette
         self.color = @preset_swatches[@palette_cursor]
       end
 
@@ -146,8 +150,19 @@ module Opal
           true
         when "p"
           @active_channel = :palette
+          select_preset(@palette_cursor)
           true
+        when "space"
+          if @active_channel == :palette
+            select_preset(@palette_cursor)
+            true
+          else
+            false
+          end
         when "enter"
+          if @active_channel == :palette
+            select_preset(@palette_cursor)
+          end
           @confirmed = true
           true
         else

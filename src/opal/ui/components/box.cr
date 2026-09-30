@@ -16,6 +16,7 @@ module Opal
       property padding_left : Int32
       property title : String?
       property title_fg : Color
+      property bg : Color
 
       def initialize(
         @child : Element? = nil,
@@ -24,10 +25,12 @@ module Opal
         padding : Int32 = 0,
         @title : String? = nil,
         title_fg : Color | Symbol | String = :cyan,
+        bg : Color | Symbol | String = Color.none,
       )
         @border = Border.from(border)
         @border_fg = Color.from(border_fg)
         @title_fg = Color.from(title_fg)
+        @bg = Color.from(bg)
         @padding_top = @padding_right = @padding_bottom = @padding_left = padding
       end
 
@@ -50,6 +53,11 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0
 
+        # Fill solid background if specified
+        if @bg.type != Color::Type::None
+          buffer.fill(x, y, width, height, ' ', Color.none, @bg)
+        end
+
         if @border.active?
           render_border(buffer, x, y, width, height)
         end
@@ -69,18 +77,18 @@ module Opal
         return if width < 2 || height < 2
 
         # Corners
-        buffer.put_char(x, y, @border.top_left[0], fg: @border_fg) if !@border.top_left.empty?
-        buffer.put_char(x + width - 1, y, @border.top_right[0], fg: @border_fg) if !@border.top_right.empty?
-        buffer.put_char(x, y + height - 1, @border.bottom_left[0], fg: @border_fg) if !@border.bottom_left.empty?
-        buffer.put_char(x + width - 1, y + height - 1, @border.bottom_right[0], fg: @border_fg) if !@border.bottom_right.empty?
+        buffer.put_char(x, y, @border.top_left[0], fg: @border_fg, bg: @bg) if !@border.top_left.empty?
+        buffer.put_char(x + width - 1, y, @border.top_right[0], fg: @border_fg, bg: @bg) if !@border.top_right.empty?
+        buffer.put_char(x, y + height - 1, @border.bottom_left[0], fg: @border_fg, bg: @bg) if !@border.bottom_left.empty?
+        buffer.put_char(x + width - 1, y + height - 1, @border.bottom_right[0], fg: @border_fg, bg: @bg) if !@border.bottom_right.empty?
 
         # Horizontal top and bottom edges
         top_char = @border.top.empty? ? ' ' : @border.top[0]
         bot_char = @border.bottom.empty? ? ' ' : @border.bottom[0]
 
         ((x + 1)...(x + width - 1)).each do |cur_x|
-          buffer.put_char(cur_x, y, top_char, fg: @border_fg)
-          buffer.put_char(cur_x, y + height - 1, bot_char, fg: @border_fg)
+          buffer.put_char(cur_x, y, top_char, fg: @border_fg, bg: @bg)
+          buffer.put_char(cur_x, y + height - 1, bot_char, fg: @border_fg, bg: @bg)
         end
 
         # Embedded title in top border
@@ -88,7 +96,7 @@ module Opal
           clean_title = " #{t} "
           title_len = VisualWidth.width(clean_title)
           if title_len < width - 4
-            buffer.put_string(x + 2, y, clean_title, fg: @title_fg, bold: true)
+            buffer.put_string(x + 2, y, clean_title, fg: @title_fg, bg: @bg, bold: true)
           end
         end
 
@@ -97,8 +105,8 @@ module Opal
         right_char = @border.right.empty? ? ' ' : @border.right[0]
 
         ((y + 1)...(y + height - 1)).each do |cur_y|
-          buffer.put_char(x, cur_y, left_char, fg: @border_fg)
-          buffer.put_char(x + width - 1, cur_y, right_char, fg: @border_fg)
+          buffer.put_char(x, cur_y, left_char, fg: @border_fg, bg: @bg)
+          buffer.put_char(x + width - 1, cur_y, right_char, fg: @border_fg, bg: @bg)
         end
       end
     end

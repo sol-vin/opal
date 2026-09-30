@@ -38,6 +38,7 @@ module Opal
         italic : Bool = false,
         underline : Bool = false,
         reverse : Bool = false,
+        keep_bg : Bool = false,
       ) : Nil
         return unless in_bounds?(x, y)
 
@@ -51,10 +52,26 @@ module Opal
           set(x + 1, y, Cell.empty)
         end
 
+        cw = VisualWidth.char_width(char)
+        if cw == 2
+          if x + 1 >= @width
+            # Cannot fit wide character on the last column; replace with space to avoid line wrap
+            char = ' '
+            cw = 1
+          else
+            # If x + 1 was previously a wide character, clear its old continuation at x + 2
+            if x + 2 < @width && get(x + 2, y).continuation?
+              set(x + 2, y, Cell.empty)
+            end
+          end
+        end
+
+        actual_bg = (keep_bg && bg.type == Color::Type::None) ? get(x, y).bg : bg
+
         cell = Cell.new(
           char: char,
           fg: fg,
-          bg: bg,
+          bg: actual_bg,
           bold: bold,
           dim: dim,
           italic: italic,
@@ -64,7 +81,6 @@ module Opal
         )
         set(x, y, cell)
 
-        cw = VisualWidth.char_width(char)
         if cw == 2 && x + 1 < @width
           set(x + 1, y, Cell.continuation)
         end
@@ -82,6 +98,7 @@ module Opal
         underline : Bool = false,
         reverse : Bool = false,
         max_width : Int32? = nil,
+        keep_bg : Bool = false,
       ) : Int32
         cur_x = x
         clean_text = VisualWidth.strip_ansi(text)
@@ -99,7 +116,8 @@ module Opal
               fg: fg, bg: bg,
               bold: bold, dim: dim,
               italic: italic, underline: underline,
-              reverse: reverse
+              reverse: reverse,
+              keep_bg: keep_bg
             )
             cur_x += cw
           end
@@ -108,12 +126,51 @@ module Opal
         cur_x - x
       end
 
+      # Writes string and pads remaining columns up to `width` with spaces, ensuring clean erasure
+      def put_line(
+        x : Int32,
+        y : Int32,
+        text : String,
+        width : Int32,
+        fg : Color = Color.none,
+        bg : Color = Color.none,
+        bold : Bool = false,
+        dim : Bool = false,
+      ) : Nil
+        written_w = put_string(x, y, text, fg: fg, bg: bg, bold: bold, dim: dim, max_width: width)
+        if written_w < width
+          (written_w...width).each do |pad_x|
+            put_char(x + pad_x, y, ' ', fg: fg, bg: bg)
+          end
+        end
+      end
+
       def fill(x : Int32, y : Int32, w : Int32, h : Int32, cell : Cell = Cell.empty) : Nil
         (y...(y + h)).each do |cur_y|
+          # Clear boundary wide characters to prevent slicing
+          if x > 0 && in_bounds?(x, cur_y) && get(x, cur_y).continuation?
+            set(x - 1, cur_y, Cell.empty)
+          end
+          if (x + w) < @width && in_bounds?(x + w, cur_y) && get(x + w, cur_y).continuation?
+            set(x + w, cur_y, Cell.empty)
+          end
+
           (x...(x + w)).each do |cur_x|
             set(cur_x, cur_y, cell)
           end
         end
+      end
+
+      def fill(
+        x : Int32,
+        y : Int32,
+        w : Int32,
+        h : Int32,
+        char : Char,
+        fg : Color = Color.none,
+        bg : Color = Color.none,
+      ) : Nil
+        fill(x, y, w, h, Cell.new(char: char, fg: fg, bg: bg))
       end
 
       def clear : Nil

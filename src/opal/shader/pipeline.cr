@@ -93,6 +93,21 @@ module Opal
         self
       end
 
+      def starfield(region : Rect? = nil, speed : Float64 = 1.0, count : Int32 = 80, preserve_text : Bool = true) : self
+        @passes << StarfieldPass.new(region: region, speed: speed, count: count, preserve_text: preserve_text)
+        self
+      end
+
+      def ripple(region : Rect? = nil, speed : Float64 = 2.0, frequency : Float64 = 0.4, amplitude : Float64 = 1.5) : self
+        @passes << RipplePass.new(region: region, speed: speed, frequency: frequency, amplitude: amplitude)
+        self
+      end
+
+      def tunnel(region : Rect? = nil, speed : Float64 = 1.2, rotation_speed : Float64 = 0.5) : self
+        @passes << TunnelPass.new(region: region, speed: speed, rotation_speed: rotation_speed)
+        self
+      end
+
       def vignette(region : Rect? = nil, radius : Float64 = 0.8, falloff : Float64 = 0.5) : self
         @passes << VignettePass.new(region: region, radius: radius, falloff: falloff)
         self

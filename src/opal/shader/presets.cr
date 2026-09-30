@@ -372,5 +372,211 @@ module Opal
         end
       end
     end
+
+    # Built-in Hyperdrive 3D Warp Starfield shader pass
+    class StarfieldPass < Pass
+      property speed : Float64
+      property count : Int32
+      property? preserve_text : Bool
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 1.0,
+        @count : Int32 = 80,
+        @preserve_text : Bool = true,
+      )
+        super(region)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        cx = rx + rw // 2
+        cy = ry + rh // 2
+
+        (0...@count).each do |i|
+          # Deterministic pseudo-random seed per star
+          seed = (i.to_i64 &* 2654435761_i64) ^ 0x9e3779b9_i64
+          orig_x = (((seed &* 1103515245_i64 + 12345).abs % 2000).to_f - 1000.0) / 1000.0
+          orig_y = ((((seed >> 16) &* 1103515245_i64 + 12345).abs % 2000).to_f - 1000.0) / 1000.0
+
+          # Distance Z moves from 1.0 to 0.02
+          t_offset = (i.to_f / @count.to_f)
+          z = ((1.0 - ((time * @speed * 0.4 + t_offset) % 1.0))).clamp(0.02, 1.0)
+
+          # Perspective projection (terminal 2:1 character aspect ratio compensated)
+          px = cx + (orig_x / z * (rw.to_f * 0.48)).round.to_i
+          py = cy + (orig_y / z * (rh.to_f * 0.28)).round.to_i
+
+          next if px < rx || px >= rx + rw || py < ry || py >= ry + rh
+
+          orig = source.get(px, py)
+          next if @preserve_text && orig.char != ' ' && orig.fg.type != Color::Type::None
+
+          dist = 1.0 - z # 0.0 at center, 1.0 at screen edge
+          char, fg, bold = if dist > 0.8
+                             {'#', Color.bright_white, true}
+                           elsif dist > 0.55
+                             {'*', Color.bright_cyan, true}
+                           elsif dist > 0.3
+                             {'+', Color.cyan, false}
+                           elsif dist > 0.15
+                             {'.', Color.rgb(80, 140, 220), false}
+                           else
+                             {'.', Color.rgb(40, 60, 120), false}
+                           end
+
+          target.put_char(px, py, char, fg: fg, bold: bold)
+        end
+      end
+    end
+
+    # Built-in Water Ripple & Caustic Distortion shader pass
+    class RipplePass < Pass
+      property speed : Float64
+      property frequency : Float64
+      property amplitude : Float64
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 2.0,
+        @frequency : Float64 = 0.4,
+        @amplitude : Float64 = 1.5,
+      )
+        super(region)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        cx = rx + rw / 2.0 + Math.sin(time * 0.8) * (rw / 6.0)
+        cy = ry + rh / 2.0 + Math.cos(time * 0.7) * (rh / 6.0)
+
+        (ry...(ry + rh)).each do |y|
+          dy = (y - cy).to_f * 2.0 # Aspect ratio compensation
+          (rx...(rx + rw)).each do |x|
+            dx = (x - cx).to_f
+            dist = Math.sqrt(dx * dx + dy * dy)
+            wave = Math.sin(dist * @frequency - time * @speed)
+
+            # Refractive displacement
+            offset_x = (wave * @amplitude).round.to_i
+            src_x = (x + offset_x).clamp(rx, rx + rw - 1)
+            cell = source.get(src_x, y)
+
+            # Caustic aqua/cyan tinting
+            caustic_val = ((wave + 1.0) * 0.5) # 0.0 .. 1.0
+            g = (100.0 + caustic_val * 155.0).to_u8
+            b = (180.0 + caustic_val * 75.0).to_u8
+            caustic_color = Color.rgb(0_u8, g, b)
+
+            if cell.char != ' ' && cell.fg.type != Color::Type::None
+              tinted_fg = Color.lerp(cell.fg, caustic_color, 0.4)
+              target.set(x, y, UI::Cell.new(char: cell.char, fg: tinted_fg, bg: cell.bg, bold: wave > 0.4))
+            else
+              wave_char = if wave > 0.7
+                            '~'
+                          elsif wave > 0.3
+                            '-'
+                          elsif wave > -0.2
+                            '.'
+                          else
+                            ' '
+                          end
+              target.put_char(x, y, wave_char, fg: caustic_color, dim: wave <= 0.3)
+            end
+          end
+        end
+      end
+    end
+
+    # Built-in 3D Demoscene Infinite Cyber Tunnel shader pass
+    class TunnelPass < Pass
+      property speed : Float64
+      property rotation_speed : Float64
+
+      def initialize(
+        region : Rect? = nil,
+        @speed : Float64 = 1.2,
+        @rotation_speed : Float64 = 0.5,
+      )
+        super(region)
+      end
+
+      def apply(source : UI::Buffer, target : UI::Buffer, time : Float64, frame : UInt64) : Nil
+        return unless @enabled
+
+        rx = @region.try(&.x) || 0
+        ry = @region.try(&.y) || 0
+        rw = @region.try(&.width) || source.width
+        rh = @region.try(&.height) || source.height
+
+        rx = rx.clamp(0, source.width)
+        ry = ry.clamp(0, source.height)
+        rw = rw.clamp(0, source.width - rx)
+        rh = rh.clamp(0, source.height - ry)
+        return if rw <= 0 || rh <= 0
+
+        cx = rx + rw / 2.0
+        cy = ry + rh / 2.0
+
+        (ry...(ry + rh)).each do |y|
+          dy = (y - cy).to_f / (rh / 2.0) * 1.8 # 2:1 character aspect ratio
+          (rx...(rx + rw)).each do |x|
+            dx = (x - cx).to_f / (rw / 2.0)
+            r = Math.sqrt(dx * dx + dy * dy)
+            next if r < 0.05
+
+            theta = Math.atan2(dy, dx) # -PI .. PI
+
+            u = ((theta / Math::PI * 0.5 + 0.5) * 8.0 + time * @rotation_speed) % 1.0
+            v = (1.0 / r + time * @speed) % 1.0
+
+            # Checker / ring depth pattern
+            check_u = (u * 8.0).to_i % 2
+            check_v = (v * 8.0).to_i % 2
+            is_stripe = (check_u ^ check_v) == 1
+
+            # Depth falloff and neon purple/cyan palette
+            depth = (1.0 - (1.0 / (r * 1.5 + 1.0))).clamp(0.0, 1.0)
+            neon_r = ((Math.sin(v * Math::PI * 2.0) * 100.0) + 155.0).to_u8
+            neon_g = ((Math.cos(u * Math::PI * 2.0) * 80.0) + 90.0).to_u8
+            neon_b = 240_u8
+            tunnel_color = Color.rgb(neon_r, neon_g, neon_b)
+            shaded_color = Color.lerp(Color.black, tunnel_color, depth)
+
+            cell = source.get(x, y)
+            if cell.char != ' ' && cell.fg.type != Color::Type::None
+              target.set(x, y, UI::Cell.new(char: cell.char, fg: shaded_color, bg: cell.bg, bold: true))
+            else
+              char = is_stripe ? '▓' : '░'
+              target.put_char(x, y, char, fg: shaded_color, dim: depth < 0.4)
+            end
+          end
+        end
+      end
+    end
   end
 end

@@ -122,9 +122,10 @@ module Opal
             end
             io << cell.char
           end
-          io << "\e[0m"
+          io << "\e[0m\e[K"
         end
 
+        io << "\e[J"
         @driver.write(io.to_s)
         @driver.flush
       end

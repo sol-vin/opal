@@ -194,31 +194,111 @@ module Opal
       end
     end
 
-    # Markdown Element for use inside UI trees
+    # Markdown Element / Viewer for use inside UI trees with interactive scrolling
     class MarkdownElement < Element
       getter content : String
       getter rendered : String
+      property scroll_offset : Int32 = 0
+      property visible_height : Int32 = 20
 
       def initialize(@content : String, width : Int32 = 80)
         renderer = Markdown::Renderer.new(width)
         @rendered = renderer.render(@content)
       end
 
+      def lines : Array(String)
+        @rendered.split('\n')
+      end
+
+      def page_up(lines_count : Int32? = nil) : Nil
+        step = lines_count || Math.max(1, @visible_height - 2)
+        scroll_up(step)
+      end
+
+      def page_down(lines_count : Int32? = nil) : Nil
+        step = lines_count || Math.max(1, @visible_height - 2)
+        scroll_down(step)
+      end
+
+      def scroll_up(lines_count : Int32 = 1) : Nil
+        @scroll_offset = Math.max(0, @scroll_offset - lines_count)
+      end
+
+      def scroll_down(lines_count : Int32 = 1) : Nil
+        all_lines = lines
+        max_scroll = Math.max(0, all_lines.size - @visible_height)
+        @scroll_offset = Math.min(max_scroll, @scroll_offset + lines_count)
+      end
+
+      def scroll_to_top : Nil
+        @scroll_offset = 0
+      end
+
+      def scroll_to_bottom : Nil
+        all_lines = lines
+        @scroll_offset = Math.max(0, all_lines.size - @visible_height)
+      end
+
+      def handle_key(key : Terminal::KeyEvent) : Bool
+        case key.name
+        when "page_up", "pageup"
+          page_up
+          true
+        when "page_down", "pagedown"
+          page_down
+          true
+        when "up", "k"
+          scroll_up(1)
+          true
+        when "down", "j"
+          scroll_down(1)
+          true
+        when "home"
+          scroll_to_top
+          true
+        when "end"
+          scroll_to_bottom
+          true
+        else
+          false
+        end
+      end
+
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
-        lines = @rendered.split('\n')
-        h = lines.size
-        w = lines.map { |l| VisualWidth.width(l) }.max? || 0
+        all_lines = lines
+        h = all_lines.size
+        w = all_lines.map { |l| VisualWidth.width(l) }.max? || 0
         {[w, available_w].min, [h, available_h].min}
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
-        lines = @rendered.split('\n')
-        lines.each_with_index do |line, idx|
+        @visible_height = height
+        all_lines = lines
+        total_lines = all_lines.size
+        max_scroll = Math.max(0, total_lines - height)
+        @scroll_offset = @scroll_offset.clamp(0, max_scroll)
+
+        visible = all_lines[@scroll_offset...@scroll_offset + height]? || [] of String
+        visible.each_with_index do |line, idx|
           break if y + idx >= y + height
-          buffer.put_string(x, y + idx, line, max_width: width)
+          buffer.put_string(x, y + idx, line, max_width: width - (total_lines > height ? 2 : 0))
+        end
+
+        # Draw subtle vertical scrollbar if content exceeds container height
+        if total_lines > height && height > 2
+          bar_x = x + width - 1
+          thumb_pos = ((@scroll_offset.to_f / max_scroll.to_f) * (height - 1)).round.to_i.clamp(0, height - 1)
+
+          (0...height).each do |sy|
+            char = (sy == thumb_pos) ? '█' : '│'
+            fg_color = (sy == thumb_pos) ? Color.cyan : Color.bright_black
+            buffer.put_char(bar_x, y + sy, char, fg: fg_color)
+          end
         end
       end
     end
+
+    alias MarkdownViewer = MarkdownElement
   end
 
   # Renders Markdown text directly to an ANSI formatted string.

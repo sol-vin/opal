@@ -35,7 +35,13 @@ module Opal
         return false unless @shift == expected_shift
 
         name_lower = @key.downcase
-        if name_lower == base_name || (name_lower == "escape" && base_name == "esc") || (name_lower == "esc" && base_name == "escape")
+        if name_lower == base_name ||
+           (name_lower == "escape" && base_name == "esc") ||
+           (name_lower == "esc" && base_name == "escape") ||
+           (name_lower == "page_up" && base_name == "pageup") ||
+           (name_lower == "pageup" && base_name == "page_up") ||
+           (name_lower == "page_down" && base_name == "pagedown") ||
+           (name_lower == "pagedown" && base_name == "page_down")
           true
         elsif @char && @char.to_s.downcase == base_name
           true

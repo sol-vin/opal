@@ -33,6 +33,31 @@ module Opal
       new(Type::RGB, r: r.to_u8.clamp(0_u8, 255_u8), g: g.to_u8.clamp(0_u8, 255_u8), b: b.to_u8.clamp(0_u8, 255_u8))
     end
 
+    # Constructs Color from HSV components: h in [0, 360], s in [0, 1], v in [0, 1]
+    def self.hsv(h : Float64, s : Float64, v : Float64) : Color
+      h_norm = (h % 360.0 + 360.0) % 360.0
+      s_norm = s.clamp(0.0, 1.0)
+      v_norm = v.clamp(0.0, 1.0)
+
+      c = v_norm * s_norm
+      x = c * (1.0 - ((h_norm / 60.0) % 2.0 - 1.0).abs)
+      m = v_norm - c
+
+      r_prime, g_prime, b_prime = case (h_norm / 60.0).to_i
+                                  when 0 then {c, x, 0.0}
+                                  when 1 then {x, c, 0.0}
+                                  when 2 then {0.0, c, x}
+                                  when 3 then {0.0, x, c}
+                                  when 4 then {x, 0.0, c}
+                                  else        {c, 0.0, x}
+                                  end
+
+      r = ((r_prime + m) * 255.0).round.to_u8
+      g = ((g_prime + m) * 255.0).round.to_u8
+      b = ((b_prime + m) * 255.0).round.to_u8
+      rgb(r, g, b)
+    end
+
     # Parses hex string like "#ff79c6", "61AFEF", or "#fff"
     def self.hex(raw : String) : Color
       str = raw.lstrip('#')
