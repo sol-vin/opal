@@ -154,10 +154,20 @@ module Opal
         end
       end
 
-      @last_mouse_x : Int32? = nil
-      @last_mouse_y : Int32? = nil
+      property last_canvas_x : Int32 = 1
+      property last_canvas_y : Int32 = 2
+      property last_canvas_w : Int32 = 28
+      property last_canvas_h : Int32 = 12
+
+      @last_drag_x : Int32? = nil
+      @last_drag_y : Int32? = nil
 
       def handle_mouse(event : Terminal::MouseEvent) : Bool
+        cw = @last_canvas_w
+        ch = @last_canvas_h
+        cx = @last_canvas_x
+        cy = @last_canvas_y
+
         case event.button
         when Terminal::MouseButton::WheelUp
           @lightness = (@lightness + 0.05).clamp(0.0, 1.0)
@@ -165,34 +175,273 @@ module Opal
         when Terminal::MouseButton::WheelDown
           @lightness = (@lightness - 0.05).clamp(0.0, 1.0)
           true
-        when Terminal::MouseButton::Left
+        when Terminal::MouseButton::Right
+          # Right-click drag: Rotate 3D object
           if event.action == Terminal::MouseAction::Press
-            @last_mouse_x = event.x
-            @last_mouse_y = event.y
+            @last_drag_x = event.x
+            @last_drag_y = event.y
             true
           elsif event.action == Terminal::MouseAction::Motion
-            if (last_x = @last_mouse_x) && (last_y = @last_mouse_y)
+            if (last_x = @last_drag_x) && (last_y = @last_drag_y)
               dx = event.x - last_x
               dy = event.y - last_y
               @yaw += dx * 0.08
               @pitch += dy * 0.08
-              @last_mouse_x = event.x
-              @last_mouse_y = event.y
+              @last_drag_x = event.x
+              @last_drag_y = event.y
               true
             else
-              @last_mouse_x = event.x
-              @last_mouse_y = event.y
+              @last_drag_x = event.x
+              @last_drag_y = event.y
               false
             end
           elsif event.action == Terminal::MouseAction::Release
-            @last_mouse_x = nil
-            @last_mouse_y = nil
+            @last_drag_x = nil
+            @last_drag_y = nil
+            true
+          else
+            false
+          end
+        when Terminal::MouseButton::Left
+          if event.action == Terminal::MouseAction::Release
+            return true
+          end
+
+          # Left-click: Choose color from surface using raycast
+          # Determine canvas-local coordinates (handles 1-indexed terminal coords or 0-indexed coords)
+          local_x = if event.x >= cx + 1 && event.x <= cx + cw
+                      event.x - 1 - cx
+                    elsif event.x >= cx && event.x < cx + cw
+                      event.x - cx
+                    else
+                      (event.x - 1 - cx).clamp(0, cw - 1)
+                    end
+
+          local_y = if event.y >= cy + 1 && event.y <= cy + ch
+                      event.y - 1 - cy
+                    elsif event.y >= cy && event.y < cy + ch
+                      event.y - cy
+                    else
+                      (event.y - 1 - cy).clamp(0, ch - 1)
+                    end
+
+          local_x = local_x.clamp(0, cw - 1)
+          local_y = local_y.clamp(0, ch - 1)
+
+          @cursor_x = local_x
+          @cursor_y = local_y
+
+          if hit_color = sample_raycast_color(local_x, local_y, cw, ch)
+            @selected_color = hit_color
+          end
+          true
+        when Terminal::MouseButton::None
+          if event.action == Terminal::MouseAction::Motion && (last_x = @last_drag_x) && (last_y = @last_drag_y)
+            dx = event.x - last_x
+            dy = event.y - last_y
+            @yaw += dx * 0.08
+            @pitch += dy * 0.08
+            @last_drag_x = event.x
+            @last_drag_y = event.y
+            true
+          elsif event.action == Terminal::MouseAction::Release
+            @last_drag_x = nil
+            @last_drag_y = nil
             true
           else
             false
           end
         else
+          if event.action == Terminal::MouseAction::Release
+            @last_drag_x = nil
+            @last_drag_y = nil
+          end
           false
+        end
+      end
+
+      # Performs mathematical raycasting at canvas-local coordinates (lx, ly)
+      # and returns the surface Color if a hit occurs, or nil otherwise.
+      def sample_raycast_color(lx : Int32, ly : Int32, cw : Int32? = nil, ch : Int32? = nil) : Color?
+        canvas_width = cw || @last_canvas_w
+        canvas_height = ch || @last_canvas_h
+
+        case @shape
+        when ColorPickerShape::Cube3D
+          raycast_cube(lx, ly, canvas_width, canvas_height)
+        when ColorPickerShape::Sphere3D
+          raycast_sphere(lx, ly, canvas_width, canvas_height)
+        when ColorPickerShape::Circle2D
+          raycast_circle(lx, ly, canvas_width, canvas_height)
+        when ColorPickerShape::Square2D
+          raycast_square(lx, ly, canvas_width, canvas_height)
+        end
+      end
+
+      # Raycast Cube Surface at (lx, ly)
+      def raycast_cube(lx : Int32, ly : Int32, cw : Int32, ch : Int32) : Color?
+        center_x = cw // 2
+        center_y = ch // 2
+        scale = (ch.to_f * 0.32)
+        return nil if scale <= 0.0
+
+        cos_y = Math.cos(@yaw)
+        sin_y = Math.sin(@yaw)
+        cos_p = Math.cos(@pitch)
+        sin_p = Math.sin(@pitch)
+
+        dy_1 = sin_p
+        dz_1 = cos_p
+        dx_obj = -dz_1 * sin_y
+        dy_obj = dy_1
+        dz_obj = dz_1 * cos_y
+
+        dy = ly - center_y
+        y_c = dy.to_f / scale
+
+        dx = lx - center_x
+        x_c = dx.to_f / (scale * 2.0)
+
+        oy_1 = y_c * cos_p - 5.0 * sin_p
+        oz_1 = -y_c * sin_p - 5.0 * cos_p
+        ox_obj = x_c * cos_y - oz_1 * sin_y
+        oy_obj = oy_1
+        oz_obj = x_c * sin_y + oz_1 * cos_y
+
+        t_min = -1e9
+        t_max = 1e9
+        hit = true
+
+        if dx_obj.abs > 1e-6
+          t1 = (-1.0 - ox_obj) / dx_obj
+          t2 = (1.0 - ox_obj) / dx_obj
+          t_near = Math.min(t1, t2)
+          t_far = Math.max(t1, t2)
+          t_min = Math.max(t_min, t_near)
+          t_max = Math.min(t_max, t_far)
+        else
+          hit = false if ox_obj < -1.0 || ox_obj > 1.0
+        end
+
+        if hit
+          if dy_obj.abs > 1e-6
+            t1 = (-1.0 - oy_obj) / dy_obj
+            t2 = (1.0 - oy_obj) / dy_obj
+            t_near = Math.min(t1, t2)
+            t_far = Math.max(t1, t2)
+            t_min = Math.max(t_min, t_near)
+            t_max = Math.min(t_max, t_far)
+          else
+            hit = false if oy_obj < -1.0 || oy_obj > 1.0
+          end
+        end
+
+        if hit
+          if dz_obj.abs > 1e-6
+            t1 = (-1.0 - oz_obj) / dz_obj
+            t2 = (1.0 - oz_obj) / dz_obj
+            t_near = Math.min(t1, t2)
+            t_far = Math.max(t1, t2)
+            t_min = Math.max(t_min, t_near)
+            t_max = Math.min(t_max, t_far)
+          else
+            hit = false if oz_obj < -1.0 || oz_obj > 1.0
+          end
+        end
+
+        if hit && t_min <= t_max && t_max > 0.0
+          t = t_min > 0.0 ? t_min : t_max
+          px = (ox_obj + t * dx_obj).clamp(-1.0, 1.0)
+          py = (oy_obj + t * dy_obj).clamp(-1.0, 1.0)
+          pz = (oz_obj + t * dz_obj).clamp(-1.0, 1.0)
+
+          r_byte = ((px + 1.0) * 127.5).round.to_u8
+          g_byte = ((py + 1.0) * 127.5).round.to_u8
+          b_byte = ((pz + 1.0) * 127.5).round.to_u8
+          Color.rgb(r_byte, g_byte, b_byte)
+        else
+          nil
+        end
+      end
+
+      # Raycast Sphere Surface at (lx, ly)
+      def raycast_sphere(lx : Int32, ly : Int32, cw : Int32, ch : Int32) : Color?
+        center_x = cw // 2
+        center_y = ch // 2
+        radius = (ch.to_f * 0.38)
+        return nil if radius <= 0.0
+
+        cos_y = Math.cos(@yaw)
+        sin_y = Math.sin(@yaw)
+        cos_p = Math.cos(@pitch)
+        sin_p = Math.sin(@pitch)
+
+        dy = ly - center_y
+        y_c = dy.to_f / radius
+
+        dx = lx - center_x
+        x_c = dx.to_f / (radius * 2.0)
+
+        d2 = x_c * x_c + y_c * y_c
+        return nil if d2 > 1.0
+
+        z_c = Math.sqrt(1.0 - d2)
+
+        py1 = y_c * cos_p + z_c * sin_p
+        pz1 = -y_c * sin_p + z_c * cos_p
+        px1 = x_c
+
+        px_obj = px1 * cos_y - pz1 * sin_y
+        py_obj = py1
+        pz_obj = px1 * sin_y + pz1 * cos_y
+
+        phi = Math.asin(py_obj.clamp(-1.0, 1.0))
+        lightness_val = (phi / Math::PI) + 0.5
+        theta = Math.atan2(pz_obj, px_obj)
+        hue_val = (theta * 180.0 / Math::PI) % 360.0
+        hue_val += 360.0 if hue_val < 0.0
+
+        ColorPicker3D.hsl_to_rgb(hue_val, 1.0, lightness_val)
+      end
+
+      # Raycast 2D Polar Circle at (lx, ly)
+      def raycast_circle(lx : Int32, ly : Int32, cw : Int32, ch : Int32) : Color?
+        center_x = cw // 2
+        center_y = ch // 2
+        radius = (ch.to_f * 0.44)
+        return nil if radius <= 0.0
+
+        dy = ly - center_y
+        adj_dy = dy.to_f * 2.0
+        dx = lx - center_x
+
+        dist = Math.sqrt(dx.to_f * dx.to_f + adj_dy * adj_dy) / (radius * 2.0)
+        if dist <= 1.0
+          angle = (Math.atan2(adj_dy, dx.to_f) * 180.0 / Math::PI + 360.0) % 360.0
+          ColorPicker3D.hsl_to_rgb(angle, dist, @lightness)
+        else
+          nil
+        end
+      end
+
+      # Raycast 2D Square Spectrum at (lx, ly)
+      def raycast_square(lx : Int32, ly : Int32, cw : Int32, ch : Int32) : Color?
+        grid_w = Math.min(cw - 2, 28)
+        grid_h = Math.min(ch - 2, 12)
+        return nil if grid_w <= 0 || grid_h <= 0
+
+        start_x = (cw - grid_w) // 2
+        start_y = (ch - grid_h) // 2
+
+        gx = lx - start_x
+        gy = ly - start_y
+
+        if gx >= 0 && gx < grid_w && gy >= 0 && gy < grid_h
+          v_ratio = 1.0 - (gy.to_f / grid_h.to_f)
+          hue_deg = (gx.to_f / grid_w.to_f) * 360.0
+          ColorPicker3D.hsl_to_rgb(hue_deg, v_ratio, @lightness)
+        else
+          nil
         end
       end
 
@@ -217,6 +466,11 @@ module Opal
         canvas_h = (height - 4).clamp(8, 16)
         canvas_x = x + 1
         canvas_y = cur_y
+
+        @last_canvas_x = canvas_x
+        @last_canvas_y = canvas_y
+        @last_canvas_w = canvas_w
+        @last_canvas_h = canvas_h
 
         # Clear canvas area
         (0...canvas_h).each do |cy|
@@ -309,7 +563,7 @@ module Opal
         foot_y = y + height - 2
         buffer.put_string(x, foot_y, "─" * Math.min(width, 68), fg: Color.bright_black)
         foot_y += 1
-        hints = " [W/A/S/D] Turn 3D   [↑/↓/←/→] Raycast Cursor   [M] Shape   [Space] Auto-Spin "
+        hints = " [Right-Drag] Rotate 3D   [Left-Click] Pick Color   [Wheel] Lightness   [M] Shape   [Space] Auto-Spin "
         buffer.put_string(x, Math.min(foot_y, buffer.height - 1), hints, fg: Color.bright_black)
       end
 
@@ -551,6 +805,7 @@ module Opal
 
     drv.raw_mode do
       drv.hide_cursor
+      drv.enable_mouse
       render_frame.call
 
       loop do
@@ -571,11 +826,20 @@ module Opal
               break
             end
           end
+        when Terminal::MouseEvent
+          if picker.handle_mouse(event)
+            should_redraw = true
+            if picker.confirmed?
+              result = picker.selected_color
+              break
+            end
+          end
         end
 
         render_frame.call if should_redraw
       end
     ensure
+      drv.disable_mouse
       drv.show_cursor
     end
 

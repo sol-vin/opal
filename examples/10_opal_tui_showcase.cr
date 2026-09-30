@@ -1685,7 +1685,7 @@ class ColorPicker3DSlide < ShowcaseSlide
   end
 
   def hints : String
-    "[W/A/S/D] Turn 3D Object   [↑/↓/←/→] Raycast Cursor   [M] Shape   [Space] Auto-Spin"
+    "[Right-Drag] Rotate 3D   [Left-Click] Pick Color   [Wheel] Lightness   [M] Shape   [Space] Auto-Spin"
   end
 
   def tick : Nil

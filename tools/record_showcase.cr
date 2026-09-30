@@ -377,12 +377,14 @@ module Opal
         send_key("m", advance: 0.25)
         send_key("d", advance: 0.12)
         send_key("w", advance: 0.12)
-        @cast.pause(0.2)
-        # Drag mouse to rotate 3D object
-        send_mouse(25, 10, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.1)
-        send_mouse(30, 11, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.1)
-        send_mouse(35, 12, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.1)
-        send_mouse(35, 12, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.1)
+        # Right-drag mouse to rotate 3D object
+        send_mouse(25, 10, Opal::Terminal::MouseButton::Right, Opal::Terminal::MouseAction::Press, advance: 0.1)
+        send_mouse(30, 11, Opal::Terminal::MouseButton::Right, Opal::Terminal::MouseAction::Motion, advance: 0.1)
+        send_mouse(35, 12, Opal::Terminal::MouseButton::Right, Opal::Terminal::MouseAction::Motion, advance: 0.1)
+        send_mouse(35, 12, Opal::Terminal::MouseButton::Right, Opal::Terminal::MouseAction::Release, advance: 0.1)
+        # Left-click to choose color from surface using raycast
+        send_mouse(18, 9, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.18)
+        send_mouse(22, 11, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.18)
         # Mouse wheel to adjust lightness
         send_mouse(25, 10, Opal::Terminal::MouseButton::WheelUp, Opal::Terminal::MouseAction::Press, advance: 0.15)
         # Toggle auto-spin with space
