@@ -15,12 +15,13 @@ module Opal
       property? mouse_enabled : Bool
       property? diff_render : Bool
       @diff_renderer : UI::DiffRenderer? = nil
+      @render_buffer : UI::Buffer? = nil
 
       def initialize(
         @model : Model,
         driver : Terminal::Driver? = nil,
         @alt_screen : Bool = true,
-        @mouse_enabled : Bool = false,
+        @mouse_enabled : Bool = true,
         @diff_render : Bool = false,
       )
         @driver = driver || Terminal.default_driver
@@ -122,9 +123,15 @@ module Opal
       private def render_view : Nil
         if @diff_render && (dr = @diff_renderer)
           cols, rows = @driver.size
-          buffer = UI::Buffer.new(cols, rows)
-          @model.render(buffer)
-          dr.render(buffer)
+          rb = @render_buffer
+          if rb.nil? || rb.width != cols || rb.height != rows
+            rb = UI::Buffer.new(cols, rows)
+            @render_buffer = rb
+          else
+            rb.clear
+          end
+          @model.render(rb)
+          dr.render(rb)
         else
           @driver.write(Terminal::Screen::CURSOR_HOME)
           @driver.write(@model.view)

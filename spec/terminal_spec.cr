@@ -144,6 +144,57 @@ describe Opal::Terminal::AnsiParser do
       wheel_down.not_nil!.button.should eq(Opal::Terminal::MouseButton::WheelDown)
     end
   end
+
+  describe ".parse_all" do
+    it "parses coalesced mouse press and release packets in a single read chunk" do
+      events = Opal::Terminal::AnsiParser.parse_all("\e[<0;25;10M\e[<0;25;10m")
+      events.size.should eq(2)
+
+      p = events[0].as(Opal::Terminal::MouseEvent)
+      p.x.should eq(25)
+      p.y.should eq(10)
+      p.button.should eq(Opal::Terminal::MouseButton::Left)
+      p.action.should eq(Opal::Terminal::MouseAction::Press)
+
+      r = events[1].as(Opal::Terminal::MouseEvent)
+      r.x.should eq(25)
+      r.y.should eq(10)
+      r.button.should eq(Opal::Terminal::MouseButton::Left)
+      r.action.should eq(Opal::Terminal::MouseAction::Release)
+    end
+
+    it "parses rapid mouse wheel events" do
+      events = Opal::Terminal::AnsiParser.parse_all("\e[<64;10;5M\e[<65;10;5M")
+      events.size.should eq(2)
+      events[0].as(Opal::Terminal::MouseEvent).button.should eq(Opal::Terminal::MouseButton::WheelUp)
+      events[1].as(Opal::Terminal::MouseEvent).button.should eq(Opal::Terminal::MouseButton::WheelDown)
+    end
+
+    it "parses mixed mouse and keyboard events in a single packet" do
+      events = Opal::Terminal::AnsiParser.parse_all("\e[<0;10;5Ma\e[A\e[<0;10;5m")
+      events.size.should eq(4)
+
+      events[0].as(Opal::Terminal::MouseEvent).action.should eq(Opal::Terminal::MouseAction::Press)
+      events[1].as(Opal::Terminal::KeyEvent).name.should eq("a")
+      events[2].as(Opal::Terminal::KeyEvent).name.should eq("up")
+      events[3].as(Opal::Terminal::MouseEvent).action.should eq(Opal::Terminal::MouseAction::Release)
+    end
+
+    it "parses mouse modifier keys" do
+      ctrl_click = Opal::Terminal::AnsiParser.parse_all("\e[<16;12;8M").first.as(Opal::Terminal::MouseEvent)
+      ctrl_click.ctrl?.should be_true
+
+      shift_click = Opal::Terminal::AnsiParser.parse_all("\e[<4;12;8M").first.as(Opal::Terminal::MouseEvent)
+      shift_click.shift?.should be_true
+
+      alt_click = Opal::Terminal::AnsiParser.parse_all("\e[<8;12;8M").first.as(Opal::Terminal::MouseEvent)
+      alt_click.alt?.should be_true
+    end
+
+    it "returns empty array for empty input" do
+      Opal::Terminal::AnsiParser.parse_all("").should be_empty
+    end
+  end
 end
 
 describe Opal::Terminal::MockDriver do

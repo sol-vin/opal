@@ -67,8 +67,47 @@ module Opal
       getter y : Int32
       getter button : Terminal::MouseButton
       getter action : Terminal::MouseAction
+      getter? ctrl : Bool
+      getter? alt : Bool
+      getter? shift : Bool
 
-      def initialize(@x : Int32, @y : Int32, @button : Terminal::MouseButton, @action : Terminal::MouseAction)
+      def initialize(
+        @x : Int32,
+        @y : Int32,
+        @button : Terminal::MouseButton,
+        @action : Terminal::MouseAction,
+        @ctrl : Bool = false,
+        @alt : Bool = false,
+        @shift : Bool = false,
+      )
+      end
+
+      def press? : Bool
+        @action == Terminal::MouseAction::Press
+      end
+
+      def release? : Bool
+        @action == Terminal::MouseAction::Release
+      end
+
+      def motion? : Bool
+        @action == Terminal::MouseAction::Motion
+      end
+
+      def wheel_up? : Bool
+        @button == Terminal::MouseButton::WheelUp
+      end
+
+      def wheel_down? : Bool
+        @button == Terminal::MouseButton::WheelDown
+      end
+
+      def left_click? : Bool
+        @button == Terminal::MouseButton::Left && press?
+      end
+
+      def right_click? : Bool
+        @button == Terminal::MouseButton::Right && press?
       end
 
       def self.from_event(event : Terminal::MouseEvent) : MouseMsg
@@ -76,7 +115,10 @@ module Opal
           x: event.x,
           y: event.y,
           button: event.button,
-          action: event.action
+          action: event.action,
+          ctrl: event.ctrl?,
+          alt: event.alt?,
+          shift: event.shift?
         )
       end
     end

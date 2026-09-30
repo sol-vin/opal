@@ -31,7 +31,12 @@ module Opal
   module Terminal
     # Windows native terminal driver using Win32 Console API & VT100 sequences.
     class WindowsDriver < Driver
-      @input_buffer = Bytes.new(256)
+      ENABLE_MOUSE_INPUT     = 0x0010_u32
+      ENABLE_WINDOW_INPUT    = 0x0008_u32
+      ENABLE_QUICK_EDIT_MODE = 0x0040_u32
+      ENABLE_EXTENDED_FLAGS  = 0x0080_u32
+
+      @original_console_mode : UInt32? = nil
 
       def size : {Int32, Int32}
         {% if flag?(:windows) %}
@@ -62,16 +67,27 @@ module Opal
         STDOUT.flush
       end
 
-      def read_event : KeyEvent | MouseEvent | Nil
-        bytes_read = STDIN.read(@input_buffer)
-        return nil if bytes_read <= 0
+      def enable_mouse : Nil
+        super
+        {% if flag?(:windows) %}
+          handle = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+          if LibC.GetConsoleMode(handle, out mode) != 0
+            @original_console_mode ||= mode
+            new_mode = (mode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT | LibC::ENABLE_VIRTUAL_TERMINAL_INPUT) & ~ENABLE_QUICK_EDIT_MODE
+            LibC.SetConsoleMode(handle, new_mode)
+          end
+        {% end %}
+      end
 
-        seq = String.new(@input_buffer[0, bytes_read])
-        if seq.starts_with?("\e[<")
-          AnsiParser.parse_mouse(seq)
-        else
-          AnsiParser.parse_key(seq)
-        end
+      def disable_mouse : Nil
+        super
+        {% if flag?(:windows) %}
+          if orig = @original_console_mode
+            handle = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+            LibC.SetConsoleMode(handle, orig | ENABLE_EXTENDED_FLAGS)
+            @original_console_mode = nil
+          end
+        {% end %}
       end
     end
   end

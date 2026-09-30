@@ -240,51 +240,161 @@ module Opal
         KeyEvent.new("escape")
       end
 
+      SGR_MOUSE_REGEX = /\A\e\[<(\d+);(\d+);(\d+)([Mm])/
+
       # Parses an SGR mouse tracking sequence: \e[<b;x;yM or \e[<b;x;ym
       def self.parse_mouse(input : String) : MouseEvent?
         return nil unless input.starts_with?("\e[<")
-        action_char = input[-1]?
-        return nil unless action_char == 'M' || action_char == 'm'
+        if md = input.match(SGR_MOUSE_REGEX)
+          btn_code = md[1].to_i? || 0
+          x = md[2].to_i? || 1
+          y = md[3].to_i? || 1
+          action_char = md[4][0]
 
-        inner = input[3...-1]
-        parts = inner.split(';')
-        return nil if parts.size < 3
+          ctrl = (btn_code & 16) != 0
+          alt = (btn_code & 8) != 0
+          shift = (btn_code & 4) != 0
+          is_motion = (btn_code & 32) != 0
 
-        btn_code = parts[0].to_i? || 0
-        x = parts[1].to_i? || 1
-        y = parts[2].to_i? || 1
+          action = if action_char == 'm'
+                     MouseAction::Release
+                   elsif is_motion
+                     MouseAction::Motion
+                   else
+                     MouseAction::Press
+                   end
 
-        ctrl = (btn_code & 16) != 0
-        alt = (btn_code & 8) != 0
-        shift = (btn_code & 4) != 0
-        is_motion = (btn_code & 32) != 0
+          button = case btn_code & 67
+                   when  0 then MouseButton::Left
+                   when  1 then MouseButton::Middle
+                   when  2 then MouseButton::Right
+                   when 64 then MouseButton::WheelUp
+                   when 65 then MouseButton::WheelDown
+                   else         MouseButton::None
+                   end
 
-        action = if action_char == 'm'
-                   MouseAction::Release
-                 elsif is_motion
-                   MouseAction::Motion
-                 else
-                   MouseAction::Press
-                 end
+          MouseEvent.new(
+            x: x,
+            y: y,
+            button: button,
+            action: action,
+            ctrl: ctrl,
+            alt: alt,
+            shift: shift
+          )
+        else
+          nil
+        end
+      end
 
-        button = case btn_code & 67
-                 when  0 then MouseButton::Left
-                 when  1 then MouseButton::Middle
-                 when  2 then MouseButton::Right
-                 when 64 then MouseButton::WheelUp
-                 when 65 then MouseButton::WheelDown
-                 else         MouseButton::None
-                 end
+      # Parses an entire raw input chunk and extracts all contained KeyEvents and MouseEvents
+      def self.parse_all(input : String) : Array(KeyEvent | MouseEvent)
+        events = [] of KeyEvent | MouseEvent
+        return events if input.empty?
 
-        MouseEvent.new(
-          x: x,
-          y: y,
-          button: button,
-          action: action,
-          ctrl: ctrl,
-          alt: alt,
-          shift: shift
-        )
+        i = 0
+        bytes = input.to_slice
+        len = bytes.size
+
+        while i < len
+          b = bytes[i]
+          if b == 27 # ESC
+            remaining = String.new(bytes[i, len - i])
+
+            # 1. SGR Mouse: \e[<btn;x;y(M|m)
+            if remaining.starts_with?("\e[<")
+              if md = remaining.match(SGR_MOUSE_REGEX)
+                if mouse_ev = parse_mouse(md[0])
+                  events << mouse_ev
+                  i += md[0].bytesize
+                  next
+                end
+              end
+            end
+
+            # 2. SS3 format: \eOP to \eOS (F1-F4)
+            if remaining.starts_with?("\eO") && remaining.bytesize >= 3
+              sub = remaining[0, 3]
+              if key_ev = parse_key(sub)
+                events << key_ev
+                i += 3
+                next
+              end
+            end
+
+            # 3. CSI sequence: \e[ ... <terminator>
+            if remaining.starts_with?("\e[")
+              seq_len = 2
+              while (i + seq_len) < len
+                term_byte = bytes[i + seq_len]
+                seq_len += 1
+                if term_byte >= 0x40 && term_byte <= 0x7E
+                  break
+                end
+              end
+              sub = String.new(bytes[i, seq_len])
+              if key_ev = parse_key(sub)
+                events << key_ev
+              end
+              i += seq_len
+              next
+            end
+
+            # 4. Alt + key: \e<char>
+            if remaining.bytesize >= 2 && remaining[1] != '[' && remaining[1] != 'O'
+              first_char = remaining.chars[1]
+              sub = remaining[0, 1 + first_char.bytesize]
+              if key_ev = parse_key(sub)
+                events << key_ev
+              end
+              i += 1 + first_char.bytesize
+              next
+            end
+
+            # 5. Standalone ESC
+            events << KeyEvent.new("escape")
+            i += 1
+            next
+          end
+
+          # Control characters
+          case b
+          when 13 # \r
+            if i + 1 < len && bytes[i + 1] == 10
+              events << KeyEvent.new("enter", '\n')
+              i += 2
+            else
+              events << KeyEvent.new("enter", '\n')
+              i += 1
+            end
+            next
+          when 10 # \n
+            events << KeyEvent.new("enter", '\n')
+            i += 1
+            next
+          when 9 # \t
+            events << KeyEvent.new("tab", '\t')
+            i += 1
+            next
+          when 127, 8 # Backspace
+            events << KeyEvent.new("backspace")
+            i += 1
+            next
+          when 1..26 # Ctrl+A .. Ctrl+Z
+            char = ('a'.ord + b - 1).chr
+            events << KeyEvent.new(char.to_s, char, ctrl: true)
+            i += 1
+            next
+          end
+
+          # Regular UTF-8 character
+          sub = String.new(bytes[i, len - i])
+          first_char = sub.chars.first
+          events << KeyEvent.new(first_char.to_s, first_char)
+          i += first_char.bytesize
+        end
+
+        events
       end
     end
   end

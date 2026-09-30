@@ -177,11 +177,19 @@ module Opal
         @cells.fill(Cell.empty)
       end
 
+      # In-place copies all cells and dimensions from another buffer without reallocating
+      def copy_from(other : Buffer) : Nil
+        if @width != other.width || @height != other.height
+          @width = other.width
+          @height = other.height
+          @cells = Array(Cell).new(@width * @height, Cell.empty)
+        end
+        other.cells.to_unsafe.copy_to(@cells.to_unsafe, @cells.size)
+      end
+
       def clone : Buffer
         buf = Buffer.new(@width, @height)
-        @cells.each_with_index do |cell, idx|
-          buf.cells[idx] = cell
-        end
+        @cells.to_unsafe.copy_to(buf.cells.to_unsafe, @cells.size)
         buf
       end
 

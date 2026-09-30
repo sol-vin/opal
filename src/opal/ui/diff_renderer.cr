@@ -26,7 +26,11 @@ module Opal
         # If first render or dimensions resized, do a full redraw
         if prev.nil? || prev.width != buffer.width || prev.height != buffer.height
           full_render(buffer)
-          @previous_buffer = buffer.clone
+          if prev && prev.width == buffer.width && prev.height == buffer.height
+            prev.copy_from(buffer)
+          else
+            @previous_buffer = buffer.clone
+          end
           return
         end
 
@@ -97,7 +101,7 @@ module Opal
           @driver.flush
         end
 
-        @previous_buffer = buffer.clone
+        prev.copy_from(buffer)
       end
 
       private def full_render(buffer : Buffer) : Nil

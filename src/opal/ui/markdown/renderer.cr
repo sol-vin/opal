@@ -264,6 +264,19 @@ module Opal
         end
       end
 
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          scroll_up(3)
+          true
+        when Terminal::MouseButton::WheelDown
+          scroll_down(3)
+          true
+        else
+          false
+        end
+      end
+
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
         all_lines = lines
         h = all_lines.size

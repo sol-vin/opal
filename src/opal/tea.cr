@@ -10,12 +10,14 @@ module Opal
     driver : Terminal::Driver? = nil,
     alt_screen : Bool = true,
     diff_render : Bool = true,
+    mouse_enabled : Bool = true,
   ) : TEA::Model
     TEA::Program.new(
       model,
       driver: driver,
       alt_screen: alt_screen,
       diff_render: diff_render,
+      mouse_enabled: mouse_enabled,
     ).run
   end
 end

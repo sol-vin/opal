@@ -5,11 +5,32 @@ module Opal
   module Terminal
     # Abstract base interface for terminal input/output drivers.
     abstract class Driver
+      @buffered_events = Deque(KeyEvent | MouseEvent).new
+      @input_buffer = Bytes.new(512)
+
       abstract def size : {Int32, Int32}
       abstract def raw_mode(& : ->)
       abstract def write(str : String) : Nil
       abstract def flush : Nil
-      abstract def read_event : KeyEvent | MouseEvent | Nil
+
+      # Reads the next key or mouse event from the terminal, consuming from the
+      # internal event queue if multiple events arrived in the same read chunk.
+      def read_event : KeyEvent | MouseEvent | Nil
+        unless @buffered_events.empty?
+          return @buffered_events.shift
+        end
+
+        bytes_read = STDIN.read(@input_buffer)
+        return nil if bytes_read <= 0
+
+        seq = String.new(@input_buffer[0, bytes_read])
+        events = AnsiParser.parse_all(seq)
+        return nil if events.empty?
+
+        first = events.shift
+        events.each { |ev| @buffered_events.push(ev) }
+        first
+      end
 
       def enter_alternate_screen : Nil
         write(Screen::ENTER_ALT_BUFFER)

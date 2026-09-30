@@ -22,6 +22,10 @@ abstract class ShowcaseSlide
     false
   end
 
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    false
+  end
+
   def tick : Nil
   end
 
@@ -73,6 +77,10 @@ class WelcomeSlide < ShowcaseSlide
 
   def handle_key(key : Opal::Terminal::KeyEvent) : Bool
     @viewer.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @viewer.handle_mouse(event)
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
@@ -131,6 +139,26 @@ class FormWizardSlide < ShowcaseSlide
           return true
         end
       end
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @form.focus_prev
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @form.focus_next
+      true
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press
+        @submitted = @form.valid?
+        true
+      else
+        false
+      end
+    else
       false
     end
   end
@@ -675,6 +703,34 @@ class TablesSlide < ShowcaseSlide
     end
   end
 
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      if @active_pane == :table
+        @table.move_up
+      else
+        @viewport.scroll_up
+      end
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      if @active_pane == :table
+        @table.move_down
+      else
+        @viewport.scroll_down
+      end
+      true
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press
+        @active_pane = (event.y >= 14 ? :viewport : :table)
+        true
+      else
+        false
+      end
+    else
+      false
+    end
+  end
+
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     buffer.put_string(x + 2, y + 1, "📋 Fleet Service Table (#{(@active_pane == :table ? "FOCUS" : "")})", fg: Opal::Color.cyan, bold: true)
     @table.render(buffer, x + 2, y + 3, w - 4, 8)
@@ -744,6 +800,21 @@ class DevToolsSlide < ShowcaseSlide
     end
   end
 
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @code_view.scroll_up
+      @hex_viewer.scroll_up
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @code_view.scroll_down
+      @hex_viewer.scroll_down
+      true
+    else
+      false
+    end
+  end
+
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     half_w = (w - 6) // 2
 
@@ -789,6 +860,27 @@ class LayoutsSlide < ShowcaseSlide
     when "right", "l"
       @ratio = (@ratio + 0.05).clamp(0.2, 0.8)
       true
+    else
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @ratio = (@ratio + 0.05).clamp(0.2, 0.8)
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @ratio = (@ratio - 0.05).clamp(0.2, 0.8)
+      true
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press || event.action == Opal::Terminal::MouseAction::Motion
+        cols, _ = Opal::Terminal.default_driver.size
+        @ratio = (event.x.to_f / cols.to_f).clamp(0.2, 0.8)
+        true
+      else
+        false
+      end
     else
       false
     end
@@ -863,6 +955,26 @@ class TabsSlide < ShowcaseSlide
           return true
         end
       end
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @tabs.prev_tab
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @tabs.next_tab
+      true
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press
+        @tabs.next_tab
+        true
+      else
+        false
+      end
+    else
       false
     end
   end
@@ -1427,6 +1539,26 @@ class TextShaderSlide < ShowcaseSlide
     end
   end
 
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @mode = (@mode == 1 ? 9 : @mode - 1)
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @mode = (@mode == 9 ? 1 : @mode + 1)
+      true
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press
+        @bouncing = !@bouncing
+        true
+      else
+        false
+      end
+    else
+      false
+    end
+  end
+
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     cur_y = y + 1
     mode_name = case @mode
@@ -1548,6 +1680,10 @@ class ColorPicker3DSlide < ShowcaseSlide
     @picker.handle_key(key)
   end
 
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @picker.handle_mouse(event)
+  end
+
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     @picker.render(buffer, x + 2, y + 1, w - 4, h - 2)
   end
@@ -1626,6 +1762,26 @@ class AsciiImageSlide < ShowcaseSlide
     when "c"
       @colorize = !@colorize
       true
+    else
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::WheelUp
+      @selected_image = (@selected_image == 1 ? 3 : @selected_image - 1)
+      true
+    when Opal::Terminal::MouseButton::WheelDown
+      @selected_image = (@selected_image == 3 ? 1 : @selected_image + 1)
+      true
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press
+        @mode = (@mode == Opal::UI::AsciiRenderMode::HalfBlock ? Opal::UI::AsciiRenderMode::NearestChar : Opal::UI::AsciiRenderMode::HalfBlock)
+        true
+      else
+        false
+      end
     else
       false
     end
@@ -1760,6 +1916,10 @@ class FinaleSlide < ShowcaseSlide
     @viewer.handle_key(key)
   end
 
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @viewer.handle_mouse(event)
+  end
+
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
     @viewer.render(buffer, x + 2, y + 1, w - 4, h - 2)
   end
@@ -1836,6 +1996,49 @@ class ShowcaseAppModel
       # 2. Forward Key to Active Slide (Left, Right, numbers, etc. are passed directly)
       ev = Opal::Terminal::KeyEvent.new(msg.key, msg.char, msg.ctrl?, msg.alt?, msg.shift?)
       @slides[@current_idx].handle_key(ev)
+      {self, Opal::TEA::Cmd.none}
+    when Opal::TEA::MouseMsg
+      cols, rows = Opal::Terminal.default_driver.size
+
+      # 1. Global Navigation via Mouse Click:
+      if msg.left_click?
+        # Header click (rows 1 or 2):
+        if msg.y <= 2
+          if msg.x > cols // 2
+            @current_idx = (@current_idx + 1) % @slides.size
+            return {self, Opal::TEA::Cmd.redraw}
+          else
+            @current_idx = (@current_idx - 1 + @slides.size) % @slides.size
+            return {self, Opal::TEA::Cmd.redraw}
+          end
+        end
+
+        # Footer click (bottom row):
+        # Footer text: " [Shift+→] Next  [Shift+←] Prev  [ESC] Quit │ ..."
+        if msg.y >= rows - 1
+          if msg.x >= 1 && msg.x <= 16
+            @current_idx = (@current_idx + 1) % @slides.size
+            return {self, Opal::TEA::Cmd.redraw}
+          elsif msg.x >= 17 && msg.x <= 32
+            @current_idx = (@current_idx - 1 + @slides.size) % @slides.size
+            return {self, Opal::TEA::Cmd.redraw}
+          elsif msg.x >= 33 && msg.x <= 44
+            return {self, Opal::TEA::Cmd.quit}
+          end
+        end
+      end
+
+      # 2. Forward Mouse Event to Active Slide
+      ev = Opal::Terminal::MouseEvent.new(
+        x: msg.x,
+        y: msg.y,
+        button: msg.button,
+        action: msg.action,
+        ctrl: msg.ctrl?,
+        alt: msg.alt?,
+        shift: msg.shift?
+      )
+      @slides[@current_idx].handle_mouse(ev)
       {self, Opal::TEA::Cmd.none}
     else
       {self, Opal::TEA::Cmd.none}

@@ -200,4 +200,31 @@ describe Opal::UI::Buffer do
       end
     end
   end
+
+  it "copies buffer data in-place without reallocation using copy_from" do
+    src = Opal::UI::Buffer.new(30, 10)
+    src.put_string(2, 3, "In-Place Copy", fg: Opal::Color.green, bold: true)
+
+    dst = Opal::UI::Buffer.new(30, 10)
+    dst.copy_from(src)
+
+    dst.width.should eq(30)
+    dst.height.should eq(10)
+    dst.get(2, 3).char.should eq('I')
+    dst.get(2, 3).fg.should eq(Opal::Color.green)
+    dst.get(2, 3).bold?.should be_true
+    dst.get(0, 0).char.should eq(' ')
+  end
+
+  it "resizes and copies buffer data if dimensions differ in copy_from" do
+    src = Opal::UI::Buffer.new(40, 12)
+    src.put_string(0, 0, "Resized Copy")
+
+    dst = Opal::UI::Buffer.new(20, 5)
+    dst.copy_from(src)
+
+    dst.width.should eq(40)
+    dst.height.should eq(12)
+    dst.get(0, 0).char.should eq('R')
+  end
 end

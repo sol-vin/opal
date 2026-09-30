@@ -154,6 +154,48 @@ module Opal
         end
       end
 
+      @last_mouse_x : Int32? = nil
+      @last_mouse_y : Int32? = nil
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          @lightness = (@lightness + 0.05).clamp(0.0, 1.0)
+          true
+        when Terminal::MouseButton::WheelDown
+          @lightness = (@lightness - 0.05).clamp(0.0, 1.0)
+          true
+        when Terminal::MouseButton::Left
+          if event.action == Terminal::MouseAction::Press
+            @last_mouse_x = event.x
+            @last_mouse_y = event.y
+            true
+          elsif event.action == Terminal::MouseAction::Motion
+            if (last_x = @last_mouse_x) && (last_y = @last_mouse_y)
+              dx = event.x - last_x
+              dy = event.y - last_y
+              @yaw += dx * 0.08
+              @pitch += dy * 0.08
+              @last_mouse_x = event.x
+              @last_mouse_y = event.y
+              true
+            else
+              @last_mouse_x = event.x
+              @last_mouse_y = event.y
+              false
+            end
+          elsif event.action == Terminal::MouseAction::Release
+            @last_mouse_x = nil
+            @last_mouse_y = nil
+            true
+          else
+            false
+          end
+        else
+          false
+        end
+      end
+
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
         {Math.min(available_w, 70), Math.min(available_h, 20)}
       end

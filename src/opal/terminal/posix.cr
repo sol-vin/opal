@@ -20,8 +20,6 @@ module Opal
         end
       {% end %}
 
-      @input_buffer = Bytes.new(256)
-
       def size : {Int32, Int32}
         {% unless flag?(:windows) %}
           ws = LibC::Winsize.new
@@ -48,18 +46,6 @@ module Opal
 
       def flush : Nil
         STDOUT.flush
-      end
-
-      def read_event : KeyEvent | MouseEvent | Nil
-        bytes_read = STDIN.read(@input_buffer)
-        return nil if bytes_read <= 0
-
-        seq = String.new(@input_buffer[0, bytes_read])
-        if seq.starts_with?("\e[<")
-          AnsiParser.parse_mouse(seq)
-        else
-          AnsiParser.parse_key(seq)
-        end
       end
     end
   end

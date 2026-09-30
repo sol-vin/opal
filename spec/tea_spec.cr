@@ -63,6 +63,41 @@ struct AsyncModel
   end
 end
 
+class MouseCounterModel
+  include Opal::TEA::Model
+
+  property clicks : Int32 = 0
+  property scrolls : Int32 = 0
+
+  def init : Opal::TEA::Cmd
+    Opal::TEA::Cmd.none
+  end
+
+  def update(msg : Opal::TEA::Msg) : {Opal::TEA::Model, Opal::TEA::Cmd}
+    case msg
+    when Opal::TEA::MouseMsg
+      if msg.left_click?
+        @clicks += 1
+      elsif msg.wheel_up?
+        @scrolls += 1
+      end
+      {self, Opal::TEA::Cmd.none}
+    when Opal::TEA::KeyMsg
+      if msg.matches?("q")
+        {self, Opal::TEA::Cmd.quit}
+      else
+        {self, Opal::TEA::Cmd.none}
+      end
+    else
+      {self, Opal::TEA::Cmd.none}
+    end
+  end
+
+  def view : String
+    "Clicks: #{@clicks}, Scrolls: #{@scrolls}"
+  end
+end
+
 describe Opal::TEA do
   describe "Cmd" do
     it "creates empty and quit commands" do
@@ -128,6 +163,19 @@ describe Opal::TEA do
       final_model.count.should eq(1)
 
       driver.output.should_not contain(Opal::Terminal::Screen::CLEAR_ALL)
+    end
+
+    it "dispatches MouseMsg events and updates model based on clicks" do
+      driver = create_mock_driver
+      driver.inject_mouse(10, 5, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press)
+      driver.inject_mouse(10, 5, Opal::Terminal::MouseButton::WheelUp, Opal::Terminal::MouseAction::Press)
+      driver.inject_key("q")
+
+      program = Opal::TEA::Program.new(MouseCounterModel.new, driver: driver, alt_screen: false, mouse_enabled: true)
+      final_model = program.run.as(MouseCounterModel)
+      final_model.clicks.should eq(1)
+      final_model.scrolls.should eq(1)
+      driver.mouse_enabled?.should be_false # Cleanly disabled on exit!
     end
   end
 end

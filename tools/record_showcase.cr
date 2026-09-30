@@ -46,6 +46,12 @@ module Opal
         render_frame(advance)
       end
 
+      private def send_mouse(x : Int32, y : Int32, button : Opal::Terminal::MouseButton, action : Opal::Terminal::MouseAction, advance : Float64 = 0.08) : Nil
+        msg = Opal::TEA::MouseMsg.new(x, y, button, action)
+        @app.update(msg)
+        render_frame(advance)
+      end
+
       private def next_slide(pause_before : Float64 = 1.0) : Nil
         @cast.pause(pause_before)
         send_key("shift+right", advance: 0.15)
@@ -68,6 +74,8 @@ module Opal
         puts "  → Slide 1: Welcome & Overview"
         render_frame(0.4)
         send_key("pagedown", advance: 0.25)
+        send_mouse(40, 10, Opal::Terminal::MouseButton::WheelDown, Opal::Terminal::MouseAction::Press, advance: 0.2)
+        send_mouse(40, 10, Opal::Terminal::MouseButton::WheelUp, Opal::Terminal::MouseAction::Press, advance: 0.2)
         send_key("pageup", advance: 0.25)
         next_slide(1.2)
 
@@ -370,6 +378,13 @@ module Opal
         send_key("d", advance: 0.12)
         send_key("w", advance: 0.12)
         @cast.pause(0.2)
+        # Drag mouse to rotate 3D object
+        send_mouse(25, 10, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.1)
+        send_mouse(30, 11, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.1)
+        send_mouse(35, 12, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.1)
+        send_mouse(35, 12, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.1)
+        # Mouse wheel to adjust lightness
+        send_mouse(25, 10, Opal::Terminal::MouseButton::WheelUp, Opal::Terminal::MouseAction::Press, advance: 0.15)
         # Toggle auto-spin with space
         send_key("space", advance: 0.2)
         3.times { send_tick(advance: 0.15) }
