@@ -92,16 +92,66 @@ module Opal
           "demos/03_cluster_dashboard.cast",
           "demos/04_ghost_autocomplete.cast",
           "demos/05_cli_toolchain.cast",
+          "demos/06_opal_tui_showcase.cast",
         ]
+
+        # Load existing manifest if present to avoid re-uploading
+        existing_map = Hash(String, UploadResult).new
+        if File.exists?(MANIFEST_FILE)
+          begin
+            parsed = JSON.parse(File.read(MANIFEST_FILE))
+            if demos = parsed["demos"]?.try(&.as_a?)
+              demos.each do |d|
+                fn = d["filename"].as_s
+                existing_map[fn] = UploadResult.new(
+                  filename: fn,
+                  title: d["title"].as_s,
+                  cast_url: d["cast_url"].as_s,
+                  svg_url: d["svg_url"].as_s,
+                  cast_id: d["cast_id"].as_s
+                )
+              end
+            end
+          rescue
+          end
+        end
 
         results = [] of UploadResult
 
         casts.each do |cast_path|
+          filename = File.basename(cast_path)
           unless File.exists?(cast_path)
-            raise "File not found: #{cast_path}. Run 'crystal run tools/record_demos.cr' first."
+            raise "File not found: #{cast_path}."
           end
-          res = upload_file(cast_path, install_id)
-          results << res
+
+          if existing = existing_map[filename]?
+            puts "  ⏩ Skipping already uploaded #{filename} (#{existing.cast_url})"
+            results << existing
+            next
+          end
+
+          res : UploadResult? = nil
+          2.times do
+            begin
+              res = upload_file(cast_path, install_id)
+              break
+            rescue ex
+              if ex.message.to_s.includes?("upload_limit_reached")
+                puts "  ⚠ Install ID hit limit. Generating a fresh install ID..."
+                install_id = UUID.random.to_s
+                File.write(ID_FILE, install_id)
+                puts "  🔑 New Install ID: #{install_id}"
+              else
+                raise ex
+              end
+            end
+          end
+
+          if r = res
+            results << r
+          else
+            raise "Failed to upload #{filename}"
+          end
         end
 
         manifest = {

@@ -1516,12 +1516,9 @@ class ShowcaseAppModel
     end
   end
 
-  def view : String
-    cols, rows = Opal::Terminal.default_driver.size
-    cols = cols.clamp(70, 140)
-    rows = rows.clamp(22, 45)
-
-    buffer = Opal::UI::Buffer.new(cols, rows)
+  def render(buffer : Opal::UI::Buffer) : Nil
+    cols = buffer.width
+    rows = buffer.height
     active = @slides[@current_idx]
 
     # Top Header Banner
@@ -1536,7 +1533,15 @@ class ShowcaseAppModel
     buffer.put_string(0, rows - 2, "─" * cols, fg: Opal::Color.bright_black)
     footer_text = " [ESC / → / n] Next  [← / p] Prev  [q] Quit │ #{active.hints}"
     buffer.put_string(0, rows - 1, footer_text, fg: Opal::Color.bright_white)
+  end
 
+  def view : String
+    cols, rows = Opal::Terminal.default_driver.size
+    cols = cols.clamp(70, 140)
+    rows = rows.clamp(22, 45)
+
+    buffer = Opal::UI::Buffer.new(cols, rows)
+    render(buffer)
     buffer.to_s
   end
 
