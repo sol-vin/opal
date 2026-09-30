@@ -13,7 +13,7 @@
 
 <br/>
 
-[![asciicast](https://asciinema.org/a/pkAk08JARirUTHGG.svg)](https://asciinema.org/a/pkAk08JARirUTHGG)
+[![asciicast](https://asciinema.org/a/EqFHPCJjtmJSQDJD.svg)](https://asciinema.org/a/EqFHPCJjtmJSQDJD)
 
 </div>
 
