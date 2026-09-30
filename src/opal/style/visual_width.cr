@@ -19,17 +19,43 @@ module Opal
       return 0 if cp >= 0xFE00 && cp <= 0xFE0F # Variation selectors
       return 0 if cp >= 0x0300 && cp <= 0x036F # Combining diacritical marks
 
-      # East Asian Wide and Fullwidth characters
-      if (cp >= 0x1100 && cp <= 0x115F) ||   # Hangul Jamo
-         (cp >= 0x2E80 && cp <= 0xA4CF) ||   # CJK Radicals, Ideographs, Yi
-         (cp >= 0xAC00 && cp <= 0xD7A3) ||   # Hangul Syllables
-         (cp >= 0xF900 && cp <= 0xFAFF) ||   # CJK Compatibility Ideographs
-         (cp >= 0xFE10 && cp <= 0xFE19) ||   # Vertical forms
-         (cp >= 0xFE30 && cp <= 0xFE6F) ||   # CJK Compatibility Forms
-         (cp >= 0xFF01 && cp <= 0xFF60) ||   # Fullwidth forms
-         (cp >= 0xFFE0 && cp <= 0xFFE6) ||   # Fullwidth symbols
-         (cp >= 0x1F300 && cp <= 0x1FAFF) || # Miscellaneous Symbols, Pictographs, Emojis
-         (cp >= 0x20000 && cp <= 0x2FA1F)    # CJK Unified Extension
+      # East Asian Wide, Fullwidth characters, and Unicode Emojis
+      if (cp >= 0x1F000 && cp <= 0x1FAFF) ||               # Miscellaneous Symbols and Pictographs, Emoticons, Supplemental
+         (cp >= 0x20000 && cp <= 0x2FA1F) ||               # CJK Unified Extension
+         (cp >= 0x1100 && cp <= 0x115F) ||                 # Hangul Jamo
+         (cp >= 0x2E80 && cp <= 0xA4CF) ||                 # CJK Radicals, Ideographs, Yi
+         (cp >= 0xAC00 && cp <= 0xD7A3) ||                 # Hangul Syllables
+         (cp >= 0xF900 && cp <= 0xFAFF) ||                 # CJK Compatibility Ideographs
+         (cp >= 0xFE10 && cp <= 0xFE19) ||                 # Vertical forms
+         (cp >= 0xFE30 && cp <= 0xFE6F) ||                 # CJK Compatibility Forms
+         (cp >= 0xFF01 && cp <= 0xFF60) ||                 # Fullwidth forms
+         (cp >= 0xFFE0 && cp <= 0xFFE6) ||                 # Fullwidth symbols
+         (cp == 0x231A || cp == 0x231B) ||                 # ⌚, ⌛
+         (cp >= 0x23E9 && cp <= 0x23EC) ||                 # ⏩, ⏪, ⏫, ⏬
+         (cp == 0x23F0 || cp == 0x23F3) ||                 # ⏰, ⏳
+         (cp == 0x25FD || cp == 0x25FE) ||                 # ◽, ◾
+         (cp >= 0x2614 && cp <= 0x2615) ||                 # ☔, ☕
+         (cp >= 0x2648 && cp <= 0x2653) ||                 # ♈..♓
+         (cp == 0x267F) ||                                 # ♿
+         (cp == 0x2693) ||                                 # ⚓
+         (cp >= 0x26A0 && cp <= 0x26A1) ||                 # ⚠️, ⚡
+         (cp >= 0x26AA && cp <= 0x26AB) ||                 # ⚪, ⚫
+         (cp >= 0x26BD && cp <= 0x26BE) ||                 # ⚽, ⚾
+         (cp >= 0x26C4 && cp <= 0x26C5) ||                 # ⛄, ⛅
+         (cp == 0x26CE || cp == 0x26D4) ||                 # ⛎, ⛔
+         (cp == 0x26EA) ||                                 # ⛪
+         (cp >= 0x26F2 && cp <= 0x26F3) ||                 # ⛲, ⛳
+         (cp == 0x26F5 || cp == 0x26FA || cp == 0x26FD) || # ⛵, ⛺, ⛽
+         (cp == 0x2705) ||                                 # ✅
+         (cp >= 0x270A && cp <= 0x270B) ||                 # ✊, ✋
+         (cp == 0x2728) ||                                 # ✨
+         (cp == 0x274C || cp == 0x274E) ||                 # ❌, ❎
+         (cp >= 0x2753 && cp <= 0x2755) ||                 # ❓, ❔, ❕
+         (cp == 0x2757) ||                                 # ❗
+         (cp >= 0x2795 && cp <= 0x2797) ||                 # ➕, ➖, ➗
+         (cp == 0x27B0 || cp == 0x27BF) ||                 # ➰, ➿
+         (cp >= 0x2B1B && cp <= 0x2B1C) ||                 # ⬛, ⬜
+         (cp == 0x2B50 || cp == 0x2B55)                    # ⭐, ⭕
         return 2
       end
 

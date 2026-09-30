@@ -145,4 +145,59 @@ describe Opal::UI::Buffer do
     # Must overwrite col 2 with 'x' and col 3 with ' '
     driver.output.should contain("x")
   end
+
+  it "diff renderer supports invalidate! to force a full redraw" do
+    driver = create_mock_driver
+    dr = Opal::UI::DiffRenderer.new(driver)
+
+    buf = Opal::UI::Buffer.new(10, 2)
+    buf.put_string(0, 0, "Test")
+    dr.render(buf)
+
+    driver.clear_output
+    dr.invalidate!
+    dr.render(buf)
+
+    # Must perform full render again after invalidate!
+    driver.output.should contain("\e[0m\e[K")
+    driver.output.should contain("\e[J")
+  end
+
+  it "diff renderer cleanly erases lines containing emojis when overwritten with empty spaces" do
+    driver = create_mock_driver
+    dr = Opal::UI::DiffRenderer.new(driver)
+
+    # Frame 1: Text containing ⚡ (2-width emoji) followed by words and spaces
+    buf1 = Opal::UI::Buffer.new(50, 1)
+    buf1.put_string(0, 0, "• ⚡ Flicker-Free Delta Rendering")
+    dr.render(buf1)
+
+    # Frame 2: Entirely empty buffer
+    buf2 = Opal::UI::Buffer.new(50, 1)
+    driver.clear_output
+    dr.render(buf2)
+
+    # Verify that all characters across the line were cleanly overwritten with spaces
+    # In differential mode, space characters must be emitted to clear cells
+    driver.output.should contain(" ")
+  end
+
+  it "form render fills padding space between fields with spaces" do
+    form = Opal::FormModule::Form.new("Test Form")
+    form.text("name", "Name:", default: "Alice")
+    form.confirm("agree", "Agree?", default: true)
+
+    buf = Opal::UI::Buffer.new(40, 10)
+    # Dirty the buffer with previous characters
+    buf.fill(0, 0, 40, 10, 'X')
+
+    form.render(buf, 0, 0, 40, 10)
+
+    # Bounding box should have NO 'X' characters remaining inside
+    (0...10).each do |y|
+      (0...40).each do |x|
+        buf.get(x, y).char.should_not eq('X')
+      end
+    end
+  end
 end

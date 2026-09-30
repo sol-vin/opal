@@ -82,6 +82,15 @@ describe Opal::TEA do
       batched.actions.size.should eq(1)
       batched.quit?.should be_true
     end
+
+    it "creates redraw commands and batches them" do
+      redraw_cmd = Opal::TEA::Cmd.redraw
+      redraw_cmd.redraw?.should be_true
+      redraw_cmd.quit?.should be_false
+
+      batched = Opal::TEA::Cmd.batch(redraw_cmd, Opal::TEA::Cmd.none)
+      batched.redraw?.should be_true
+    end
   end
 
   describe "Program" do

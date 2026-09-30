@@ -61,6 +61,9 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width < 10 || height < 4
 
+        # Erase entire filter list area with spaces to ensure zero dirty cells
+        buffer.fill(x, y, width, height, ' ')
+
         cur_y = y
 
         # Title

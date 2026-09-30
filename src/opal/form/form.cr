@@ -120,6 +120,11 @@ module Opal
       end
 
       def render(buffer : UI::Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
+        return if width <= 0 || height <= 0
+
+        # Erase entire form bounding box with spaces to ensure clean rendering between fields
+        buffer.fill(x, y, width, height, ' ')
+
         cur_y = y
 
         # Title Card Header

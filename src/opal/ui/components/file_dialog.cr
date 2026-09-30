@@ -252,6 +252,9 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width < 15 || height < 5
 
+        # Erase entire file dialog area with spaces to ensure zero dirty cells
+        buffer.fill(x, y, width, height, ' ')
+
         cur_y = y
 
         # 1. Header Path Breadcrumb

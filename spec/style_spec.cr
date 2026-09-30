@@ -68,6 +68,13 @@ describe Opal::VisualWidth do
 
   it "measures emojis as 2 columns" do
     Opal::VisualWidth.width("🎮 Rocket").should eq(9)
+    Opal::VisualWidth.char_width('⚡').should eq(2)        # U+26A1 High Voltage
+    Opal::VisualWidth.char_width('✨').should eq(2)        # U+2728 Sparkles
+    Opal::VisualWidth.char_width('☕').should eq(2)        # U+2615 Hot Beverage
+    Opal::VisualWidth.char_width('\u{26A0}').should eq(2) # U+26A0 Warning
+    Opal::VisualWidth.char_width('🍵').should eq(2)        # U+1F375 Teacup
+    Opal::VisualWidth.char_width('💎').should eq(2)        # U+1F48E Gem
+    Opal::VisualWidth.char_width('✔').should eq(1)        # U+2714 Checkmark (text presentation)
   end
 
   it "truncates text with ellipsis" do

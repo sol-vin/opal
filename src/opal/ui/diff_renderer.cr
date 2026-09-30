@@ -13,6 +13,12 @@ module Opal
         @driver = driver || Terminal.default_driver
       end
 
+      # Invalidates the previous buffer cache, forcing the next render frame
+      # to perform a complete full-screen redraw with line clearing.
+      def invalidate! : Nil
+        @previous_buffer = nil
+      end
+
       # Renders a buffer frame using differential cell comparisons.
       def render(buffer : Buffer) : Nil
         prev = @previous_buffer

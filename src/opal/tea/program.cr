@@ -78,6 +78,11 @@ module Opal
 
               new_model, cmd = @model.update(msg)
               @model = new_model
+
+              if cmd.redraw?
+                @diff_renderer.try(&.invalidate!)
+              end
+
               render_view
 
               if cmd.quit?

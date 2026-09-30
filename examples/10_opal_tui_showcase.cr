@@ -1819,13 +1819,13 @@ class ShowcaseAppModel
       # Shift+Right: advance to next slide
       if msg.matches?("shift+right")
         @current_idx = (@current_idx + 1) % @slides.size
-        return {self, Opal::TEA::Cmd.none}
+        return {self, Opal::TEA::Cmd.redraw}
       end
 
       # Shift+Left: return to previous slide
       if msg.matches?("shift+left")
         @current_idx = (@current_idx - 1 + @slides.size) % @slides.size
-        return {self, Opal::TEA::Cmd.none}
+        return {self, Opal::TEA::Cmd.redraw}
       end
 
       # Quit command: ESC or Ctrl+C
@@ -1846,6 +1846,9 @@ class ShowcaseAppModel
     cols = buffer.width
     rows = buffer.height
     active = @slides[@current_idx]
+
+    # Explicitly clear/fill entire canvas area with spaces to ensure zero dirty cells
+    buffer.fill(0, 0, cols, rows, ' ')
 
     # Top Header Banner
     header_text = " 💎 OPAL TUI SHOWCASE ── Slide #{@current_idx + 1}/#{@slides.size}: [#{active.title}] ── [#{active.category}]"

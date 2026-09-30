@@ -58,6 +58,9 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0
 
+        # Erase entire code view viewport with spaces to eliminate dirty trailing cells
+        buffer.fill(x, y, width, height, ' ')
+
         all_lines = lines
         total_lines = all_lines.size
         gutter_w = @show_line_numbers ? calculate_gutter_width(total_lines) : 0

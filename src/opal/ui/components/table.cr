@@ -98,6 +98,9 @@ module Opal
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0
 
+        # Erase entire table viewport with spaces to eliminate dirty trailing cells
+        buffer.fill(x, y, width, height, ' ')
+
         col_widths = calculate_column_widths
         cur_y = y
 
