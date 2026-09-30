@@ -12,6 +12,7 @@ module Opal
       property? italic : Bool
       property? underline : Bool
       property? reverse : Bool
+      property? continuation : Bool
 
       def initialize(
         @char : Char = ' ',
@@ -22,11 +23,16 @@ module Opal
         @italic : Bool = false,
         @underline : Bool = false,
         @reverse : Bool = false,
+        @continuation : Bool = false,
       )
       end
 
       def self.empty : Cell
         new(' ', Color.none, Color.none)
+      end
+
+      def self.continuation : Cell
+        new('\0', Color.none, Color.none, continuation: true)
       end
 
       def ==(other : Cell) : Bool
@@ -37,7 +43,8 @@ module Opal
           @dim == other.dim? &&
           @italic == other.italic? &&
           @underline == other.underline? &&
-          @reverse == other.reverse?
+          @reverse == other.reverse? &&
+          @continuation == other.continuation?
       end
     end
   end

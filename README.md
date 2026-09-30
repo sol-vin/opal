@@ -13,7 +13,7 @@
 
 <br/>
 
-[![asciicast](https://asciinema.org/a/9JsggDP5b07T86IM.svg)](https://asciinema.org/a/9JsggDP5b07T86IM)
+[![asciicast](https://asciinema.org/a/Xu1oFgRhkwTp2Efp.svg)](https://asciinema.org/a/Xu1oFgRhkwTp2Efp)
 
 </div>
 
@@ -138,7 +138,7 @@ Real, live recordings captured directly from Opal running in terminal sessions (
 
 | Feature Demo | Live Terminal Asciicast |
 | :--- | :--- |
-| **Grand 23-Slide TUI Showcase Tour**<br/>• Full interactive tour across all Opal features<br/>• Multi-field form wizard with live validation<br/>• Live fuzzy search & file dialog explorer<br/>• 2D/3D rotatable color cubes, spheres & wheels<br/>• Text shaders (Matrix rain, CRT scanlines, glitch)<br/>• Sparklines, tables, code/hex views, modals & TEA | [![asciicast](https://asciinema.org/a/9JsggDP5b07T86IM.svg)](https://asciinema.org/a/9JsggDP5b07T86IM) |
+| **Grand 23-Slide TUI Showcase Tour**<br/>• Full interactive tour across all Opal features<br/>• Multi-field form wizard with live validation<br/>• Live fuzzy search & file dialog explorer<br/>• 2D/3D rotatable color cubes, spheres & wheels<br/>• Text shaders (Matrix rain, CRT scanlines, glitch)<br/>• Sparklines, tables, code/hex views, modals & TEA | [![asciicast](https://asciinema.org/a/Xu1oFgRhkwTp2Efp.svg)](https://asciinema.org/a/Xu1oFgRhkwTp2Efp) |
 | **Multi-Field Form Wizard**<br/>• Tab / Shift+Tab focus navigation<br/>• Masked secret/password inputs<br/>• Live inline validation feedback<br/>• Multi-select checkboxes | [![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO) |
 | **Live Fuzzy Search & Split Preview**<br/>• Realtime sub-millisecond filtering<br/>• Word-boundary rune highlighting<br/>• Instant split details pane | [![asciicast](https://asciinema.org/a/CdgldnJvhRGBGEuE.svg)](https://asciinema.org/a/CdgldnJvhRGBGEuE) |
 | **Cluster Analytics Dashboard**<br/>• Rolling Unicode Sparklines<br/>• Colorized percentage Gauges<br/>• Horizontal BarCharts & Trees<br/>• Catppuccin Mocha theme | [![asciicast](https://asciinema.org/a/J87u80gsmyKUwKx9.svg)](https://asciinema.org/a/J87u80gsmyKUwKx9) |

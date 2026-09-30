@@ -124,7 +124,8 @@ module Opal
             raise "File not found: #{cast_path}."
           end
 
-          if existing = existing_map[filename]?
+          force_upload = ARGV.includes?("--force") || filename == "06_opal_tui_showcase.cast"
+          if (existing = existing_map[filename]?) && !force_upload
             puts "  ⏩ Skipping already uploaded #{filename} (#{existing.cast_url})"
             results << existing
             next

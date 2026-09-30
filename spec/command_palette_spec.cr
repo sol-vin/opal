@@ -45,4 +45,25 @@ describe "Opal Command Palette" do
     str.should contain("Command Palette")
     str.should contain("Show help")
   end
+
+  it "ensures box borders line up perfectly and wide emoji does not push extra chars" do
+    palette = Opal::UI::CommandPalette.new
+    palette.add("git:commit", "Commit Working Changes", category: "Git", shortcut: "Ctrl+C")
+    palette.append_char('g')
+    palette.append_char('i')
+    palette.append_char('t')
+    palette.append_char(' ')
+    palette.append_char('c')
+
+    buf = Opal::UI::Buffer.new(70, 14)
+    palette.render(buf, 0, 0, 70, 14)
+
+    rendered = buf.render_to_string(with_ansi: false)
+    box_lines = rendered.lines.select { |l| l.includes?("│") || l.includes?("╭") || l.includes?("├") || l.includes?("╰") }
+    box_lines.should_not be_empty
+
+    # Every border row of the card must end at the exact same visual width
+    right_positions = box_lines.map { |l| Opal::VisualWidth.width(l.rstrip) }
+    right_positions.uniq.size.should eq(1)
+  end
 end

@@ -139,8 +139,10 @@ module Opal
         card_buf.put_string(2, 1, "🔍 ", fg: Color.cyan)
         search_prompt = @query.empty? ? "Type a command..." : @query
         prompt_fg = @query.empty? ? Color.bright_black : Color.white
-        card_buf.put_string(5, 1, search_prompt, fg: prompt_fg)
-        card_buf.put_char(5 + VisualWidth.width(@query), 1, '█', fg: Color.cyan) unless @query.empty?
+        max_prompt_w = pal_w - 7
+        card_buf.put_string(5, 1, VisualWidth.truncate(search_prompt, max_prompt_w), fg: prompt_fg)
+        cursor_x = 5 + VisualWidth.width(@query)
+        card_buf.put_char(cursor_x, 1, '█', fg: Color.cyan) if !@query.empty? && cursor_x < pal_w - 1
 
         card_buf.put_string(1, 2, "─" * (pal_w - 2), fg: Color.bright_black)
 
@@ -167,16 +169,18 @@ module Opal
             cat_str = "[#{act.category}]"
             card_buf.put_string(4, row_y, cat_str, fg: is_active ? Color.cyan : Color.bright_black)
 
-            # Action title
-            title_x = 4 + VisualWidth.width(cat_str) + 1
-            card_buf.put_string(title_x, row_y, act.title, fg: is_active ? Color.bright_white : Color.white, bold: is_active)
-
             # Shortcut pill on the right
+            sc_x = pal_w - 1
             if sc = act.shortcut
               sc_str = "<#{sc}>"
               sc_x = pal_w - VisualWidth.width(sc_str) - 3
               card_buf.put_string(sc_x, row_y, sc_str, fg: is_active ? Color.yellow : Color.bright_black)
             end
+
+            # Action title
+            title_x = 4 + VisualWidth.width(cat_str) + 1
+            max_title_w = Math.max(1, sc_x - title_x - 1)
+            card_buf.put_string(title_x, row_y, VisualWidth.truncate(act.title, max_title_w), fg: is_active ? Color.bright_white : Color.white, bold: is_active)
           end
         end
 

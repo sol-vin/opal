@@ -79,6 +79,8 @@ module Opal
 
           (0...buf.width).each do |x|
             cell = buf.get(x, y)
+            next if cell.continuation?
+
             if cell.bold? != last_bold || cell.dim? != last_dim || cell.fg != last_fg || cell.bg != last_bg
               io << "\e[0m"
               io << "\e[1m" if cell.bold?

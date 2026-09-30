@@ -40,6 +40,17 @@ module Opal
         reverse : Bool = false,
       ) : Nil
         return unless in_bounds?(x, y)
+
+        # If overwriting a continuation cell, clear the preceding wide character cell
+        if x > 0 && get(x, y).continuation?
+          set(x - 1, y, Cell.empty)
+        end
+
+        # If this cell previously had a wide character, clear its continuation cell
+        if x + 1 < @width && get(x + 1, y).continuation?
+          set(x + 1, y, Cell.empty)
+        end
+
         cell = Cell.new(
           char: char,
           fg: fg,
@@ -48,9 +59,15 @@ module Opal
           dim: dim,
           italic: italic,
           underline: underline,
-          reverse: reverse
+          reverse: reverse,
+          continuation: false
         )
         set(x, y, cell)
+
+        cw = VisualWidth.char_width(char)
+        if cw == 2 && x + 1 < @width
+          set(x + 1, y, Cell.continuation)
+        end
       end
 
       def put_string(
@@ -161,6 +178,8 @@ module Opal
             row_content = String.build do |row_io|
               (0...@width).each do |x|
                 cell = get(x, y)
+                next if cell.continuation?
+
                 if with_ansi
                   if cell.bold? != last_bold ||
                      cell.dim? != last_dim ||
@@ -198,7 +217,9 @@ module Opal
       def to_s(io : IO) : Nil
         (0...@height).each do |y|
           (0...@width).each do |x|
-            io << get(x, y).char
+            cell = get(x, y)
+            next if cell.continuation?
+            io << cell.char
           end
           io.puts unless y == @height - 1
         end

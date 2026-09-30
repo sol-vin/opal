@@ -89,4 +89,23 @@ describe Opal::UI::ColorPicker3D do
     end
     output.should contain("Color Spectrum Studio")
   end
+
+  it "renders 3D cube and sphere with solid continuous surface coverage without gaps" do
+    picker = Opal::UI::ColorPicker3D.new(shape: Opal::UI::ColorPickerShape::Cube3D)
+    buf = Opal::UI::Buffer.new(70, 20)
+    picker.render(buf, 0, 0, 70, 20)
+
+    rendered = buf.render_to_string(with_ansi: false)
+    cube_blocks = rendered.count('█')
+    # Dense sampling produces substantial solid block coverage
+    cube_blocks.should be > 100
+
+    # Check sphere
+    picker.cycle_shape # Sphere3D
+    buf.clear
+    picker.render(buf, 0, 0, 70, 20)
+    rendered_sphere = buf.render_to_string(with_ansi: false)
+    sphere_blocks = rendered_sphere.count('█')
+    sphere_blocks.should be > 100
+  end
 end

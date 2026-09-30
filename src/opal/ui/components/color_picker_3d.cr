@@ -301,7 +301,8 @@ module Opal
           { {1.0, 0.0, 0.0}, :x, 1.0 },   # Right
         ]
 
-        steps = 10
+        steps_u = (scale * 6.0).round.to_i.clamp(32, 64)
+        steps_v = (scale * 3.5).round.to_i.clamp(20, 36)
         faces.each do |face_normal, axis, axis_val|
           nx, ny, nz = face_normal
 
@@ -314,10 +315,10 @@ module Opal
           # Back-face culling: only draw faces pointing towards viewer
           next if nz2 <= 0.0
 
-          (0..steps).each do |si|
-            u_coord = (si.to_f / steps.to_f) * 2.0 - 1.0
-            (0..steps).each do |sj|
-              v_coord = (sj.to_f / steps.to_f) * 2.0 - 1.0
+          (0..steps_u).each do |si|
+            u_coord = (si.to_f / steps_u.to_f) * 2.0 - 1.0
+            (0..steps_v).each do |sj|
+              v_coord = (sj.to_f / steps_v.to_f) * 2.0 - 1.0
 
               # Compute 3D point (x, y, z) on face
               px, py, pz = case axis
@@ -379,8 +380,8 @@ module Opal
         cos_p = Math.cos(@pitch)
         sin_p = Math.sin(@pitch)
 
-        lat_steps = 14
-        lon_steps = 24
+        lat_steps = 28
+        lon_steps = 56
 
         (0..lat_steps).each do |lat_i|
           phi = (lat_i.to_f / lat_steps.to_f) * Math::PI - (Math::PI / 2.0) # -PI/2 .. PI/2

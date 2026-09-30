@@ -242,10 +242,10 @@ module Opal
         # =====================================================================
         puts "  → Slide 16: Command Palette"
         render_frame(0.3)
-        "build".each_char do |ch|
+        "git c".each_char do |ch|
           send_key(ch.to_s, ch, advance: 0.12)
         end
-        @cast.pause(0.25)
+        @cast.pause(0.5)
         send_key("enter", advance: 0.3)
         next_slide(1.4)
 
