@@ -104,7 +104,14 @@ module Opal
             ny = dy.to_f
             dist = Math.sqrt(nx * nx + ny * ny)
 
-            next if dist > radius || dist < inner_r
+            if dist > radius
+              next
+            end
+
+            if @donut && dist < inner_r
+              buffer.put_char(sx, sy, ' ')
+              next
+            end
 
             # Angle from center in [-PI, PI]
             angle = Math.atan2(ny, nx)

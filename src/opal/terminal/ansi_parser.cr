@@ -37,9 +37,11 @@ module Opal
            (name_lower == "page_up" && base_name == "pageup") ||
            (name_lower == "pageup" && base_name == "page_up") ||
            (name_lower == "page_down" && base_name == "pagedown") ||
-           (name_lower == "pagedown" && base_name == "page_down")
+           (name_lower == "pagedown" && base_name == "page_down") ||
+           (name_lower == "space" && (base_name == " " || base_name == "space")) ||
+           (name_lower == " " && (base_name == "space" || base_name == " "))
           true
-        elsif @char && @char.to_s.downcase == base_name
+        elsif @char && (@char.to_s.downcase == base_name || (@char == ' ' && base_name == "space"))
           true
         else
           false
@@ -107,8 +109,10 @@ module Opal
         # Single byte control keys
         first_byte = input.byte_at(0)
 
-        # Handle Enter, Tab, Backspace, Escape
+        # Handle Space, Enter, Tab, Backspace, Escape
         case first_byte
+        when 32 # Space
+          return KeyEvent.new("space", ' ')
         when 13 # \r
           return KeyEvent.new("enter", '\n')
         when 10 # \n
@@ -359,6 +363,10 @@ module Opal
 
           # Control characters
           case b
+          when 32 # Space
+            events << KeyEvent.new("space", ' ')
+            i += 1
+            next
           when 13 # \r
             if i + 1 < len && bytes[i + 1] == 10
               events << KeyEvent.new("enter", '\n')

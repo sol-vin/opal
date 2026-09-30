@@ -56,4 +56,31 @@ describe ShowcaseAppModel do
     view_out.should contain("Next")
     view_out.should contain("Quit")
   end
+
+  it "toggles donut mode on slide 10 (PieChartSlide) when pressing space" do
+    app = ShowcaseAppModel.new
+    # Navigate to slide 10 (index 9)
+    9.times do
+      app.update(Opal::TEA::KeyMsg.new("right", shift: true))
+    end
+    app.current_idx.should eq(9)
+    slide = app.slides[9].as(PieChartSlide)
+    slide.donut_mode?.should be_false
+
+    # Press spacebar with key name "space"
+    app.update(Opal::TEA::KeyMsg.new("space", ' '))
+    slide.donut_mode?.should be_true
+
+    # Press spacebar again
+    app.update(Opal::TEA::KeyMsg.new("space", ' '))
+    slide.donut_mode?.should be_false
+
+    # Press spacebar with key name " " (raw single space)
+    app.update(Opal::TEA::KeyMsg.new(" ", ' '))
+    slide.donut_mode?.should be_true
+
+    # Click with mouse
+    app.update(Opal::TEA::MouseMsg.new(30, 10, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press))
+    slide.donut_mode?.should be_false
+  end
 end

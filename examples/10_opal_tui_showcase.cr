@@ -541,8 +541,24 @@ class PieChartSlide < ShowcaseSlide
   end
 
   def handle_key(key : Opal::Terminal::KeyEvent) : Bool
-    case key.name
-    when "space"
+    if key.matches?("space") || key.name == "space" || key.name == " " || key.char == ' '
+      @donut_mode = !@donut_mode
+      true
+    else
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    case event.button
+    when Opal::Terminal::MouseButton::Left
+      if event.action == Opal::Terminal::MouseAction::Press
+        @donut_mode = !@donut_mode
+        true
+      else
+        false
+      end
+    when Opal::Terminal::MouseButton::WheelUp, Opal::Terminal::MouseButton::WheelDown
       @donut_mode = !@donut_mode
       true
     else
@@ -1417,7 +1433,7 @@ class TeaEngineSlide < ShowcaseSlide
     when "-", "down"
       @count -= 1
       true
-    when "space"
+    when "space", " "
       @auto_tick = !@auto_tick
       true
     when "r"
@@ -1531,7 +1547,7 @@ class TextShaderSlide < ShowcaseSlide
     when "b"
       @bouncing = !@bouncing
       true
-    when "space"
+    when "space", " "
       @animating = !@animating
       true
     else

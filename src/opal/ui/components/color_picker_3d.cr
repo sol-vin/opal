@@ -137,7 +137,7 @@ module Opal
         when "m"
           cycle_shape
           true
-        when "space"
+        when "space", " "
           @auto_rotate = !@auto_rotate
           true
         when "+", "="
