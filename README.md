@@ -11,6 +11,10 @@
 
 *Pure Crystal. Zero external C library dependencies (no ncurses). Native Windows, Linux, and macOS support.*
 
+<br/>
+
+[![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh)
+
 </div>
 
 ---
@@ -62,8 +66,8 @@ require "opal"
 
 ## 📑 Table of Contents
 
+- [Live Interactive Showcases](#-live-interactive-showcases)
 - [Quick Start](#-quick-start)
-- [Architecture Overview](#-architecture-overview)
 - [Multi-Field Form & Wizard DSL](#-multi-field-form--wizard-dsl)
 - [Live Fuzzy Search & Filter](#-live-fuzzy-search--filter)
 - [Data Visualizations](#-data-visualizations)
@@ -81,6 +85,7 @@ require "opal"
 - [The Elm Architecture (TEA)](#-the-elm-architecture-tea)
 - [Testing with MockDriver](#-testing-with-mockdriver)
 - [Examples](#-examples)
+- [Cross-Platform Support](#-cross-platform-support)
 - [License](#-license)
 
 ---
@@ -123,7 +128,26 @@ puts "Switched to branch: #{selected}" if selected
 
 ---
 
+## 🎬 Live Interactive Showcases
+
+Real, live recordings captured directly from Opal running in terminal sessions (click any recording to open in asciinema):
+
+| Feature Demo | Live Terminal Asciicast |
+| :--- | :--- |
+| **Multi-Field Form Wizard**<br/>• Tab / Shift+Tab focus navigation<br/>• Masked secret/password inputs<br/>• Live inline validation feedback<br/>• Multi-select checkboxes | [![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh) |
+| **Live Fuzzy Search & Split Preview**<br/>• Realtime sub-millisecond filtering<br/>• Word-boundary rune highlighting<br/>• Instant split details pane | [![asciicast](https://asciinema.org/a/gTYV0YhRKibHgGAF.svg)](https://asciinema.org/a/gTYV0YhRKibHgGAF) |
+| **Cluster Analytics Dashboard**<br/>• Rolling Unicode Sparklines<br/>• Colorized percentage Gauges<br/>• Horizontal BarCharts & Trees<br/>• Catppuccin Mocha theme | [![asciicast](https://asciinema.org/a/VtRuehsfqGqgDCns.svg)](https://asciinema.org/a/VtRuehsfqGqgDCns) |
+| **Ghost-Text Autocomplete & Line Editor**<br/>• Modern fish/zsh inline suggestions<br/>• Single-keystroke `Tab` expansion<br/>• Full interactive line editing | [![asciicast](https://asciinema.org/a/LrkoOiO2aFSD2eeY.svg)](https://asciinema.org/a/LrkoOiO2aFSD2eeY) |
+| **CLI Toolchain & Auto Help**<br/>• Colored help generator<br/>• Animated ANSI spinner<br/>• In-place Unicode progress bar | [![asciicast](https://asciinema.org/a/sWDcfvepKjRj9OV9.svg)](https://asciinema.org/a/sWDcfvepKjRj9OV9) |
+
+> [!TIP]
+> All recordings are managed under installation ID `93d19fef-0835-4ebf-b218-cda99edbe21b`. You can permanently link them to your asciinema account via [https://asciinema.org/connect/93d19fef-0835-4ebf-b218-cda99edbe21b](https://asciinema.org/connect/93d19fef-0835-4ebf-b218-cda99edbe21b).
+
+---
+
 ## 📝 Multi-Field Form & Wizard DSL
+
+[![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh)
 
 Traditional CLI prompts ask one question at a time and prevent reviewing earlier inputs. `Opal.form` presents an interactive card where all fields are visible simultaneously, users navigate using `Tab` / `Shift+Tab`, and live validation catches mistakes instantly.
 
@@ -147,6 +171,8 @@ end
 
 ## 🔍 Live Fuzzy Search & Filter
 
+[![asciicast](https://asciinema.org/a/gTYV0YhRKibHgGAF.svg)](https://asciinema.org/a/gTYV0YhRKibHgGAF)
+
 Fast, keystroke-responsive fuzzy filtering inspired by `fzf`:
 
 - Instant substring matching with word boundary bonuses.
@@ -164,6 +190,8 @@ choice = Opal.filter(
 ---
 
 ## 📊 Data Visualizations
+
+[![asciicast](https://asciinema.org/a/VtRuehsfqGqgDCns.svg)](https://asciinema.org/a/VtRuehsfqGqgDCns)
 
 Render rich dashboards and metrics without graphics libraries:
 
@@ -314,6 +342,8 @@ current_c    = Opal::Color.lerp(normal_color, alert_color, 0.75)
 
 ## 🛠️ CLI Application DSL
 
+[![asciicast](https://asciinema.org/a/sWDcfvepKjRj9OV9.svg)](https://asciinema.org/a/sWDcfvepKjRj9OV9)
+
 ```crystal
 app = Opal.cli("deployer", "Cloud deployment manager", "0.4.0") do
   option "-v", "--verbose", "Enable debug logging", type: :bool
@@ -330,6 +360,102 @@ app = Opal.cli("deployer", "Cloud deployment manager", "0.4.0") do
 end
 
 app.run(ARGV)
+```
+
+---
+
+## 🎨 Fluent Styling & Layout
+
+Lipgloss-inspired declarative style chain with true visual string width calculation and 24-bit TrueColor:
+
+```crystal
+# Composable styling
+header_style = Opal.style
+  .bold
+  .foreground(Opal::Color.cyan)
+  .background(Opal::Color.from("#1e1e2e"))
+  .padding(1, 2)
+  .border(:rounded)
+
+puts header_style.render("Welcome to Opal")
+
+# Double-buffered layout rendering
+rendered = Opal::UI.render(width: 80, height: 10) do |ui|
+  ui.box(border: :rounded, title: "System Info") do |b|
+    b.vstack do |v|
+      v.text("CPU: 8 cores active")
+      v.text("Memory: 16 GB DDR5")
+    end
+  end
+end
+puts rendered
+```
+
+---
+
+## 💬 Interactive Prompts
+
+```crystal
+# Text, Confirm, Select, and Multi-Select
+name = Opal.ask("Enter your username:", default: "developer")
+confirmed = Opal.confirm("Continue with deployment?", default: true)
+tier = Opal.select("Choose your deployment tier:", ["Small", "Medium", "Enterprise"])
+features = Opal.multi_select("Select plugins:", ["Metrics", "Tracing", "RateLimiter"])
+
+# Animated ANSI Spinner
+Opal.spinner("Provisioning cluster resources...") do
+  sleep 1.second
+end
+
+# In-Place Smooth Unicode Progress Bar
+Opal.progress(total: 100, title: "Downloading Assets") do |bar|
+  10.times do
+    sleep 50.milliseconds
+    bar.advance(10)
+  end
+end
+```
+
+---
+
+## 🔮 Autocomplete & Ghost Text DSL
+
+[![asciicast](https://asciinema.org/a/LrkoOiO2aFSD2eeY.svg)](https://asciinema.org/a/LrkoOiO2aFSD2eeY)
+
+Provide rich inline suggestions and command completion with zero terminal lag:
+
+```crystal
+# Static dictionary or dynamic query provider
+engine = Opal::Input::Autocomplete.new(["checkout", "commit", "push", "pull", "status", "rebase"])
+
+# Interactive line editor with ghost-text preview
+input = Opal::Input::TextInput.new(placeholder: "Type a git command...")
+input.autocomplete = engine
+
+# Readline loop with inline preview
+# Press [Tab] to accept ghost completion
+# Press [Enter] to submit
+```
+
+---
+
+## ⌨️ KeyMap & MouseMap DSLs
+
+```crystal
+# Declarative Keyboard Binding
+key_map = Opal::Input::KeyMap.new
+key_map.bind("ctrl+c", "Exit program") { exit }
+key_map.bind("enter", "Confirm input") { save_data }
+key_map.bind("up", "Navigate up") { cursor_up }
+
+# Extended SGR Mouse Hit-Testing
+mouse_map = Opal::Input::MouseMap.new
+mouse_map.on_click(x_range: 2..15, y_range: 5..7) do
+  puts "Deploy button clicked!"
+end
+mouse_map.on_scroll do |delta|
+  scroll_view(delta)
+end
 ```
 
 ---

@@ -1,0 +1,46 @@
+{
+  "install_id": "93d19fef-0835-4ebf-b218-cda99edbe21b",
+  "claim_url": "https://asciinema.org/connect/93d19fef-0835-4ebf-b218-cda99edbe21b",
+  "demos": [
+    {
+      "filename": "01_form_wizard.cast",
+      "title": "Opal Multi-Field Form Wizard",
+      "cast_url": "https://asciinema.org/a/TLHSrlUNF0IXNZdh",
+      "svg_url": "https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg",
+      "cast_id": "TLHSrlUNF0IXNZdh",
+      "markdown": "[![asciicast](https://asciinema.org/a/TLHSrlUNF0IXNZdh.svg)](https://asciinema.org/a/TLHSrlUNF0IXNZdh)"
+    },
+    {
+      "filename": "02_fuzzy_finder.cast",
+      "title": "Opal Fuzzy Finder & Split Preview",
+      "cast_url": "https://asciinema.org/a/gTYV0YhRKibHgGAF",
+      "svg_url": "https://asciinema.org/a/gTYV0YhRKibHgGAF.svg",
+      "cast_id": "gTYV0YhRKibHgGAF",
+      "markdown": "[![asciicast](https://asciinema.org/a/gTYV0YhRKibHgGAF.svg)](https://asciinema.org/a/gTYV0YhRKibHgGAF)"
+    },
+    {
+      "filename": "03_cluster_dashboard.cast",
+      "title": "Opal Cluster Analytics Dashboard",
+      "cast_url": "https://asciinema.org/a/VtRuehsfqGqgDCns",
+      "svg_url": "https://asciinema.org/a/VtRuehsfqGqgDCns.svg",
+      "cast_id": "VtRuehsfqGqgDCns",
+      "markdown": "[![asciicast](https://asciinema.org/a/VtRuehsfqGqgDCns.svg)](https://asciinema.org/a/VtRuehsfqGqgDCns)"
+    },
+    {
+      "filename": "04_ghost_autocomplete.cast",
+      "title": "Opal Inline Ghost-Text Autocomplete",
+      "cast_url": "https://asciinema.org/a/LrkoOiO2aFSD2eeY",
+      "svg_url": "https://asciinema.org/a/LrkoOiO2aFSD2eeY.svg",
+      "cast_id": "LrkoOiO2aFSD2eeY",
+      "markdown": "[![asciicast](https://asciinema.org/a/LrkoOiO2aFSD2eeY.svg)](https://asciinema.org/a/LrkoOiO2aFSD2eeY)"
+    },
+    {
+      "filename": "05_cli_toolchain.cast",
+      "title": "Opal CLI Toolchain & Help Generator",
+      "cast_url": "https://asciinema.org/a/sWDcfvepKjRj9OV9",
+      "svg_url": "https://asciinema.org/a/sWDcfvepKjRj9OV9.svg",
+      "cast_id": "sWDcfvepKjRj9OV9",
+      "markdown": "[![asciicast](https://asciinema.org/a/sWDcfvepKjRj9OV9.svg)](https://asciinema.org/a/sWDcfvepKjRj9OV9)"
+    }
+  ]
+}
