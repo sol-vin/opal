@@ -24,7 +24,7 @@ module Opal
           end
 
           fun ioctl(fd : Int32, request : UInt64, arg : Winsize*) : Int32
-          fun poll(fds : PollFD*, nfds : UInt64, timeout : Int32) : Int32
+          fun opal_poll = poll(fds : PollFD*, nfds : UInt64, timeout : Int32) : Int32
         end
       {% end %}
 
@@ -39,7 +39,7 @@ module Opal
 
         {% unless flag?(:windows) %}
           pfd = LibC::PollFD.new(fd: 0, events: LibC::POLLIN, revents: 0_i16)
-          ret = LibC.poll(pointerof(pfd), 1_u64, timeout_ms)
+          ret = LibC.opal_poll(pointerof(pfd), 1_u64, timeout_ms)
           if ret > 0 && (pfd.revents & LibC::POLLIN != 0)
             return read_event
           else
