@@ -68,8 +68,8 @@ describe Opal::UI::FileDialog do
 
   it "renders into a buffer without errors" do
     dialog = Opal::UI::FileDialog.new(".")
-    buf = Opal::UI::Buffer.new(70, 20)
-    dialog.render(buf, 0, 0, 70, 20)
+    buf = Opal::UI::Buffer.new(70, 30)
+    dialog.render(buf, 0, 0, 70, 30)
     rendered = buf.render_to_string(with_ansi: false)
 
     rendered.should contain("Path:")

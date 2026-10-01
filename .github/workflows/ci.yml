@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Update apt cache
         if: matrix.os == 'ubuntu-latest'
@@ -60,3 +62,13 @@ jobs:
           crystal build examples/10_opal_tui_showcase.cr -o bin/example10
           crystal build examples/11_text_shaders.cr -o bin/example11
           crystal build examples/12_3d_color_picker.cr -o bin/example12
+          crystal build examples/18_dsl_blending_and_asciinema.cr -o bin/example18
+
+      - name: Verify Version Alignment & Changelog (Carbon)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          shards install
+          mkdir -p bin
+          crystal build lib/carbon/src/carbon/cli.cr -o bin/carbon
+          bin/carbon check
+          bin/carbon changelog --compile

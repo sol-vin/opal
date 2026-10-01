@@ -37,10 +37,10 @@ module Opal
         child
       end
 
-      def add(label : String, color : Color | Symbol | String = :white, icon : String? = nil, &block : TreeNode -> Nil) : TreeNode
+      def add(label : String, color : Color | Symbol | String = :white, icon : String? = nil, &) : TreeNode
         child = TreeNode.new(label, color, icon)
         @children << child
-        block.call(child)
+        with child yield child
         child
       end
     end
@@ -83,10 +83,10 @@ module Opal
         node
       end
 
-      def add(label : String, color : Color | Symbol | String = :white, icon : String? = nil, &block : TreeNode -> Nil) : TreeNode
+      def add(label : String, color : Color | Symbol | String = :white, icon : String? = nil, &) : TreeNode
         node = TreeNode.new(label, color, icon)
         @root_nodes << node
-        block.call(node)
+        with node yield node
         node
       end
 

@@ -867,7 +867,7 @@ Explore all runnable examples in the [`examples/`](examples/) directory:
 - [`07_fuzzy_finder.cr`](examples/07_fuzzy_finder.cr) — Live fuzzy search list with rune highlighting and split preview pane.
 - [`08_dataviz_dashboard.cr`](examples/08_dataviz_dashboard.cr) — Rich analytics dashboard with Sparklines, BarCharts, Gauges, Trees, and Themes.
 - [`09_markdown_and_overlays.cr`](examples/09_markdown_and_overlays.cr) — Terminal Markdown viewer, Modal dialogs, and floating Toast notifications.
-- [`10_opal_tui_showcase.cr`](examples/10_opal_tui_showcase.cr) — **Full-featured 23-slide linear TUI showcase tour** displaying every Opal feature with interactive mini-apps, file dialogs, 2D/3D color pickers, and live text shaders.
+- [`10_opal_tui_showcase.cr`](examples/10_opal_tui_showcase.cr) — **Full-featured 34-slide linear TUI showcase tour** displaying every Opal feature with interactive mini-apps, file dialogs, 2D/3D color pickers, live text shaders, DSL blending, and Asciinema VCR tape deck.
 - [`11_text_shaders.cr`](examples/11_text_shaders.cr) — Realtime text shader playground demonstrating Matrix Rain, CRT scanlines, Glitch, Plasma waves, Fire FX, and multi-pass pipeline compositing.
 - [`12_3d_color_picker.cr`](examples/12_3d_color_picker.cr) — Interactive 3D RGB Cube, 3D Sphere, 2D Wheel, and Spectrum color pickers with pitch/yaw rotation and surface raycasting.
 - [`13_control_input_hooks_and_puppeting.cr`](examples/13_control_input_hooks_and_puppeting.cr) — Multi-control focus orchestration with `Opal::UI::Engine`, custom input hooks (`on_input`), Vim navigation, and automated background puppeting.
@@ -891,6 +891,23 @@ crystal run examples/12_3d_color_picker.cr
 | **Linux** | POSIX `termios`, VT100, SGR | TrueColor, 256, ANSI 16 | Yes (SGR 1006) |
 | **macOS** | POSIX `termios`, VT100, SGR | TrueColor, 256, ANSI 16 | Yes (SGR 1006) |
 | **Windows** | Win32 Console API (`ENABLE_VIRTUAL_TERMINAL_PROCESSING`) + ANSI VT100 | TrueColor, 256, ANSI 16 | Yes (SGR 1006) |
+
+---
+
+## [TOOL] Automated Versioning & Changelogs with Carbon
+
+Opal uses [Carbon](https://github.com/sol-vin/carbon) for automated Git-commit-based semantic versioning, release management, and changelog orchestration. Every commit automatically synchronizes `shard.yml`, `src/opal/version.cr`, and compiles `CHANGELOG.md`.
+
+```bash
+# Check version alignment against Git commits
+bin/carbon check
+
+# Sync version to match Git commits
+bin/carbon sync
+
+# Synchronize changelog
+bin/carbon changelog
+```
 
 ---
 
