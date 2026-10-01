@@ -1,5 +1,5 @@
 name: opal
-version: 0.1.57
+version: 0.1.58
 authors:
   - Ian Rash <redcodefinal@gmail.com>
 description: Next-generation TUI and CLI DSL framework for Crystal, unifying Bubbletea, Ink, and Blessed paradigms.
