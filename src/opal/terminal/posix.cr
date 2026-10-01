@@ -39,7 +39,7 @@ module Opal
 
         {% unless flag?(:windows) %}
           pfd = LibC::PollFD.new(fd: 0, events: LibC::POLLIN, revents: 0_i16)
-          ret = LibC.poll(pointerof(pfd), LibC::SizeT.new(1), timeout_ms)
+          ret = LibC.poll(pointerof(pfd), 1_u64, timeout_ms)
           if ret > 0 && (pfd.revents & LibC::POLLIN != 0)
             return read_event
           else
