@@ -43,6 +43,7 @@ module Opal
       def commands : Hash(String, Command)
         @subcommands
       end
+
       property sections : Array(HelpSection)
       property category : String? = nil
       property parent : Command? = nil

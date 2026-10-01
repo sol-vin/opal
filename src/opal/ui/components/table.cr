@@ -347,7 +347,7 @@ module Opal
       private def render_bordered_table(
         buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32,
         col_widths : Array(Int32), b : Border,
-        h_fg : Color, h_bg : Color, b_fg : Color, s_fg : Color, s_bg : Color, z_bg : Color
+        h_fg : Color, h_bg : Color, b_fg : Color, s_fg : Color, s_bg : Color, z_bg : Color,
       ) : Nil
         top_l = b.top_left
         top_r = b.top_right
@@ -360,35 +360,35 @@ module Opal
                 when "─" then "┬"
                 when "═" then "╦"
                 when "━" then "┳"
-                else "+"
+                else          "+"
                 end
 
         mid_j = case h_char
                 when "─" then "┼"
                 when "═" then "╬"
                 when "━" then "╋"
-                else "+"
+                else          "+"
                 end
 
         bot_j = case h_char
                 when "─" then "┴"
                 when "═" then "╩"
                 when "━" then "┻"
-                else "+"
+                else          "+"
                 end
 
         l_j = case h_char
               when "─" then "├"
               when "═" then "╠"
               when "━" then "┣"
-              else "+"
+              else          "+"
               end
 
         r_j = case h_char
               when "─" then "┤"
               when "═" then "╣"
               when "━" then "┫"
-              else "+"
+              else          "+"
               end
 
         cur_y = y
@@ -480,7 +480,7 @@ module Opal
       private def render_markdown_table(
         buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32,
         col_widths : Array(Int32),
-        h_fg : Color, h_bg : Color, b_fg : Color, s_fg : Color, s_bg : Color, z_bg : Color
+        h_fg : Color, h_bg : Color, b_fg : Color, s_fg : Color, s_bg : Color, z_bg : Color,
       ) : Nil
         cur_y = y
         buffer.with_clip(x, y, width, height) do

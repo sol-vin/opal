@@ -43,12 +43,12 @@ module Opal
             title = ctx.string?(:title)
             style_str = ctx.string(:style)
             b_style : Border | Symbol | String = case style_str
-                                                 when "ascii"  then :ascii
-                                                 when "single" then :single
-                                                 when "double" then :double
-                                                 when "thick"  then :thick
-                                                 else               :rounded
-                                                 end
+            when "ascii"  then :ascii
+            when "single" then :single
+            when "double" then :double
+            when "thick"  then :thick
+            else               :rounded
+            end
 
             color = ctx.string(:color)
             padding = ctx.int(:padding)

@@ -77,14 +77,14 @@ module Opal
             # Border style
             style_str = ctx.string(:style)
             b_style : Border | Symbol | String = case style_str
-                                                 when "ascii"    then :ascii
-                                                 when "double"   then :double
-                                                 when "thick"    then :thick
-                                                 when "markdown" then :ascii
-                                                 when "minimal"  then :single
-                                                 when "blank"    then :hidden
-                                                 else                 :rounded
-                                                 end
+            when "ascii"    then :ascii
+            when "double"   then :double
+            when "thick"    then :thick
+            when "markdown" then :ascii
+            when "minimal"  then :single
+            when "blank"    then :hidden
+            else                 :rounded
+            end
 
             theme_name = ctx.string?(:theme)
             th = theme_name ? Theme.find(theme_name) : nil

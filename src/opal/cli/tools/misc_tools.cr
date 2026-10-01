@@ -113,15 +113,15 @@ module Opal
                          when ".cr"        then "crystal"
                          when ".c", ".h"   then "c"
                          when ".s", ".asm" then "asm"
-                         else "plain"
+                         else                   "plain"
                          end
             end
 
             lang_sym = case lang_str
-                       when "crystal"   then :crystal
-                       when "c"         then :c
-                       when "asm", "s"  then :asm
-                       else                  :plain
+                       when "crystal"  then :crystal
+                       when "c"        then :c
+                       when "asm", "s" then :asm
+                       else                 :plain
                        end
 
             UI::CodeView.print(

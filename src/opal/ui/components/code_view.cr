@@ -39,19 +39,19 @@ module Opal
         super()
         @language = language.is_a?(Symbol) ? language : (
           case language.downcase
-          when "crystal", "cr" then :crystal
-          when "ruby", "rb" then :ruby
-          when "python", "py" then :python
-          when "javascript", "js" then :javascript
-          when "json" then :json
+          when "crystal", "cr"       then :crystal
+          when "ruby", "rb"          then :ruby
+          when "python", "py"        then :python
+          when "javascript", "js"    then :javascript
+          when "json"                then :json
           when "bash", "sh", "shell" then :bash
-          when "sql" then :sql
-          when "html", "xml" then :html
-          when "css" then :css
-          when "markdown", "md" then :markdown
-          when "diff", "patch" then :diff
-          when "yaml", "yml" then :yaml
-          else :plain
+          when "sql"                 then :sql
+          when "html", "xml"         then :html
+          when "css"                 then :css
+          when "markdown", "md"      then :markdown
+          when "diff", "patch"       then :diff
+          when "yaml", "yml"         then :yaml
+          else                            :plain
           end
         )
         @gutter_fg = gutter_fg ? Color.from(gutter_fg) : nil

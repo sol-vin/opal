@@ -33,18 +33,18 @@ module Opal
 
             trimmed = raw.strip
             ratio : Float64 = if trimmed.ends_with?('%')
-                                (trimmed[0...-1].to_f64? || 0.0) / 100.0
-                              elsif (num = trimmed.to_f64?)
-                                if max_val = ctx.float?(:max)
-                                  num / max_val
-                                elsif num > 1.0
-                                  num / 100.0
-                                else
-                                  num
-                                end
-                              else
-                                0.0
-                              end
+              (trimmed[0...-1].to_f64? || 0.0) / 100.0
+            elsif (num = trimmed.to_f64?)
+              if max_val = ctx.float?(:max)
+                num / max_val
+              elsif num > 1.0
+                num / 100.0
+              else
+                num
+              end
+            else
+              0.0
+            end
 
             label = ctx.string?(:label)
             color = ctx.string?(:color)

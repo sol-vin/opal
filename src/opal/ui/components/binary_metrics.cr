@@ -56,7 +56,7 @@ module Opal
         @top_functions = [] of BinaryFunction,
         @hardening = [] of HardeningFlag,
         @title : String? = "RADARE2 BINARY ANALYSIS & HARDENING METRICS",
-        @bar_char : Char = '|'
+        @bar_char : Char = '|',
       )
       end
 

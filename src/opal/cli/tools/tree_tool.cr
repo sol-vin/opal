@@ -91,11 +91,11 @@ module Opal
           else
             ext = File.extname(path)
             color : Symbol = case ext
-                             when ".cr", ".rb", ".py", ".js", ".ts", ".go", ".rs", ".c", ".cpp" then :green
-                             when ".json", ".yaml", ".yml", ".toml", ".xml", ".csv"             then :yellow
-                             when ".md", ".txt", ".doc"                                         then :white
-                             else                                                                    :white
-                             end
+            when ".cr", ".rb", ".py", ".js", ".ts", ".go", ".rs", ".c", ".cpp" then :green
+            when ".json", ".yaml", ".yml", ".toml", ".xml", ".csv"             then :yellow
+            when ".md", ".txt", ".doc"                                         then :white
+            else                                                                    :white
+            end
             UI::TreeNode.new(name, color: color)
           end
         end
