@@ -17,18 +17,14 @@ module Opal
             ws_ypixel : UInt16
           end
 
-          struct Pollfd
-            fd : Int32
-            events : Int16
-            revents : Int16
+          struct PollFD
+            fd : LibC::Int
+            events : LibC::Short
+            revents : LibC::Short
           end
 
           fun ioctl(fd : Int32, request : UInt64, arg : Winsize*) : Int32
-          {% if flag?(:darwin) %}
-            fun poll(fds : Pollfd*, nfds : UInt32, timeout : Int32) : Int32
-          {% else %}
-            fun poll(fds : Pollfd*, nfds : UInt64, timeout : Int32) : Int32
-          {% end %}
+          fun poll(fds : PollFD*, nfds : LibC::SizeT, timeout : LibC::Int) : LibC::Int
         end
       {% end %}
 
@@ -42,12 +38,8 @@ module Opal
         end
 
         {% unless flag?(:windows) %}
-          pfd = LibC::Pollfd.new(fd: 0, events: LibC::POLLIN, revents: 0_i16)
-          {% if flag?(:darwin) %}
-            ret = LibC.poll(pointerof(pfd), 1_u32, timeout_ms)
-          {% else %}
-            ret = LibC.poll(pointerof(pfd), 1_u64, timeout_ms)
-          {% end %}
+          pfd = LibC::PollFD.new(fd: 0, events: LibC::POLLIN, revents: 0_i16)
+          ret = LibC.poll(pointerof(pfd), LibC::SizeT.new(1), timeout_ms)
           if ret > 0 && (pfd.revents & LibC::POLLIN != 0)
             return read_event
           else
