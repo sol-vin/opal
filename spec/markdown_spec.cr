@@ -41,4 +41,39 @@ describe "Opal Terminal Markdown Viewer" do
     out.should contain("│")
     out.should contain("Important quote")
   end
+
+  it "supports scrollable toggling and auto-scrolling" do
+    long_md = (1..50).map { |i| "Line #{i}" }.join("\n")
+    viewer = Opal::UI::MarkdownViewer.new(long_md, width: 40, auto_scroll: true, scroll_speed: 2.0)
+    viewer.scroll_offset.should eq(0)
+
+    # Tick advances scroll
+    viewer.tick(1.0)
+    viewer.scroll_offset.should be > 0
+
+    # Disabling scrollable prevents scrolling
+    viewer.scrollable = false
+    prev_offset = viewer.scroll_offset
+    viewer.scroll_down(5)
+    viewer.scroll_offset.should eq(prev_offset)
+  end
+
+  it "renders AsyncMarkdownViewer throbber then resolved content" do
+    async_v = Opal::UI::AsyncMarkdownViewer.new(label: "Fetching docs...") do
+      sleep 50.milliseconds
+      "# Resolved Doc\nContent here"
+    end
+
+    async_v.resolved?.should be_false
+    buf = Opal::UI::Buffer.new(40, 10)
+    async_v.render(buf, 0, 0, 40, 10)
+    buf.to_s.should contain("Fetching docs...")
+
+    # Wait for fiber
+    sleep 100.milliseconds
+    async_v.resolved?.should be_true
+    buf.clear
+    async_v.render(buf, 0, 0, 40, 10)
+    buf.to_s.should contain("Resolved Doc")
+  end
 end

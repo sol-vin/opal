@@ -200,10 +200,47 @@ module Opal
       getter rendered : String
       property scroll_offset : Int32 = 0
       property visible_height : Int32 = 20
+      property? scrollable : Bool = true
+      property? auto_scroll : Bool = false
+      property scroll_speed : Float64 = 1.0
+      @scroll_accumulator : Float64 = 0.0
 
-      def initialize(@content : String, width : Int32 = 80)
+      def initialize(
+        @content : String,
+        width : Int32 = 80,
+        @scrollable : Bool = true,
+        @auto_scroll : Bool = false,
+        @scroll_speed : Float64 = 1.0,
+      )
+        super()
         renderer = Markdown::Renderer.new(width)
         @rendered = renderer.render(@content)
+      end
+
+      def content=(new_content : String)
+        set_content(new_content, 80)
+      end
+
+      def set_content(new_content : String, width : Int32 = 80)
+        @content = new_content
+        @rendered = Markdown::Renderer.new(width).render(new_content)
+        @scroll_offset = 0
+      end
+
+      def tick(dt : Float64 = 0.0166) : Nil
+        return unless @auto_scroll
+        @scroll_accumulator += dt * @scroll_speed * 2.0
+        if @scroll_accumulator >= 1.0
+          steps = @scroll_accumulator.to_i
+          @scroll_accumulator -= steps
+          all_lines = lines
+          max_scroll = Math.max(0, all_lines.size - @visible_height)
+          if @scroll_offset >= max_scroll
+            @scroll_offset = 0
+          else
+            @scroll_offset = Math.min(max_scroll, @scroll_offset + steps)
+          end
+        end
       end
 
       def lines : Array(String)
@@ -211,35 +248,42 @@ module Opal
       end
 
       def page_up(lines_count : Int32? = nil) : Nil
+        return unless @scrollable
         step = lines_count || Math.max(1, @visible_height - 2)
         scroll_up(step)
       end
 
       def page_down(lines_count : Int32? = nil) : Nil
+        return unless @scrollable
         step = lines_count || Math.max(1, @visible_height - 2)
         scroll_down(step)
       end
 
       def scroll_up(lines_count : Int32 = 1) : Nil
+        return unless @scrollable
         @scroll_offset = Math.max(0, @scroll_offset - lines_count)
       end
 
       def scroll_down(lines_count : Int32 = 1) : Nil
+        return unless @scrollable
         all_lines = lines
         max_scroll = Math.max(0, all_lines.size - @visible_height)
         @scroll_offset = Math.min(max_scroll, @scroll_offset + lines_count)
       end
 
       def scroll_to_top : Nil
+        return unless @scrollable
         @scroll_offset = 0
       end
 
       def scroll_to_bottom : Nil
+        return unless @scrollable
         all_lines = lines
         @scroll_offset = Math.max(0, all_lines.size - @visible_height)
       end
 
       def handle_key(key : Terminal::KeyEvent) : Bool
+        return false unless @scrollable
         case key.name
         when "page_up", "pageup"
           page_up
@@ -265,6 +309,7 @@ module Opal
       end
 
       def handle_mouse(event : Terminal::MouseEvent) : Bool
+        return false unless @scrollable
         case event.button
         when Terminal::MouseButton::WheelUp
           scroll_up(3)
@@ -317,6 +362,86 @@ module Opal
     end
 
     alias MarkdownViewer = MarkdownElement
+
+    # Async Markdown Viewer that displays an animated throbber until markdown string is ready
+    class AsyncMarkdownViewer < Element
+      property viewer : MarkdownViewer? = nil
+      property? resolved : Bool = false
+      property label : String
+      property spinner_frame : Int32 = 0
+      property width : Int32
+      property? scrollable : Bool = true
+      property? auto_scroll : Bool = false
+      property scroll_speed : Float64 = 1.0
+
+      def initialize(
+        @label : String = "Loading markdown...",
+        @width : Int32 = 80,
+        @scrollable : Bool = true,
+        @auto_scroll : Bool = false,
+        @scroll_speed : Float64 = 1.0,
+        &block : -> String
+      )
+        super()
+        spawn do
+          result = block.call
+          v = MarkdownViewer.new(
+            result,
+            width: @width,
+            scrollable: @scrollable,
+            auto_scroll: @auto_scroll,
+            scroll_speed: @scroll_speed
+          )
+          @viewer = v
+          @resolved = true
+        end
+      end
+
+      def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
+        if v = @viewer
+          v.preferred_size(available_w, available_h)
+        else
+          {available_w, available_h}
+        end
+      end
+
+      def tick(dt : Float64 = 0.0166) : Nil
+        if v = @viewer
+          v.tick(dt)
+        else
+          @spinner_frame += 1
+        end
+      end
+
+      def handle_key(key : Terminal::KeyEvent) : Bool
+        if v = @viewer
+          v.handle_key(key)
+        else
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        if v = @viewer
+          v.handle_mouse(event)
+        else
+          false
+        end
+      end
+
+      def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
+        if v = @viewer
+          v.render(buffer, x, y, width, height)
+        else
+          th = current_theme
+          glyphs = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+          spinner = glyphs[@spinner_frame % glyphs.size]
+          mid_y = y + (height // 2)
+          mid_x = x + Math.max(0, (width - @label.size - 4) // 2)
+          buffer.put_string(mid_x, mid_y, "#{spinner} #{@label}", fg: th.primary)
+        end
+      end
+    end
 
     module Markdown
       # Renders Markdown text directly to an ANSI formatted string.

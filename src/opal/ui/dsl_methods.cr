@@ -40,6 +40,11 @@ require "./components/header"
 require "./components/footer"
 require "./components/placeholder"
 require "./components/content_switcher"
+require "./components/scissor"
+require "./components/mask"
+require "./components/group"
+require "./components/meter"
+require "../style/animation"
 require "./layouts/dock"
 require "./layouts/grid"
 
@@ -974,6 +979,126 @@ module Opal
         with cs yield cs
         add_element(cs)
         cs
+      end
+
+      # Scissor clipping container restricting child rendering to a specific rect
+      def scissor(rect : Rect, &) : ScissorContainer
+        builder = Builder.new
+        with builder yield builder
+        container = ScissorContainer.new(rect, builder.root)
+        add_element(container)
+        container
+      end
+
+      def scissor(x : Int32, y : Int32, width : Int32, height : Int32, &) : ScissorContainer
+        scissor(Rect.new(x, y, width, height)) { |b| yield b }
+      end
+
+      # Masking container rendering children under an active MaskMap
+      def mask(mask_map : MaskMap, feather : Bool = true, offset_x : Int32 = 0, offset_y : Int32 = 0, &) : MaskContainer
+        builder = Builder.new
+        with builder yield builder
+        container = MaskContainer.new(mask_map, builder.root, feather: feather, offset_x: offset_x, offset_y: offset_y)
+        add_element(container)
+        container
+      end
+
+      # Group layout container supporting directional flow and overflow clipping
+      def group(
+        title : String? = nil,
+        direction : LayoutDirection = LayoutDirection::Vertical,
+        overflow : OverflowPolicy = OverflowPolicy::Hidden,
+        border : Border = Border.none,
+        padding : Int32 = 0,
+        &
+      ) : Group
+        grp = Group.new(title: title, direction: direction, overflow: overflow, border: border, padding: padding)
+        builder = Builder.new
+        with builder yield builder
+        if root = builder.root
+          grp.add(root)
+        end
+        add_element(grp)
+        grp
+      end
+
+      # Alias for group
+      def container(
+        title : String? = nil,
+        direction : LayoutDirection = LayoutDirection::Vertical,
+        overflow : OverflowPolicy = OverflowPolicy::Hidden,
+        border : Border = Border.none,
+        padding : Int32 = 0,
+        &
+      ) : Group
+        grp = Group.new(title: title, direction: direction, overflow: overflow, border: border, padding: padding)
+        builder = Builder.new
+        with builder yield builder
+        if root = builder.root
+          grp.add(root)
+        end
+        add_element(grp)
+        grp
+      end
+
+      # Fractional 1/8th Unicode block meter
+      def meter(
+        value : Float64,
+        orientation : MeterOrientation = MeterOrientation::Horizontal,
+        gradient : MeterGradient = MeterGradient::Heat,
+        show_label : Bool = true,
+        width : Int32? = nil,
+        height : Int32? = nil
+      ) : Meter
+        m = Meter.new(value: value, orientation: orientation, gradient: gradient, show_label: show_label, width: width, height: height)
+        add_element(m)
+        m
+      end
+
+      # Compact 1-character meter glyph
+      def compact_meter(value : Float64) : Text
+        ch = Glyphs.h_bar(value)
+        text(ch.to_s, fg: value > 0.8 ? Color.hex("#ff0844") : (value > 0.5 ? Color.hex("#ffd200") : Color.hex("#38ef7d")), bold: true)
+      end
+
+      # Tween animator helper
+      def tween(
+        from_val : Float64,
+        to_val : Float64,
+        duration : Time::Span,
+        easing : Animation::Easing = Animation::Easing::Linear,
+        &block : Float64 -> Nil
+      ) : Animation::Tween
+        tw = Animation::Tween.new(from_val, to_val, duration, easing)
+        tw.on_update(&block)
+        tw
+      end
+
+      # Interactive Markdown Viewer element
+      def markdown_viewer(
+        content : String,
+        scrollable : Bool = true,
+        auto_scroll : Bool = false,
+        scroll_speed : Float64 = 1.0,
+        width : Int32 = 80
+      ) : MarkdownViewer
+        mv = MarkdownViewer.new(content, width: width, scrollable: scrollable, auto_scroll: auto_scroll, scroll_speed: scroll_speed)
+        add_element(mv)
+        mv
+      end
+
+      # Asynchronous Markdown Viewer with loading throbber
+      def async_markdown_viewer(
+        label : String = "Loading markdown...",
+        scrollable : Bool = true,
+        auto_scroll : Bool = false,
+        scroll_speed : Float64 = 1.0,
+        width : Int32 = 80,
+        &block : -> String
+      ) : AsyncMarkdownViewer
+        mv = AsyncMarkdownViewer.new(label, width: width, scrollable: scrollable, auto_scroll: auto_scroll, scroll_speed: scroll_speed, &block)
+        add_element(mv)
+        mv
       end
     end
   end

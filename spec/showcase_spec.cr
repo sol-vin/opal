@@ -2,19 +2,19 @@ require "./spec_helper"
 require "../examples/10_opal_tui_showcase"
 
 describe ShowcaseAppModel do
-  it "initializes with 34 slides" do
+  it "initializes with 13 slides" do
     app = ShowcaseAppModel.new
-    app.slides.size.should eq(34)
+    app.slides.size.should eq(13)
     app.current_idx.should eq(0)
   end
 
   it "renders every single slide without error" do
     app = ShowcaseAppModel.new
-    buf = Opal::UI::Buffer.new(80, 24)
+    buf = Opal::UI::Buffer.new(90, 26)
 
-    app.slides.each_with_index do |slide, idx|
+    app.slides.each do |slide|
       buf.clear
-      slide.render(buf, 0, 2, 80, 20)
+      slide.render(buf, 0, 2, 90, 22)
       rendered = buf.render_to_string(with_ansi: false)
       rendered.should_not be_empty
     end
@@ -24,7 +24,7 @@ describe ShowcaseAppModel do
     app = ShowcaseAppModel.new
     shift_right_msg = Opal::TEA::KeyMsg.new("right", shift: true)
 
-    34.times do |step|
+    13.times do |step|
       app.current_idx.should eq(step)
       app.update(shift_right_msg)
     end
@@ -51,74 +51,69 @@ describe ShowcaseAppModel do
   it "renders full view buffer with header and footer" do
     app = ShowcaseAppModel.new
     view_out = app.view
-    view_out.should contain("OPAL TUI SHOWCASE")
-    view_out.should contain("Slide 1/34")
+    view_out.should contain("OPAL TUI")
+    view_out.should contain("Slide 1/13")
     view_out.should contain("Next")
-    view_out.should contain("Quit")
+    view_out.should contain("Code")
+    view_out.should contain("Guide")
   end
 
-  it "cycles modes on Slide 32 (DslBlendingSlide)" do
+  it "operates checklist and launches on Slide 1 (CheckSlide)" do
     app = ShowcaseAppModel.new
-    slide = app.slides[31].as(DslBlendingSlide)
-    slide.mode.should eq(1)
+    slide = app.slides[0].as(CheckSlide)
+    initial_check = slide.checklist[0][:checked]
 
-    slide.handle_key(Opal::Terminal::KeyEvent.new("2", '2'))
-    slide.mode.should eq(2)
-
-    slide.handle_key(Opal::Terminal::KeyEvent.new("3", '3'))
-    slide.mode.should eq(3)
-
+    # Toggle item
     slide.handle_key(Opal::Terminal::KeyEvent.new("space", ' '))
-    slide.mode.should eq(1)
+    slide.checklist[0][:checked].should eq(!initial_check)
+
+    # Press Enter
+    slide.handle_key(Opal::Terminal::KeyEvent.new("enter", '\n'))
+    slide.launch_requested?.should be_true
+
+    # App tick advances to Slide 2
+    app.update(Opal::TEA::TickMsg.new)
+    app.current_idx.should eq(1)
   end
 
-  it "operates tape controls on Slide 33 (VcrTapeDeckSlide)" do
+  it "toggles feather and moves light on Slide 2 (SpotlightSlide)" do
     app = ShowcaseAppModel.new
-    slide = app.slides[32].as(VcrTapeDeckSlide)
-    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Playing)
+    slide = app.slides[1].as(SpotlightSlide)
+    orig_feather = slide.feather?
 
-    # Pause
-    slide.handle_key(Opal::Terminal::KeyEvent.new("p", 'p'))
-    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Paused)
+    slide.handle_key(Opal::Terminal::KeyEvent.new("f", 'f'))
+    slide.feather?.should eq(!orig_feather)
 
-    # Stop
-    slide.handle_key(Opal::Terminal::KeyEvent.new("s", 's'))
-    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Stopped)
-
-    # Record
-    slide.handle_key(Opal::Terminal::KeyEvent.new("r", 'r'))
-    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Recording)
-
-    # Toggle overlay
-    orig_overlay = slide.respect_overlays
-    slide.handle_key(Opal::Terminal::KeyEvent.new("o", 'o'))
-    slide.respect_overlays.should eq(!orig_overlay)
+    orig_x = slide.center_x
+    slide.handle_key(Opal::Terminal::KeyEvent.new("d", 'd'))
+    slide.center_x.should be > orig_x
   end
 
-  it "toggles donut mode on slide 10 (PieChartSlide) when pressing space" do
+  it "toggles source code viewer modal with 'c'" do
     app = ShowcaseAppModel.new
-    # Navigate to slide 10 (index 9)
-    9.times do
-      app.update(Opal::TEA::KeyMsg.new("right", shift: true))
-    end
-    app.current_idx.should eq(9)
-    slide = app.slides[9].as(PieChartSlide)
-    slide.donut_mode?.should be_false
+    app.show_code?.should be_false
 
-    # Press spacebar with key name "space"
-    app.update(Opal::TEA::KeyMsg.new("space", ' '))
-    slide.donut_mode?.should be_true
+    # Press 'c' to open code viewer
+    app.update(Opal::TEA::KeyMsg.new("c", 'c'))
+    app.show_code?.should be_true
+    app.code_viewer.should_not be_nil
 
-    # Press spacebar again
-    app.update(Opal::TEA::KeyMsg.new("space", ' '))
-    slide.donut_mode?.should be_false
+    # Press 'escape' to close code viewer
+    app.update(Opal::TEA::KeyMsg.new("escape"))
+    app.show_code?.should be_false
+  end
 
-    # Press spacebar with key name " " (raw single space)
-    app.update(Opal::TEA::KeyMsg.new(" ", ' '))
-    slide.donut_mode?.should be_true
+  it "toggles markdown guide modal with '?'" do
+    app = ShowcaseAppModel.new
+    app.show_guide?.should be_false
 
-    # Click with mouse
-    app.update(Opal::TEA::MouseMsg.new(30, 10, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press))
-    slide.donut_mode?.should be_false
+    # Press '?' to open guide viewer
+    app.update(Opal::TEA::KeyMsg.new("?", '?'))
+    app.show_guide?.should be_true
+    app.guide_viewer.should_not be_nil
+
+    # Press 'escape' to close guide viewer
+    app.update(Opal::TEA::KeyMsg.new("escape"))
+    app.show_guide?.should be_false
   end
 end

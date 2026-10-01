@@ -18,6 +18,10 @@ module Opal
       property gutter_fg : Color?
       property cursor_fg : Color?
       property cursor_indicator : String?
+      property? scrollable : Bool = true
+      property? auto_scroll : Bool = false
+      property scroll_speed : Float64 = 1.0
+      @scroll_accumulator : Float64 = 0.0
 
       # Cached layout coordinates for mouse interaction
       @last_x : Int32 = 0
@@ -35,6 +39,9 @@ module Opal
         gutter_fg : Color | Symbol | String | Nil = nil,
         cursor_fg : Color | Symbol | String | Nil = nil,
         @cursor_indicator : String? = nil,
+        @scrollable : Bool = true,
+        @auto_scroll : Bool = false,
+        @scroll_speed : Float64 = 1.0,
       )
         super()
         @language = language.is_a?(Symbol) ? language : (
@@ -62,11 +69,28 @@ module Opal
         @code.split('\n')
       end
 
+      def tick(dt : Float64 = 0.0166) : Nil
+        return unless @auto_scroll
+        @scroll_accumulator += dt * @scroll_speed * 2.0
+        if @scroll_accumulator >= 1.0
+          steps = @scroll_accumulator.to_i
+          @scroll_accumulator -= steps
+          max_scroll = Math.max(0, lines.size - (@last_h > 0 ? @last_h : 10))
+          if @scroll_offset >= max_scroll
+            @scroll_offset = 0
+          else
+            @scroll_offset = Math.min(max_scroll, @scroll_offset + steps)
+          end
+        end
+      end
+
       def scroll_up(count : Int32 = 1) : Nil
+        return unless @scrollable
         @scroll_offset = Math.max(0, @scroll_offset - count)
       end
 
       def scroll_down(count : Int32 = 1) : Nil
+        return unless @scrollable
         max_scroll = Math.max(0, lines.size - 1)
         @scroll_offset = Math.min(max_scroll, @scroll_offset + count)
       end
@@ -80,6 +104,7 @@ module Opal
       end
 
       def handle_key(event : Terminal::KeyEvent) : Bool
+        return false unless @scrollable
         case event.name
         when "up", "k"
           scroll_up(1)
@@ -107,9 +132,11 @@ module Opal
       def handle_mouse(event : Terminal::MouseEvent) : Bool
         case event.button
         when Terminal::MouseButton::WheelUp
+          return false unless @scrollable
           scroll_up(2)
           return true
         when Terminal::MouseButton::WheelDown
+          return false unless @scrollable
           scroll_down(2)
           return true
         end
