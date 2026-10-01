@@ -7,7 +7,7 @@ module Opal
       property width : Int32
       property height : Int32
       getter output_io : IO::Memory
-      property event_queue : Array(KeyEvent | MouseEvent)
+      property event_queue : Array(KeyEvent | MouseEvent | ResizeEvent)
       getter? in_raw_mode : Bool = false
       getter? alt_screen : Bool = false
       getter? cursor_visible : Bool = true
@@ -17,7 +17,7 @@ module Opal
         io = IO::Memory.new
         @output_io = io
         super(io, io)
-        @event_queue = [] of (KeyEvent | MouseEvent)
+        @event_queue = [] of (KeyEvent | MouseEvent | ResizeEvent)
       end
 
       def size : {Int32, Int32}
@@ -42,7 +42,11 @@ module Opal
         @output_io.flush
       end
 
-      def read_event : KeyEvent | MouseEvent | Nil
+    def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
+      @event_queue.shift?
+    end
+
+    def read_event : KeyEvent | MouseEvent | ResizeEvent | Nil
         @event_queue.shift?
       end
 
@@ -76,7 +80,15 @@ module Opal
         super
       end
 
-      # Injects a key event into the mock input stream
+    # Injects a window resize event
+    def inject_resize(width : Int32, height : Int32) : self
+      @width = width
+      @height = height
+      @event_queue << ResizeEvent.new(width, height)
+      self
+    end
+
+    # Injects a key event into the mock input stream
       def inject_key(name : String, char : Char? = nil, ctrl : Bool = false, alt : Bool = false, shift : Bool = false) : self
         @event_queue << KeyEvent.new(name, char, ctrl: ctrl, alt: alt, shift: shift)
         self

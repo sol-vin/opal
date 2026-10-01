@@ -20,7 +20,29 @@ module Opal
         end
       {% end %}
 
-      def size : {Int32, Int32}
+      def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
+      unless @buffered_events.empty?
+        return @buffered_events.shift
+      end
+
+      if resize_ev = check_resize
+        return resize_ev
+      end
+
+      {% unless flag?(:windows) %}
+        pfd = LibC::Pollfd.new(fd: 0, events: LibC::POLLIN, revents: 0)
+        ret = LibC.poll(pointerof(pfd), 1_u64, timeout_ms)
+        if ret > 0 && (pfd.revents & LibC::POLLIN != 0)
+          return read_event
+        else
+          return check_resize
+        end
+      {% end %}
+
+      nil
+    end
+
+    def size : {Int32, Int32}
         {% unless flag?(:windows) %}
           ws = LibC::Winsize.new
           # Try STDOUT fd = 1

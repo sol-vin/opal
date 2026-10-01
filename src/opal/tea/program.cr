@@ -52,9 +52,11 @@ module Opal
             # Background input reader fiber
             spawn do
               while running
-                event = @driver.read_event
+                event = @driver.poll_event(50)
                 if event
                   msg = case event
+                        when Terminal::ResizeEvent
+                          WindowSizeMsg.new(event.width, event.height)
                         when Terminal::KeyEvent
                           KeyMsg.from_event(event)
                         when Terminal::MouseEvent

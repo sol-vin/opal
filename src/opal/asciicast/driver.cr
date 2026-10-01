@@ -10,7 +10,7 @@ module Opal
     class Driver < Terminal::Driver
       getter writer : Writer
       property time_advance : Float64
-      property event_queue : Array(Terminal::KeyEvent | Terminal::MouseEvent)
+      property event_queue : Array(Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent)
       getter? in_raw_mode : Bool = false
 
       def initialize(
@@ -22,7 +22,7 @@ module Opal
       )
         super()
         @writer = writer || Writer.new(width: width, height: height, title: title)
-        @event_queue = [] of (Terminal::KeyEvent | Terminal::MouseEvent)
+        @event_queue = [] of (Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent)
       end
 
       # Terminal dimensions from writer header
@@ -50,13 +50,17 @@ module Opal
         # In-memory buffer flush (no-op)
       end
 
-      # Reads the next simulated or injected input event
-      def read_event : Terminal::KeyEvent | Terminal::MouseEvent | Nil
+    def poll_event(timeout_ms : Int32 = 0) : Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent | Nil
+      @event_queue.shift?
+    end
+
+    # Reads the next simulated or injected input event
+      def read_event : Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent | Nil
         @event_queue.shift?
       end
 
       # Injects a keyboard or mouse event into the driver's input stream
-      def inject_event(event : Terminal::KeyEvent | Terminal::MouseEvent) : self
+      def inject_event(event : Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent) : self
         @event_queue << event
         self
       end

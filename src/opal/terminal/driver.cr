@@ -7,7 +7,9 @@ module Opal
     abstract class Driver
       property output : IO
       property input : IO
-      @buffered_events = Deque(KeyEvent | MouseEvent).new
+      @buffered_events = Deque(KeyEvent | MouseEvent | ResizeEvent).new
+      @last_size : {Int32, Int32}? = nil
+      property on_resize : Proc(Int32, Int32, Nil)? = nil
       @input_buffer = Bytes.new(512)
 
       def initialize(@output : IO = STDOUT, @input : IO = STDIN)
@@ -18,11 +20,41 @@ module Opal
       abstract def write(str : String) : Nil
       abstract def flush : Nil
 
-      # Reads the next key or mouse event from the terminal, consuming from the
-      # internal event queue if multiple events arrived in the same read chunk.
-      def read_event : KeyEvent | MouseEvent | Nil
+      # Checks if the terminal window size has changed since last check.
+      def check_resize : ResizeEvent?
+        curr = size
+        if (last = @last_size) && (last[0] != curr[0] || last[1] != curr[1])
+          @last_size = curr
+          @on_resize.try(&.call(curr[0], curr[1]))
+          ResizeEvent.new(curr[0], curr[1])
+        else
+          @last_size = curr
+          nil
+        end
+      end
+
+      # Non-blocking or timed check for input/resize events.
+      def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
         unless @buffered_events.empty?
           return @buffered_events.shift
+        end
+
+        if resize_ev = check_resize
+          return resize_ev
+        end
+
+        nil
+      end
+
+      # Reads the next key, mouse, or resize event from the terminal, consuming from the
+      # internal event queue if multiple events arrived in the same read chunk.
+      def read_event : KeyEvent | MouseEvent | ResizeEvent | Nil
+        unless @buffered_events.empty?
+          return @buffered_events.shift
+        end
+
+        if resize_ev = check_resize
+          return resize_ev
         end
 
         bytes_read = begin
