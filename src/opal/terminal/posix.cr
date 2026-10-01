@@ -27,7 +27,7 @@ module Opal
           {% if flag?(:darwin) %}
             fun poll(fds : Pollfd*, nfds : UInt32, timeout : Int32) : Int32
           {% else %}
-            fun poll(fds : Pollfd*, nfds : LibC::ULong, timeout : Int32) : Int32
+            fun poll(fds : Pollfd*, nfds : ULong, timeout : Int32) : Int32
           {% end %}
         end
       {% end %}
