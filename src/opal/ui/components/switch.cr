@@ -143,32 +143,34 @@ module Opal
 
         bracket_fg = focused? ? c_focus : th.border
 
-        # Render Switch Track: "[●   ]" or "[   ●]"
-        buffer.put_char(x, y, '[', fg: bracket_fg, bold: focused?)
-        if @on
-          buffer.put_char(x + 1, y, ch_track, fg: c_on_track)
-          buffer.put_char(x + 2, y, ch_track, fg: c_on_track)
-          buffer.put_char(x + 3, y, ch_track, fg: c_on_track)
-          buffer.put_char(x + 4, y, ch_thumb, fg: c_on_thumb, bold: true)
-        else
-          buffer.put_char(x + 1, y, ch_thumb, fg: c_off_thumb)
-          buffer.put_char(x + 2, y, ch_track, fg: c_off_track)
-          buffer.put_char(x + 3, y, ch_track, fg: c_off_track)
-          buffer.put_char(x + 4, y, ch_track, fg: c_off_track)
-        end
-        buffer.put_char(x + 5, y, ']', fg: bracket_fg, bold: focused?)
-
-        # Render Label if present
-        cur_w = 6
-        if lbl = @label
-          avail_label_w = width - cur_w - 1
-          if avail_label_w > 0
-            buffer.put_string(x + cur_w + 1, y, lbl, fg: c_label, bold: focused? && !@disabled, max_width: avail_label_w)
-            cur_w += 1 + Math.min(avail_label_w, VisualWidth.width(lbl))
+        buffer.with_clip(x, y, width, height) do
+          # Render Switch Track: "[●   ]" or "[   ●]"
+          buffer.put_char(x, y, '[', fg: bracket_fg, bold: focused?) if width > 0
+          if @on
+            buffer.put_char(x + 1, y, ch_track, fg: c_on_track) if width > 1
+            buffer.put_char(x + 2, y, ch_track, fg: c_on_track) if width > 2
+            buffer.put_char(x + 3, y, ch_track, fg: c_on_track) if width > 3
+            buffer.put_char(x + 4, y, ch_thumb, fg: c_on_thumb, bold: true) if width > 4
+          else
+            buffer.put_char(x + 1, y, ch_thumb, fg: c_off_thumb) if width > 1
+            buffer.put_char(x + 2, y, ch_track, fg: c_off_track) if width > 2
+            buffer.put_char(x + 3, y, ch_track, fg: c_off_track) if width > 3
+            buffer.put_char(x + 4, y, ch_track, fg: c_off_track) if width > 4
           end
-        end
+          buffer.put_char(x + 5, y, ']', fg: bracket_fg, bold: focused?) if width > 5
 
-        @last_w = Math.min(width, cur_w)
+          # Render Label if present
+          cur_w = 6
+          if lbl = @label
+            avail_label_w = Math.max(0, width - cur_w - 1)
+            if avail_label_w > 0
+              buffer.put_string(x + cur_w + 1, y, lbl, fg: c_label, bold: focused? && !@disabled, max_width: avail_label_w)
+              cur_w += 1 + Math.min(avail_label_w, VisualWidth.width(lbl))
+            end
+          end
+
+          @last_w = Math.min(width, cur_w)
+        end
       end
     end
   end

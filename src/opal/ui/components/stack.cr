@@ -31,14 +31,21 @@ module Opal
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
+        return if width <= 0 || height <= 0
         cur_y = y
 
         @children.each_with_index do |child, idx|
-          break if cur_y >= y + height
+          avail_h = Math.max(0, (y + height) - cur_y)
+          break if avail_h <= 0
 
-          _, child_h = child.preferred_size(width, y + height - cur_y)
-          child.render(buffer, x, cur_y, width, child_h)
-          cur_y += child_h
+          _, child_h = child.preferred_size(width, avail_h)
+          render_h = Math.min(child_h, avail_h)
+          if render_h > 0
+            buffer.with_clip(x, cur_y, width, render_h) do
+              child.render(buffer, x, cur_y, width, render_h)
+            end
+          end
+          cur_y += render_h
           cur_y += @spacing if idx < @children.size - 1
         end
       end
@@ -73,14 +80,21 @@ module Opal
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
+        return if width <= 0 || height <= 0
         cur_x = x
 
         @children.each_with_index do |child, idx|
-          break if cur_x >= x + width
+          avail_w = Math.max(0, (x + width) - cur_x)
+          break if avail_w <= 0
 
-          child_w, _ = child.preferred_size(x + width - cur_x, height)
-          child.render(buffer, cur_x, y, child_w, height)
-          cur_x += child_w
+          child_w, _ = child.preferred_size(avail_w, height)
+          render_w = Math.min(child_w, avail_w)
+          if render_w > 0
+            buffer.with_clip(cur_x, y, render_w, height) do
+              child.render(buffer, cur_x, y, render_w, height)
+            end
+          end
+          cur_x += render_w
           cur_x += @spacing if idx < @children.size - 1
         end
       end

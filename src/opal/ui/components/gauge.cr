@@ -79,6 +79,45 @@ module Opal
 
         buffer.put_string(cur_x, y, pct_text, fg: c, bold: true)
       end
+
+      # Class convenience method returning styled gauge string
+      def self.to_string(
+        ratio : Float64,
+        label : String? = nil,
+        color : Color | Symbol | String | Nil = nil,
+        width : Int32? = nil,
+        filled_char : Char = '█',
+        empty_char : Char = '░',
+        ansi : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        g = Gauge.new(ratio: ratio, label: label, color: color, filled_char: filled_char, empty_char: empty_char)
+        g.to_print_s(width: width, color: ansi, theme: theme)
+      end
+
+      # Class convenience method printing styled gauge directly to IO
+      def self.print(
+        ratio : Float64,
+        label : String? = nil,
+        io : IO = STDOUT,
+        color : Color | Symbol | String | Nil = nil,
+        width : Int32? = nil,
+        filled_char : Char = '█',
+        empty_char : Char = '░',
+        ansi : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.puts to_string(
+          ratio: ratio,
+          label: label,
+          color: color,
+          width: width,
+          filled_char: filled_char,
+          empty_char: empty_char,
+          ansi: ansi,
+          theme: theme
+        )
+      end
     end
   end
 end

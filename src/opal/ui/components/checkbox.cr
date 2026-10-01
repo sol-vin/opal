@@ -124,7 +124,7 @@ module Opal
         b_bg = @box_bg || Color.none
         l_fg = @disabled ? th.text_muted : (@label_fg || th.text)
 
-        buffer.put_string(x, y, glyph, fg: b_fg, bg: b_bg, bold: @checked)
+        buffer.put_string(x, y, glyph, fg: b_fg, bg: b_bg, bold: @checked, max_width: width)
 
         if lbl = @label
           avail_l = Math.max(0, width - glyph_w - 1)

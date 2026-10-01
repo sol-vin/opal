@@ -183,6 +183,126 @@ module Opal
           end
         end
       end
+
+      # Class convenience method returning styled line graph string
+      def self.to_string(
+        series : Array(LineSeries),
+        title : String? = nil,
+        width : Int32? = nil,
+        height : Int32 = 14,
+        min_y : Float64? = nil,
+        max_y : Float64? = nil,
+        show_grid : Bool = true,
+        show_legend : Bool = true,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        lg = LineGraph.new(
+          series: series,
+          title: title,
+          min_y: min_y,
+          max_y: max_y,
+          show_grid: show_grid,
+          show_legend: show_legend
+        )
+        term_width = (Terminal::Info.new.width rescue 80)
+        w = width || term_width
+        buffer = Buffer.new(w, height)
+        lg.render(buffer, 0, 0, w, height)
+
+        use_color = if color.nil?
+                      (STDOUT.tty? rescue false) && !ENV.has_key?("NO_COLOR")
+                    else
+                      color
+                    end
+        buffer.render_to_string(with_ansi: use_color)
+      end
+
+      # Class convenience method printing styled line graph directly to IO
+      def self.print(
+        series : Array(LineSeries),
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        height : Int32 = 14,
+        min_y : Float64? = nil,
+        max_y : Float64? = nil,
+        show_grid : Bool = true,
+        show_legend : Bool = true,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.print to_string(
+          series: series,
+          title: title,
+          width: width,
+          height: height,
+          min_y: min_y,
+          max_y: max_y,
+          show_grid: show_grid,
+          show_legend: show_legend,
+          color: color,
+          theme: theme
+        )
+      end
+
+      # Overload accepting tuples of {name, data}
+      def self.to_string(
+        raw_series : Array(Tuple(String, Array(Float64))),
+        title : String? = nil,
+        width : Int32? = nil,
+        height : Int32 = 14,
+        min_y : Float64? = nil,
+        max_y : Float64? = nil,
+        show_grid : Bool = true,
+        show_legend : Bool = true,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        series = raw_series.map { |name, data| LineSeries.new(name, data) }
+        to_string(
+          series: series,
+          title: title,
+          width: width,
+          height: height,
+          min_y: min_y,
+          max_y: max_y,
+          show_grid: show_grid,
+          show_legend: show_legend,
+          color: color,
+          theme: theme
+        )
+      end
+
+      # Overload printing tuples of {name, data} directly to IO
+      def self.print(
+        raw_series : Array(Tuple(String, Array(Float64))),
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        height : Int32 = 14,
+        min_y : Float64? = nil,
+        max_y : Float64? = nil,
+        show_grid : Bool = true,
+        show_legend : Bool = true,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        series = raw_series.map { |name, data| LineSeries.new(name, data) }
+        print(
+          series: series,
+          title: title,
+          io: io,
+          width: width,
+          height: height,
+          min_y: min_y,
+          max_y: max_y,
+          show_grid: show_grid,
+          show_legend: show_legend,
+          color: color,
+          theme: theme
+        )
+      end
     end
   end
 end

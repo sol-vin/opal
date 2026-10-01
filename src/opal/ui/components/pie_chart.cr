@@ -168,6 +168,105 @@ module Opal
           l_y += 1
         end
       end
+
+      # Class convenience method returning styled pie chart string
+      def self.to_string(
+        slices : Array(PieSlice),
+        title : String? = nil,
+        donut : Bool = false,
+        width : Int32? = nil,
+        height : Int32 = 12,
+        inner_radius_ratio : Float64 = 0.42,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        pc = PieChart.new(slices: slices, title: title, donut: donut, inner_radius_ratio: inner_radius_ratio)
+        term_width = (Terminal::Info.new.width rescue 80)
+        w = width || term_width
+        buffer = Buffer.new(w, height)
+        pc.render(buffer, 0, 0, w, height)
+
+        use_color = if color.nil?
+                      (STDOUT.tty? rescue false) && !ENV.has_key?("NO_COLOR")
+                    else
+                      color
+                    end
+        buffer.render_to_string(with_ansi: use_color)
+      end
+
+      # Class convenience method printing styled pie chart directly to IO
+      def self.print(
+        slices : Array(PieSlice),
+        title : String? = nil,
+        donut : Bool = false,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        height : Int32 = 12,
+        inner_radius_ratio : Float64 = 0.42,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.print to_string(
+          slices: slices,
+          title: title,
+          donut: donut,
+          width: width,
+          height: height,
+          inner_radius_ratio: inner_radius_ratio,
+          color: color,
+          theme: theme
+        )
+      end
+
+      # Overload accepting tuples of {label, value}
+      def self.to_string(
+        raw_slices : Array(Tuple(String, Float64)),
+        title : String? = nil,
+        donut : Bool = false,
+        width : Int32? = nil,
+        height : Int32 = 12,
+        inner_radius_ratio : Float64 = 0.42,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        slices = raw_slices.map { |lbl, val| PieSlice.new(lbl, val) }
+        to_string(
+          slices: slices,
+          title: title,
+          donut: donut,
+          width: width,
+          height: height,
+          inner_radius_ratio: inner_radius_ratio,
+          color: color,
+          theme: theme
+        )
+      end
+
+      # Overload printing tuples of {label, value} directly to IO
+      def self.print(
+        raw_slices : Array(Tuple(String, Float64)),
+        title : String? = nil,
+        donut : Bool = false,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        height : Int32 = 12,
+        inner_radius_ratio : Float64 = 0.42,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        slices = raw_slices.map { |lbl, val| PieSlice.new(lbl, val) }
+        print(
+          slices: slices,
+          title: title,
+          donut: donut,
+          io: io,
+          width: width,
+          height: height,
+          inner_radius_ratio: inner_radius_ratio,
+          color: color,
+          theme: theme
+        )
+      end
     end
   end
 end

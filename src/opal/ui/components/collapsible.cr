@@ -203,8 +203,10 @@ module Opal
           buffer.put_char(x, content_y + cy, '│', fg: c_border)
         end
 
-        if ch = @child
-          ch.render(buffer, x + 2, content_y, content_w, content_h)
+        if (ch = @child) && content_w > 0 && content_h > 0
+          buffer.with_clip(x + 2, content_y, content_w, content_h) do
+            ch.render(buffer, x + 2, content_y, content_w, content_h)
+          end
         end
       end
     end

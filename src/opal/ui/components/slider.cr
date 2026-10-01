@@ -177,29 +177,34 @@ module Opal
           val_w = VisualWidth.width(val_str)
         end
 
-        track_total_w = Math.max(3, avail_w - val_w)
+        track_total_w = Math.max(0, avail_w - val_w)
+        track_total_w = avail_w if track_total_w == 0 && avail_w > 0
         @track_start_x = cur_x
         @track_w = track_total_w
 
         range = @max - @min
         ratio = range > 0 ? ((@value - @min) / range).clamp(0.0, 1.0) : 0.0
-        thumb_pos = (ratio * (track_total_w - 1)).round.to_i
+        thumb_pos = track_total_w > 0 ? (ratio * (track_total_w - 1)).round.to_i : 0
 
-        # Draw track
-        (0...track_total_w).each do |i|
-          draw_x = cur_x + i
-          if i < thumb_pos
-            buffer.put_char(draw_x, y, @fill_char, fg: f_fg)
-          elsif i == thumb_pos
-            buffer.put_char(draw_x, y, @thumb_char, fg: th_fg, bold: true)
-          else
-            buffer.put_char(draw_x, y, @track_char, fg: t_fg)
+        buffer.with_clip(x, y, width, height) do
+          # Draw track
+          (0...track_total_w).each do |i|
+            break if cur_x + i >= x + width
+            draw_x = cur_x + i
+            if i < thumb_pos
+              buffer.put_char(draw_x, y, @fill_char, fg: f_fg)
+            elsif i == thumb_pos
+              buffer.put_char(draw_x, y, @thumb_char, fg: th_fg, bold: true)
+            else
+              buffer.put_char(draw_x, y, @track_char, fg: t_fg)
+            end
           end
-        end
 
-        # Draw value string
-        if @show_value && val_w > 0
-          buffer.put_string(cur_x + track_total_w, y, val_str, fg: v_fg)
+          # Draw value string
+          if @show_value && val_w > 0 && cur_x + track_total_w < x + width
+            avail_val_w = Math.max(0, (x + width) - (cur_x + track_total_w))
+            buffer.put_string(cur_x + track_total_w, y, val_str, fg: v_fg, max_width: avail_val_w)
+          end
         end
       end
     end

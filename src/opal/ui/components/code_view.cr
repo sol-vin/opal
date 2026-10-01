@@ -27,7 +27,7 @@ module Opal
 
       def initialize(
         @code : String = "",
-        @language : Symbol = :plain,
+        language : Symbol | String = :plain,
         @start_line : Int32 = 1,
         @highlighted_line : Int32? = nil,
         @scroll_offset : Int32 = 0,
@@ -37,6 +37,23 @@ module Opal
         @cursor_indicator : String? = nil,
       )
         super()
+        @language = language.is_a?(Symbol) ? language : (
+          case language.downcase
+          when "crystal", "cr" then :crystal
+          when "ruby", "rb" then :ruby
+          when "python", "py" then :python
+          when "javascript", "js" then :javascript
+          when "json" then :json
+          when "bash", "sh", "shell" then :bash
+          when "sql" then :sql
+          when "html", "xml" then :html
+          when "css" then :css
+          when "markdown", "md" then :markdown
+          when "diff", "patch" then :diff
+          when "yaml", "yml" then :yaml
+          else :plain
+          end
+        )
         @gutter_fg = gutter_fg ? Color.from(gutter_fg) : nil
         @cursor_fg = cursor_fg ? Color.from(cursor_fg) : nil
       end
@@ -136,30 +153,37 @@ module Opal
 
         visible_lines = all_lines[@scroll_offset...@scroll_offset + height]? || [] of String
 
-        visible_lines.each_with_index do |line_text, idx|
-          cur_y = y + idx
-          line_num = @start_line + @scroll_offset + idx
-          is_highlighted = (@highlighted_line == line_num)
+        buffer.with_clip(x, y, width, height) do
+          visible_lines.each_with_index do |line_text, idx|
+            cur_y = y + idx
+            line_num = @start_line + @scroll_offset + idx
+            is_highlighted = (@highlighted_line == line_num)
 
-          # Render line number gutter
-          if @show_line_numbers && gutter_w > 0
-            num_str = line_num.to_s
-            pad_w = gutter_w - 3 # account for ' │ '
-            indicator_w = VisualWidth.width(indicator)
+            # Render line number gutter
+            if @show_line_numbers && gutter_w > 0 && width > 0
+              num_str = line_num.to_s
+              pad_w = Math.max(0, gutter_w - 3) # account for ' │ '
+              indicator_w = VisualWidth.width(indicator)
 
-            if is_highlighted
-              rem_w = Math.max(0, pad_w - indicator_w)
-              buffer.put_string(x, cur_y, indicator, fg: cursor_c, bold: true)
-              buffer.put_string(x + indicator_w, cur_y, num_str.rjust(rem_w), fg: cursor_c, bold: true)
-              buffer.put_string(x + pad_w, cur_y, " │ ", fg: gutter_c)
-            else
-              buffer.put_string(x, cur_y, num_str.rjust(pad_w), fg: gutter_c)
-              buffer.put_string(x + pad_w, cur_y, " │ ", fg: gutter_c)
+              if is_highlighted
+                rem_w = Math.max(0, pad_w - indicator_w)
+                buffer.put_string(x, cur_y, indicator, fg: cursor_c, bold: true, max_width: width)
+                avail_num = Math.max(0, width - indicator_w)
+                buffer.put_string(x + indicator_w, cur_y, num_str.rjust(rem_w), fg: cursor_c, bold: true, max_width: avail_num)
+                avail_div = Math.max(0, width - pad_w)
+                buffer.put_string(x + pad_w, cur_y, " │ ", fg: gutter_c, max_width: avail_div)
+              else
+                buffer.put_string(x, cur_y, num_str.rjust(pad_w), fg: gutter_c, max_width: width)
+                avail_div = Math.max(0, width - pad_w)
+                buffer.put_string(x + pad_w, cur_y, " │ ", fg: gutter_c, max_width: avail_div)
+              end
+            end
+
+            # Render syntax-highlighted tokens for this line
+            if content_w > 0 && x + gutter_w < x + width
+              render_line_tokens(buffer, x + gutter_w, cur_y, line_text, content_w, is_highlighted)
             end
           end
-
-          # Render syntax-highlighted tokens for this line
-          render_line_tokens(buffer, x + gutter_w, cur_y, line_text, content_w, is_highlighted)
         end
       end
 
@@ -315,6 +339,67 @@ module Opal
         end
 
         tokens
+      end
+
+      # Preferred size in print mode: full line count
+      def preferred_print_size(available_w : Int32) : {Int32, Int32}
+        all_lines = lines
+        gutter_w = @show_line_numbers ? calculate_gutter_width(all_lines.size) : 0
+        max_line_w = all_lines.map { |l| VisualWidth.width(l) }.max? || 0
+        total_w = gutter_w + max_line_w + 2
+        {Math.max(total_w, available_w), all_lines.size}
+      end
+
+      # Render hook for print mode: resets scroll offset
+      def render_print(buffer : Buffer, width : Int32, height : Int32) : Nil
+        prev_offset = @scroll_offset
+        @scroll_offset = 0
+        begin
+          render(buffer, 0, 0, width, height)
+        ensure
+          @scroll_offset = prev_offset
+        end
+      end
+
+      # Class convenience method returning styled code string
+      def self.to_string(
+        code : String,
+        language : Symbol | String = :plain,
+        show_line_numbers : Bool = true,
+        start_line : Int32 = 1,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        cv = CodeView.new(
+          code: code,
+          language: language,
+          show_line_numbers: show_line_numbers,
+          start_line: start_line
+        )
+        cv.to_print_s(width: width, color: color, theme: theme)
+      end
+
+      # Class convenience method printing styled code directly to IO
+      def self.print(
+        code : String,
+        language : Symbol | String = :plain,
+        show_line_numbers : Bool = true,
+        start_line : Int32 = 1,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.print to_string(
+          code: code,
+          language: language,
+          show_line_numbers: show_line_numbers,
+          start_line: start_line,
+          width: width,
+          color: color,
+          theme: theme
+        )
       end
     end
   end

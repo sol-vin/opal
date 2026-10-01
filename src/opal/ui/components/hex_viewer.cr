@@ -199,60 +199,73 @@ module Opal
         @last_w = width
         @last_h = height
 
-        rows_to_render = Math.min(height, total_rows - @scroll_offset)
+        buffer.with_clip(x, y, width, height) do
+          rows_to_render = Math.min(height, total_rows - @scroll_offset)
 
-        (0...rows_to_render).each do |row_idx|
-          row_num = @scroll_offset + row_idx
-          byte_offset = row_num * @bytes_per_row
-          cur_y = y + row_idx
-          cur_x = x
+          (0...rows_to_render).each do |row_idx|
+            row_num = @scroll_offset + row_idx
+            byte_offset = row_num * @bytes_per_row
+            cur_y = y + row_idx
+            cur_x = x
 
-          # 1. Render Address
-          addr = @base_address + byte_offset
-          addr_str = "0x" + addr.to_s(16).rjust(8, '0') + "  "
-          buffer.put_string(cur_x, cur_y, addr_str, fg: @address_fg)
-          cur_x += VisualWidth.width(addr_str)
+            # 1. Render Address
+            addr = @base_address + byte_offset
+            addr_str = "0x" + addr.to_s(16).rjust(8, '0') + "  "
+            avail_w = Math.max(0, (x + width) - cur_x)
+            buffer.put_string(cur_x, cur_y, addr_str, fg: @address_fg, max_width: avail_w)
+            cur_x += VisualWidth.width(addr_str)
 
-          # 2. Render Hex Bytes
-          ascii_chars = IO::Memory.new
-          (0...@bytes_per_row).each do |i|
-            idx = byte_offset + i
-            if idx < @bytes.size
-              b = @bytes[idx]
-              is_sel = (@selected_byte == idx)
-              hex_pair = b.to_s(16).rjust(2, '0')
+            # 2. Render Hex Bytes
+            ascii_chars = IO::Memory.new
+            (0...@bytes_per_row).each do |i|
+              break if cur_x >= x + width
+              idx = byte_offset + i
+              if idx < @bytes.size
+                b = @bytes[idx]
+                is_sel = (@selected_byte == idx)
+                hex_pair = b.to_s(16).rjust(2, '0')
 
-              fg = is_sel ? @selected_fg : (b == 0 ? @zero_fg : @non_zero_fg)
-              bg = is_sel ? @selected_bg : Color.none
+                fg = is_sel ? @selected_fg : (b == 0 ? @zero_fg : @non_zero_fg)
+                bg = is_sel ? @selected_bg : Color.none
 
-              buffer.put_string(cur_x, cur_y, hex_pair, fg: fg, bg: bg, bold: is_sel)
-              cur_x += 2
-
-              # Add mid-row split space
-              if i == (@bytes_per_row / 2) - 1
-                buffer.put_string(cur_x, cur_y, "  ")
+                avail_hex_w = Math.max(0, (x + width) - cur_x)
+                buffer.put_string(cur_x, cur_y, hex_pair, fg: fg, bg: bg, bold: is_sel, max_width: avail_hex_w)
                 cur_x += 2
-              else
-                buffer.put_string(cur_x, cur_y, " ")
-                cur_x += 1
-              end
 
-              # Printable ASCII char
-              ascii_chars << (b >= 32 && b <= 126 ? b.chr : '.')
-            else
-              # Padding for incomplete last row
-              buffer.put_string(cur_x, cur_y, "   ")
-              cur_x += (i == (@bytes_per_row / 2) - 1 ? 4 : 3)
-              ascii_chars << ' '
+                # Add mid-row split space
+                if cur_x < x + width
+                  if i == (@bytes_per_row // 2) - 1
+                    buffer.put_string(cur_x, cur_y, "  ", max_width: Math.max(0, (x + width) - cur_x))
+                    cur_x += 2
+                  else
+                    buffer.put_string(cur_x, cur_y, " ", max_width: Math.max(0, (x + width) - cur_x))
+                    cur_x += 1
+                  end
+                end
+
+                # Printable ASCII char
+                ascii_chars << (b >= 32 && b <= 126 ? b.chr : '.')
+              else
+                # Padding for incomplete last row
+                buffer.put_string(cur_x, cur_y, "   ", max_width: Math.max(0, (x + width) - cur_x))
+                cur_x += (i == (@bytes_per_row // 2) - 1 ? 4 : 3)
+                ascii_chars << ' '
+              end
+            end
+
+            # 3. Render ASCII representation
+            if cur_x < x + width
+              buffer.put_string(cur_x, cur_y, "│", fg: @address_fg, max_width: Math.max(0, (x + width) - cur_x))
+              cur_x += 1
+              ascii_str = ascii_chars.to_s
+              avail_ascii_w = Math.max(0, (x + width) - cur_x)
+              buffer.put_string(cur_x, cur_y, ascii_str, fg: @ascii_fg, max_width: avail_ascii_w)
+              cur_x += Math.min(avail_ascii_w, VisualWidth.width(ascii_str))
+              if cur_x < x + width
+                buffer.put_string(cur_x, cur_y, "│", fg: @address_fg, max_width: Math.max(0, (x + width) - cur_x))
+              end
             end
           end
-
-          # 3. Render ASCII representation
-          buffer.put_string(cur_x, cur_y, "│", fg: @address_fg)
-          cur_x += 1
-          buffer.put_string(cur_x, cur_y, ascii_chars.to_s, fg: @ascii_fg)
-          cur_x += ascii_chars.to_s.size
-          buffer.put_string(cur_x, cur_y, "│", fg: @address_fg)
         end
       end
     end

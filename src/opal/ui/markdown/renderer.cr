@@ -317,10 +317,28 @@ module Opal
     end
 
     alias MarkdownViewer = MarkdownElement
+
+    module Markdown
+      # Renders Markdown text directly to an ANSI formatted string.
+      def self.render(text : String, width : Int32? = nil) : String
+        w = width || (Terminal::Info.new.width rescue 80)
+        Renderer.new(w).render(text)
+      end
+
+      # Prints rendered Markdown directly to IO.
+      def self.print(text : String, io : IO = STDOUT, width : Int32? = nil) : Nil
+        io.print render(text, width)
+      end
+    end
   end
 
   # Renders Markdown text directly to an ANSI formatted string.
   def self.render_markdown(text : String, width : Int32 = 80) : String
     UI::Markdown::Renderer.new(width).render(text)
+  end
+
+  # Prints Markdown text directly to IO stream.
+  def self.print_markdown(text : String, io : IO = STDOUT, width : Int32? = nil) : Nil
+    UI::Markdown.print(text, io, width)
   end
 end

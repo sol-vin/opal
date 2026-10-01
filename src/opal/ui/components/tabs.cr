@@ -161,17 +161,35 @@ module Opal
         return if width <= 0 || height <= 0 || @items.empty?
         @tab_hit_boxes.clear
 
+        # Determine start index so active tab is always kept visible
+        start_idx = 0
+        if @active_index > 0
+          loop do
+            w_to_active = 0
+            (start_idx..@active_index).each do |i|
+              w_to_active += formatted_item_width(@items[i])
+              w_to_active += @spacing if i < @active_index
+            end
+            break if w_to_active <= width || start_idx >= @active_index
+            start_idx += 1
+          end
+        end
+
         cur_x = x
 
-        @items.each_with_index do |item, idx|
-          break if cur_x >= x + width
-          is_active = (idx == @active_index)
-          item_w = formatted_item_width(item)
-          avail_w = Math.min(item_w, (x + width) - cur_x)
+        buffer.with_clip(x, y, width, height) do
+          (start_idx...@items.size).each do |idx|
+            break if cur_x >= x + width
+            item = @items[idx]
+            is_active = (idx == @active_index)
+            item_w = formatted_item_width(item)
+            avail_w = Math.min(item_w, (x + width) - cur_x)
+            next if avail_w <= 0
 
-          render_tab(buffer, cur_x, y, item, is_active, avail_w)
-          @tab_hit_boxes << {cur_x, y, avail_w, 1, idx}
-          cur_x += item_w + @spacing
+            render_tab(buffer, cur_x, y, item, is_active, avail_w)
+            @tab_hit_boxes << {cur_x, y, avail_w, 1, idx}
+            cur_x += item_w + @spacing
+          end
         end
       end
 

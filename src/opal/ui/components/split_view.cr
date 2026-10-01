@@ -133,11 +133,11 @@ module Opal
              end
         w2 = avail_w - w1
 
-        # Render first pane into sub-buffer and blit
+        # Render first pane
         if (el1 = @first) && w1 > 0
-          sub_buf1 = Buffer.new(w1, height)
-          el1.render(sub_buf1, 0, 0, w1, height)
-          buffer.blit(sub_buf1, x, y)
+          buffer.with_clip(x, y, w1, height) do
+            el1.render(buffer, x, y, w1, height)
+          end
         end
 
         # Render vertical separator
@@ -148,11 +148,12 @@ module Opal
           end
         end
 
-        # Render second pane into sub-buffer and blit
+        # Render second pane
         if (el2 = @second) && w2 > 0
-          sub_buf2 = Buffer.new(w2, height)
-          el2.render(sub_buf2, 0, 0, w2, height)
-          buffer.blit(sub_buf2, x + w1 + sep_w, y)
+          pane2_x = x + w1 + sep_w
+          buffer.with_clip(pane2_x, y, w2, height) do
+            el2.render(buffer, pane2_x, y, w2, height)
+          end
         end
       end
 
@@ -172,9 +173,9 @@ module Opal
 
         # Render first pane
         if (el1 = @first) && h1 > 0
-          sub_buf1 = Buffer.new(width, h1)
-          el1.render(sub_buf1, 0, 0, width, h1)
-          buffer.blit(sub_buf1, x, y)
+          buffer.with_clip(x, y, width, h1) do
+            el1.render(buffer, x, y, width, h1)
+          end
         end
 
         # Render horizontal separator
@@ -187,9 +188,10 @@ module Opal
 
         # Render second pane
         if (el2 = @second) && h2 > 0
-          sub_buf2 = Buffer.new(width, h2)
-          el2.render(sub_buf2, 0, 0, width, h2)
-          buffer.blit(sub_buf2, x, y + h1 + sep_h)
+          pane2_y = y + h1 + sep_h
+          buffer.with_clip(x, pane2_y, width, h2) do
+            el2.render(buffer, x, pane2_y, width, h2)
+          end
         end
       end
     end

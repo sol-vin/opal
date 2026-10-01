@@ -87,6 +87,77 @@ module Opal
           cur_y += 1
         end
       end
+
+      # Preferred size in print mode: full item count plus title lines
+      def preferred_print_size(available_w : Int32) : {Int32, Int32}
+        h = @items.size + (@title ? 2 : 0)
+        {available_w, h}
+      end
+
+      # Class convenience method returning styled barchart string
+      def self.to_string(
+        items : Array(BarItem),
+        title : String? = nil,
+        width : Int32? = nil,
+        bar_char : Char = '█',
+        max_value : Float64? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        chart = BarChart.new(items: items, title: title, bar_char: bar_char, max_value: max_value)
+        chart.to_print_s(width: width, color: color, theme: theme)
+      end
+
+      # Class convenience method printing styled barchart directly to IO
+      def self.print(
+        items : Array(BarItem),
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        bar_char : Char = '█',
+        max_value : Float64? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.print to_string(
+          items: items,
+          title: title,
+          width: width,
+          bar_char: bar_char,
+          max_value: max_value,
+          color: color,
+          theme: theme
+        )
+      end
+
+      # Overload accepting tuples of {label, value}
+      def self.to_string(
+        raw_items : Array(Tuple(String, Float64)),
+        title : String? = nil,
+        width : Int32? = nil,
+        bar_char : Char = '█',
+        max_value : Float64? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        items = raw_items.map { |lbl, val| BarItem.new(lbl, val) }
+        to_string(items, title, width, bar_char, max_value, color, theme)
+      end
+
+      # Overload printing tuples of {label, value} directly to IO
+      def self.print(
+        raw_items : Array(Tuple(String, Float64)),
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        bar_char : Char = '█',
+        max_value : Float64? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        items = raw_items.map { |lbl, val| BarItem.new(lbl, val) }
+        print(items, title, io, width, bar_char, max_value, color, theme)
+      end
     end
   end
 end

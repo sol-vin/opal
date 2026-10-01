@@ -137,21 +137,21 @@ module Opal
       return style if style.is_a?(Border)
 
       case style
-      when :rounded         then rounded
-      when :single, :normal then single
-      when :double          then double
-      when :thick, :bold    then thick
-      when :ascii           then ascii
-      when :hidden          then hidden
+      when :rounded               then rounded
+      when :single, :normal       then single
+      when :double                then double
+      when :thick, :bold, :heavy  then thick
+      when :ascii                 then ascii
+      when :hidden                then hidden
       when String
         p = style.starts_with?("pattern:") ? style[8..] : style
         case p
-        when "rounded"          then rounded
-        when "single", "normal" then single
-        when "double"           then double
-        when "thick", "bold"    then thick
-        when "ascii"            then ascii
-        when "hidden"           then hidden
+        when "rounded"                 then rounded
+        when "single", "normal"        then single
+        when "double"                  then double
+        when "thick", "bold", "heavy"  then thick
+        when "ascii"                   then ascii
+        when "hidden"                  then hidden
         else
           if p.size > 1
             pattern(p, left: "|", corners: "+")

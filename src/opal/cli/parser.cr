@@ -159,13 +159,44 @@ module Opal
 
         # Map positional arguments
         named_args = Hash(Symbol, String).new
-        current_cmd.arguments.each_with_index do |arg_def, i|
-          if i < positional_args.size
-            named_args[arg_def.name] = positional_args[i]
-          elsif arg_def.required?
-            raise ParseError.new("Missing required argument: <#{arg_def.name}> for command '#{current_cmd.name}'")
-          elsif default_val = arg_def.default
-            named_args[arg_def.name] = default_val
+        named_arg_lists = Hash(Symbol, Array(String)).new
+        arg_defs = current_cmd.arguments
+
+        pos_idx = 0
+        arg_defs.each do |arg_def|
+          if arg_def.multiple?
+            rest = positional_args[pos_idx..]? || [] of String
+            if rest.empty? && arg_def.required?
+              raise ParseError.new("Missing required argument: <#{arg_def.name}> for command '#{current_cmd.name}'")
+            end
+            if choices = arg_def.choices
+              rest.each do |r_val|
+                unless choices.includes?(r_val)
+                  raise ParseError.new("Invalid value '#{r_val}' for <#{arg_def.name}>. Allowed choices: #{choices.join(", ")}")
+                end
+              end
+            end
+            named_arg_lists[arg_def.name] = rest
+            named_args[arg_def.name] = rest.first? || arg_def.default || ""
+            pos_idx = positional_args.size
+            break
+          else
+            if pos_idx < positional_args.size
+              val = positional_args[pos_idx]
+              if choices = arg_def.choices
+                unless choices.includes?(val)
+                  raise ParseError.new("Invalid value '#{val}' for <#{arg_def.name}>. Allowed choices: #{choices.join(", ")}")
+                end
+              end
+              named_args[arg_def.name] = val
+              named_arg_lists[arg_def.name] = [val]
+              pos_idx += 1
+            elsif arg_def.required?
+              raise ParseError.new("Missing required argument: <#{arg_def.name}> for command '#{current_cmd.name}'")
+            elsif default_val = arg_def.default
+              named_args[arg_def.name] = default_val
+              named_arg_lists[arg_def.name] = [default_val]
+            end
           end
         end
 
@@ -180,6 +211,7 @@ module Opal
           options: options_map,
           args: positional_args,
           named_args: named_args,
+          named_arg_lists: named_arg_lists,
           raw_args: raw
         )
 

@@ -9,7 +9,7 @@ crystal: ">= 1.10.0"
 
 targets:
   opal:
-    main: src/opal.cr
+    main: src/opal/cli/main.cr
   opal-demo:
     main: examples/10_opal_tui_showcase.cr
   opal-shaders:

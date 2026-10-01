@@ -5,19 +5,51 @@ require "./help"
 
 module Opal
   module CLI
+    # Represents a custom section in command help screens (e.g. PIPING EXAMPLES)
+    class HelpSection
+      getter title : String
+      getter lines : Array(String)
+
+      def initialize(@title : String)
+        @lines = [] of String
+      end
+
+      def text(t : String) : self
+        @lines << t
+        self
+      end
+
+      def example(ex : String) : self
+        @lines << "  $ #{ex}"
+        self
+      end
+    end
+
     # Represents a command or subcommand node in the CLI hierarchy.
     class Command
       property name : String
       property description : String
+      property summary : String? = nil
+      property title : String? = nil
+      property header_text : String? = nil
+      property footer_text : String? = nil
       property aliases : Array(String)
       property options : Array(Option)
       property arguments : Array(Argument)
       property subcommands : Hash(String, Command)
       property examples : Array(String)
+
+      # Alias for subcommands
+      def commands : Hash(String, Command)
+        @subcommands
+      end
+      property sections : Array(HelpSection)
       property category : String? = nil
       property parent : Command? = nil
       property? allow_unknown_options : Bool = false
       property help_handler : (Context? -> String | Nil)? = nil
+
+      @current_group : String? = nil
 
       # Allows unrecognized options or flags to pass through without parsing errors
       def allow_unknown_options(allow : Bool = true) : self
@@ -41,9 +73,41 @@ module Opal
         @arguments = [] of Argument
         @subcommands = {} of String => Command
         @examples = [] of String
+        @sections = [] of HelpSection
       end
 
-      # Sets command description
+      # Sets short summary for parent command listings
+      def summary(text : String) : self
+        @summary = text
+        self
+      end
+
+      # Sets display title
+      def title(text : String) : self
+        @title = text
+        self
+      end
+
+      # Sets header/banner text
+      def header(text : String) : self
+        @header_text = text
+        self
+      end
+
+      def banner(text : String) : self
+        header(text)
+      end
+
+      # Sets footer/epilog text
+      def footer(text : String) : self
+        @footer_text = text
+        self
+      end
+
+      def epilog(text : String) : self
+        footer(text)
+      end
+
       # Sets command category for grouped help rendering
       def category(cat : String) : self
         @category = cat
@@ -52,6 +116,26 @@ module Opal
 
       def description(desc : String) : self
         @description = desc
+        self
+      end
+
+      # Groups enclosed option/flag definitions into a named category
+      def group(name : String, &block : -> Nil) : self
+        prev = @current_group
+        @current_group = name
+        begin
+          block.call
+        ensure
+          @current_group = prev
+        end
+        self
+      end
+
+      # Adds a custom help section (e.g. PIPELINE COMPOSITION)
+      def section(title : String, &block : HelpSection -> Nil) : self
+        sec = HelpSection.new(title)
+        block.call(sec)
+        @sections << sec
         self
       end
 
@@ -88,7 +172,7 @@ module Opal
         command(name, description, &block)
       end
 
-      # Defines a boolean flag (e.g. -q, --quiet)
+      # Defines a boolean flag (e.g. -q, --quiet or unified "-q, --quiet")
       def flag(
         name : Symbol,
         long : String,
@@ -97,19 +181,33 @@ module Opal
         default : Bool = false,
         global : Bool = false,
       ) : self
-        @options << Option.new(
-          name: name,
-          long: long,
-          short: short,
-          description: description,
-          type: :bool,
-          default: default,
-          global: global
-        )
+        opt = if short.nil? && (long.includes?(',') || long.includes?(' '))
+                Option.from_spec(
+                  name: name,
+                  spec: long,
+                  description: description,
+                  type: :bool,
+                  default: default,
+                  global: global,
+                  group: @current_group
+                )
+              else
+                Option.new(
+                  name: name,
+                  long: long,
+                  short: short,
+                  description: description,
+                  type: :bool,
+                  default: default,
+                  global: global,
+                  group: @current_group
+                )
+              end
+        @options << opt
         self
       end
 
-      # Defines a valued option (e.g. -e src/main.cr, --entry=src/main.cr)
+      # Defines a valued option (e.g. -e src/main.cr, --entry=src/main.cr or unified "-e, --entry=DIR")
       def option(
         name : Symbol,
         long : String,
@@ -122,18 +220,64 @@ module Opal
         choices : Array(String)? = nil,
         env_var : String? = nil,
       ) : self
-        @options << Option.new(
+        opt = if short.nil? && (long.includes?(',') || long.includes?(' ') || long.includes?('='))
+                Option.from_spec(
+                  name: name,
+                  spec: long,
+                  description: description,
+                  type: type,
+                  default: default,
+                  required: required,
+                  global: global,
+                  choices: choices,
+                  env_var: env_var,
+                  group: @current_group
+                )
+              else
+                Option.new(
+                  name: name,
+                  long: long,
+                  short: short,
+                  description: description,
+                  type: type,
+                  default: default,
+                  required: required,
+                  global: global,
+                  choices: choices,
+                  env_var: env_var,
+                  group: @current_group
+                )
+              end
+        @options << opt
+        self
+      end
+
+      # Shorthand for option with unified spec string like "-d, --delimiter=CHAR"
+      def opt(
+        name : Symbol,
+        spec : String,
+        description : String = "",
+        type : Symbol? = nil,
+        default : OptionValue = nil,
+        required : Bool = false,
+        global : Bool = false,
+        choices : Array(String)? = nil,
+        env_var : String? = nil,
+        group : String? = nil,
+      ) : self
+        opt = Option.from_spec(
           name: name,
-          long: long,
-          short: short,
+          spec: spec,
           description: description,
           type: type,
           default: default,
           required: required,
           global: global,
           choices: choices,
-          env_var: env_var
+          env_var: env_var,
+          group: group || @current_group
         )
+        @options << opt
         self
       end
 
@@ -144,15 +288,44 @@ module Opal
         required : Bool = false,
         default : String? = nil,
         type : Symbol = :string,
+        multiple : Bool = false,
+        choices : Array(String)? = nil,
+        value_name : String? = nil,
       ) : self
         @arguments << Argument.new(
           name: name,
           description: description,
           required: required,
           default: default,
-          type: type
+          type: type,
+          multiple: multiple,
+          choices: choices,
+          value_name: value_name
         )
         self
+      end
+
+      # Ergonomic shorthand for argument
+      def arg(
+        name : Symbol,
+        description : String = "",
+        required : Bool = false,
+        default : String? = nil,
+        type : Symbol = :string,
+        multiple : Bool = false,
+        choices : Array(String)? = nil,
+        value_name : String? = nil,
+      ) : self
+        argument(
+          name: name,
+          description: description,
+          required: required,
+          default: default,
+          type: type,
+          multiple: multiple,
+          choices: choices,
+          value_name: value_name
+        )
       end
 
       # Adds a usage example
@@ -232,14 +405,10 @@ module Opal
           res = handler.call(context)
           return res.is_a?(String) ? res : ""
         end
-        Help.render(
+        Help.render_command(
           app_name: app_name,
-          command_name: @name,
-          description: @description,
-          subcommands: @subcommands.reject { |k, v| k != v.name },
-          options: all_options,
-          arguments: @arguments,
-          examples: @examples
+          command: self,
+          context: context
         )
       end
     end

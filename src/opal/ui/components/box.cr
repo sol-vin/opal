@@ -1,4 +1,5 @@
 require "../element"
+require "./text"
 require "../../style/border"
 require "../../style/color"
 require "../../style/visual_width"
@@ -83,7 +84,11 @@ module Opal
         inner_w = Math.max(0, width - (border_offset_x * 2) - @padding_left - @padding_right)
         inner_h = Math.max(0, height - (border_offset_y * 2) - @padding_top - @padding_bottom)
 
-        @child.try(&.render(buffer, inner_x, inner_y, inner_w, inner_h))
+        if (ch = @child) && inner_w > 0 && inner_h > 0
+          buffer.with_clip(inner_x, inner_y, inner_w, inner_h) do
+            ch.render(buffer, inner_x, inner_y, inner_w, inner_h)
+          end
+        end
       end
 
       private def render_border(
@@ -146,6 +151,52 @@ module Opal
         end
         res << "…"
         res.to_s
+      end
+
+      # Class convenience method returning styled box string
+      def self.to_string(
+        text : String,
+        title : String? = nil,
+        border : Symbol | Border | String = :rounded,
+        border_fg : Color | Symbol | String = Color.none,
+        padding : Int32 = 1,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        child = Text.new(text)
+        b = Box.new(
+          child: child,
+          border: border,
+          border_fg: border_fg,
+          padding: padding,
+          title: title
+        )
+        b.to_print_s(width: width, color: color, theme: theme)
+      end
+
+      # Class convenience method printing styled box directly to IO
+      def self.print(
+        text : String,
+        title : String? = nil,
+        io : IO = STDOUT,
+        border : Symbol | Border | String = :rounded,
+        border_fg : Color | Symbol | String = Color.none,
+        padding : Int32 = 1,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.print to_string(
+          text: text,
+          title: title,
+          border: border,
+          border_fg: border_fg,
+          padding: padding,
+          width: width,
+          color: color,
+          theme: theme
+        )
       end
     end
   end

@@ -64,6 +64,14 @@ module Opal
         super()
       end
 
+      def initialize(
+        root_node : TreeNode,
+        title : String? = nil,
+        selected_node : TreeNode? = nil,
+      )
+        initialize([root_node], title: title, selected_node: selected_node)
+      end
+
       def add(node : TreeNode) : TreeNode
         @root_nodes << node
         node
@@ -92,21 +100,25 @@ module Opal
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
-        return if @root_nodes.empty?
+        return if width <= 0 || height <= 0 || @root_nodes.empty?
         @visible_rows.clear
 
-        cur_y = y
-        if t = @title
-          buffer.put_string(x, cur_y, t, fg: Color.cyan, bold: true, max_width: width)
-          cur_y += 1
-          buffer.put_string(x, cur_y, "─" * Math.min(width, VisualWidth.width(t) + 4), fg: Color.bright_black)
-          cur_y += 1
-        end
+        buffer.with_clip(x, y, width, height) do
+          cur_y = y
+          if t = @title
+            buffer.put_string(x, cur_y, t, fg: Color.cyan, bold: true, max_width: width)
+            cur_y += 1
+            if cur_y < y + height
+              buffer.put_string(x, cur_y, "─" * Math.min(width, VisualWidth.width(t) + 4), fg: Color.bright_black, max_width: width)
+              cur_y += 1
+            end
+          end
 
-        @root_nodes.each_with_index do |node, idx|
-          is_last = (idx == @root_nodes.size - 1)
-          cur_y = render_node(buffer, node, "", is_last, x, cur_y, width, y + height)
-          break if cur_y >= y + height
+          @root_nodes.each_with_index do |node, idx|
+            is_last = (idx == @root_nodes.size - 1)
+            cur_y = render_node(buffer, node, "", is_last, x, cur_y, width, y + height)
+            break if cur_y >= y + height
+          end
         end
       end
 
@@ -248,6 +260,70 @@ module Opal
         end
 
         false
+      end
+
+      # Preferred size in print mode: full line count
+      def preferred_print_size(available_w : Int32) : {Int32, Int32}
+        total_lines = @root_nodes.sum { |n| count_visible_lines(n) } + (@title ? 2 : 0)
+        {available_w, total_lines}
+      end
+
+      # Render hook for print mode: clears selection highlight to render pure branch structure
+      def render_print(buffer : Buffer, width : Int32, height : Int32) : Nil
+        prev_sel = @selected_node
+        @selected_node = nil
+        begin
+          render(buffer, 0, 0, width, height)
+        ensure
+          @selected_node = prev_sel
+        end
+      end
+
+      # Class convenience method returning styled tree string
+      def self.to_string(
+        root_nodes : Array(TreeNode),
+        title : String? = nil,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        tree = Tree.new(root_nodes: root_nodes, title: title)
+        tree.to_print_s(width: width, color: color, theme: theme)
+      end
+
+      # Class convenience method printing styled tree directly to IO
+      def self.print(
+        root_nodes : Array(TreeNode),
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        io.print to_string(root_nodes: root_nodes, title: title, width: width, color: color, theme: theme)
+      end
+
+      # Overload accepting a single root TreeNode
+      def self.to_string(
+        root_node : TreeNode,
+        title : String? = nil,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : String
+        to_string([root_node], title: title, width: width, color: color, theme: theme)
+      end
+
+      # Overload printing a single root TreeNode directly to IO
+      def self.print(
+        root_node : TreeNode,
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        color : Bool? = nil,
+        theme : Theme? = nil,
+      ) : Nil
+        print([root_node], title: title, io: io, width: width, color: color, theme: theme)
       end
     end
   end

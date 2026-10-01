@@ -603,127 +603,128 @@ module Opal
 
         fe = filtered_entries
         list_h = (y + height - 2) - cur_y
-        return if list_h <= 0
 
         has_preview = width >= 54
         max_w_clamp = Math.max(24, width - 20)
         list_w = has_preview ? ((width * 0.54).to_i.clamp(24, max_w_clamp)) : width
 
-        # 3. Render Entries List
-        if fe.empty?
-          buffer.put_string(x + 2, cur_y, "(No matching files or directories)", fg: c_mut, italic: true)
-        else
-          # Compute scrolling window
-          scroll_offset = 0
-          if @cursor >= list_h
-            scroll_offset = @cursor - list_h + 1
-          end
-
-          (0...list_h).each do |line_idx|
-            entry_idx = scroll_offset + line_idx
-            break if entry_idx >= fe.size
-
-            entry = fe[entry_idx]
-            is_active = (entry_idx == @cursor)
-            row_y = cur_y + line_idx
-
-            if is_active
-              buffer.put_string(x, row_y, "> ", fg: c_pri, bold: true)
-            else
-              buffer.put_string(x, row_y, "  ")
+        if list_h > 0
+          # 3. Render Entries List
+          if fe.empty?
+            buffer.put_string(x + 2, cur_y, "(No matching files or directories)", fg: c_mut, italic: true)
+          else
+            # Compute scrolling window
+            scroll_offset = 0
+            if @cursor >= list_h
+              scroll_offset = @cursor - list_h + 1
             end
 
-            # Icon & Name
-            icon_str = entry.icon + " "
-            buffer.put_string(x + 2, row_y, icon_str, fg: entry.directory? ? c_acc : c_mut)
-            icon_len = VisualWidth.width(icon_str)
+            (0...list_h).each do |line_idx|
+              entry_idx = scroll_offset + line_idx
+              break if entry_idx >= fe.size
 
-            size_str = entry.display_size
-            size_len = VisualWidth.width(size_str)
-            name_max_w = Math.max(6, list_w - 4 - icon_len - size_len - 2)
+              entry = fe[entry_idx]
+              is_active = (entry_idx == @cursor)
+              row_y = cur_y + line_idx
 
-            name_disp = entry.name
-            if VisualWidth.width(name_disp) > name_max_w
-              name_disp = name_disp[0...(name_max_w - 3)] + "..."
-            end
-
-            name_fg = if is_active
-                        th.primary
-                      elsif entry.directory?
-                        c_acc
-                      else
-                        c_txt
-                      end
-
-            name_bg = is_active ? c_surf : Color.none
-
-            buffer.put_string(x + 2 + icon_len, row_y, name_disp, fg: name_fg, bg: name_bg, bold: (is_active || entry.directory?))
-
-            # Right-aligned size in entry column
-            size_x = x + list_w - size_len - 1
-            if size_x > x + 2 + icon_len + VisualWidth.width(name_disp)
-              size_fg = entry.directory? ? c_acc : c_mut
-              buffer.put_string(size_x, row_y, size_str, fg: size_fg)
-            end
-
-            # Store hit box for row click
-            @hit_entries << {x, row_y, list_w, 1, entry_idx, entry.path, entry.directory?}
-          end
-        end
-
-        # 4. Render Preview Pane (if width allows)
-        if has_preview
-          divider_x = x + list_w
-          (cur_y...(y + height - 2)).each do |div_y|
-            buffer.put_char(divider_x, div_y, '│', fg: c_bdr)
-          end
-
-          preview_x = divider_x + 2
-          preview_w = (x + width) - preview_x
-
-          if sel = selected_entry
-            p_y = cur_y
-            buffer.put_string(preview_x, p_y, "#{sel.icon} #{sel.name}", fg: c_pri, bold: true, max_width: preview_w)
-            p_y += 1
-            buffer.put_string(preview_x, p_y, "Size: #{sel.display_size}  Mod: #{sel.modified.to_s("%Y-%m-%d %H:%M")}", fg: c_mut, max_width: preview_w)
-            p_y += 1
-            buffer.put_string(preview_x, p_y, "─" * preview_w, fg: c_bdr)
-            p_y += 1
-
-            if fn = @preview_fn
-              content = fn.call(sel.path)
-              content.split('\n').each do |line|
-                break if p_y >= y + height - 2
-                buffer.put_string(preview_x, p_y, line, fg: c_txt, max_width: preview_w)
-                p_y += 1
+              if is_active
+                buffer.put_string(x, row_y, "> ", fg: c_pri, bold: true)
+              else
+                buffer.put_string(x, row_y, "  ")
               end
-            elsif sel.directory?
-              begin
-                child_count = Dir.children(sel.path).size
-                buffer.put_string(preview_x, p_y, "Directory containing #{child_count} items.", fg: c_mut, italic: true)
-                p_y += 2
-                buffer.put_string(preview_x, p_y, "Double click or [Enter] to navigate.", fg: c_acc)
-              rescue
-                buffer.put_string(preview_x, p_y, "(Permission denied)", fg: c_err)
+
+              # Icon & Name
+              icon_str = entry.icon + " "
+              buffer.put_string(x + 2, row_y, icon_str, fg: entry.directory? ? c_acc : c_mut)
+              icon_len = VisualWidth.width(icon_str)
+
+              size_str = entry.display_size
+              size_len = VisualWidth.width(size_str)
+              name_max_w = Math.max(6, list_w - 4 - icon_len - size_len - 2)
+
+              name_disp = entry.name
+              if VisualWidth.width(name_disp) > name_max_w
+                name_disp = name_disp[0...(name_max_w - 3)] + "..."
               end
-            else
-              begin
-                if File.size(sel.path) < 256 * 1024
-                  lines = File.read_lines(sel.path)
-                  max_prev_lines = (y + height - 2) - p_y
-                  lines.first(max_prev_lines).each_with_index do |fline, lidx|
-                    break if p_y >= y + height - 2
-                    line_num_str = sprintf("%3d │ ", lidx + 1)
-                    buffer.put_string(preview_x, p_y, line_num_str, fg: c_mut)
-                    text_x = preview_x + VisualWidth.width(line_num_str)
-                    buffer.put_string(text_x, p_y, fline, fg: c_txt, max_width: preview_w - VisualWidth.width(line_num_str))
-                    p_y += 1
-                  end
-                else
-                  buffer.put_string(preview_x, p_y, "(Large file - preview disabled)", fg: c_mut, italic: true)
+
+              name_fg = if is_active
+                          th.primary
+                        elsif entry.directory?
+                          c_acc
+                        else
+                          c_txt
+                        end
+
+              name_bg = is_active ? c_surf : Color.none
+
+              buffer.put_string(x + 2 + icon_len, row_y, name_disp, fg: name_fg, bg: name_bg, bold: (is_active || entry.directory?))
+
+              # Right-aligned size in entry column
+              size_x = x + list_w - size_len - 1
+              if size_x > x + 2 + icon_len + VisualWidth.width(name_disp)
+                size_fg = entry.directory? ? c_acc : c_mut
+                buffer.put_string(size_x, row_y, size_str, fg: size_fg)
+              end
+
+              # Store hit box for row click
+              @hit_entries << {x, row_y, list_w, 1, entry_idx, entry.path, entry.directory?}
+            end
+          end
+
+          # 4. Render Preview Pane (if width allows)
+          if has_preview
+            divider_x = x + list_w
+            (cur_y...(y + height - 2)).each do |div_y|
+              buffer.put_char(divider_x, div_y, '│', fg: c_bdr)
+            end
+
+            preview_x = divider_x + 2
+            preview_w = (x + width) - preview_x
+
+            if sel = selected_entry
+              p_y = cur_y
+              buffer.put_string(preview_x, p_y, "#{sel.icon} #{sel.name}", fg: c_pri, bold: true, max_width: preview_w)
+              p_y += 1
+              buffer.put_string(preview_x, p_y, "Size: #{sel.display_size}  Mod: #{sel.modified.to_s("%Y-%m-%d %H:%M")}", fg: c_mut, max_width: preview_w)
+              p_y += 1
+              buffer.put_string(preview_x, p_y, "─" * preview_w, fg: c_bdr)
+              p_y += 1
+
+              if fn = @preview_fn
+                content = fn.call(sel.path)
+                content.split('\n').each do |line|
+                  break if p_y >= y + height - 2
+                  buffer.put_string(preview_x, p_y, line, fg: c_txt, max_width: preview_w)
+                  p_y += 1
                 end
-              rescue
-                buffer.put_string(preview_x, p_y, "(Binary or unreadable file)", fg: c_mut, italic: true)
+              elsif sel.directory?
+                begin
+                  child_count = Dir.children(sel.path).size
+                  buffer.put_string(preview_x, p_y, "Directory containing #{child_count} items.", fg: c_mut, italic: true)
+                  p_y += 2
+                  buffer.put_string(preview_x, p_y, "Double click or [Enter] to navigate.", fg: c_acc)
+                rescue
+                  buffer.put_string(preview_x, p_y, "(Permission denied)", fg: c_err)
+                end
+              else
+                begin
+                  if File.size(sel.path) < 256 * 1024
+                    lines = File.read_lines(sel.path)
+                    max_prev_lines = (y + height - 2) - p_y
+                    lines.first(max_prev_lines).each_with_index do |fline, lidx|
+                      break if p_y >= y + height - 2
+                      line_num_str = sprintf("%3d │ ", lidx + 1)
+                      buffer.put_string(preview_x, p_y, line_num_str, fg: c_mut)
+                      text_x = preview_x + VisualWidth.width(line_num_str)
+                      buffer.put_string(text_x, p_y, fline, fg: c_txt, max_width: preview_w - VisualWidth.width(line_num_str))
+                      p_y += 1
+                    end
+                  else
+                    buffer.put_string(preview_x, p_y, "(Large file - preview disabled)", fg: c_mut, italic: true)
+                  end
+                rescue
+                  buffer.put_string(preview_x, p_y, "(Binary or unreadable file)", fg: c_mut, italic: true)
+                end
               end
             end
           end

@@ -60,6 +60,13 @@ module Opal
         end
       end
 
+      # Preferred size in print mode
+      def preferred_print_size(available_w : Int32) : {Int32, Int32}
+        w = [@data.size, (@title ? VisualWidth.width(@title.not_nil!) : 0)].max
+        h = @title ? 2 : 1
+        {[w, available_w].min, h}
+      end
+
       # Convenience helper returning sparkline as a string
       def self.render_to_string(data : Array(Float64), color : Color | Symbol | String = Color.none) : String
         return "" if data.empty?
@@ -78,6 +85,21 @@ module Opal
           end
           io << "\e[0m" if c.type != Color::Type::None
         end
+      end
+
+      # Prints sparkline with optional title and bounds directly to IO
+      def self.print(
+        data : Array(Float64),
+        title : String? = nil,
+        io : IO = STDOUT,
+        width : Int32? = nil,
+        color : Color | Symbol | String = :cyan,
+        min : Float64? = nil,
+        max : Float64? = nil,
+        ansi : Bool? = nil,
+      ) : Nil
+        sl = Sparkline.new(data: data, color: color, title: title, min: min, max: max)
+        io.puts sl.to_print_s(width: width, color: ansi)
       end
     end
   end

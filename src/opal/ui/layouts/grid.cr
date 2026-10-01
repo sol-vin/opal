@@ -138,11 +138,22 @@ module Opal
 
         fr_space = Math.max(0, remaining_w - fixed_sum)
         if total_fr > 0.0
+          allocated_fr = 0
+          fractional_indices = [] of Int32
           @columns.each_with_index do |t, idx|
             if t.kind.fraction?
               w = ((t.value / total_fr) * fr_space).floor.to_i
               widths[idx] = w
+              allocated_fr += w
+              fractional_indices << idx
             end
+          end
+          remainder = fr_space - allocated_fr
+          f_idx = 0
+          while remainder > 0 && !fractional_indices.empty?
+            widths[fractional_indices[f_idx % fractional_indices.size]] += 1
+            remainder -= 1
+            f_idx += 1
           end
         end
 
@@ -177,11 +188,22 @@ module Opal
 
         fr_space = Math.max(0, remaining_h - fixed_sum)
         if total_fr > 0.0
+          allocated_fr = 0
+          fractional_indices = [] of Int32
           @rows.each_with_index do |t, idx|
             if t.kind.fraction?
               h = ((t.value / total_fr) * fr_space).floor.to_i
               heights[idx] = h
+              allocated_fr += h
+              fractional_indices << idx
             end
+          end
+          remainder = fr_space - allocated_fr
+          f_idx = 0
+          while remainder > 0 && !fractional_indices.empty?
+            heights[fractional_indices[f_idx % fractional_indices.size]] += 1
+            remainder -= 1
+            f_idx += 1
           end
         end
 
@@ -261,6 +283,9 @@ module Opal
             break if idx >= row_h.size
             ch += row_h[idx] + (span_i > 0 ? @gutter_y : 0)
           end
+
+          cw = Math.min(cw, Math.max(0, (x + width) - cx))
+          ch = Math.min(ch, Math.max(0, (y + height) - cy))
 
           next if cw <= 0 || ch <= 0
 

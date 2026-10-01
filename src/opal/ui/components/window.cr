@@ -39,6 +39,9 @@ module Opal
       property border_fg : Color? = nil
       property active_border_fg : Color? = nil
       property inactive_border_fg : Color? = nil
+      property drag_border_fg : Color? = nil
+      property resize_border_fg : Color? = nil
+      property resize_handle_fg : Color? = nil
       property bg : Color? = nil
       property border : Border? = nil
       property close_glyph : String? = nil
@@ -48,11 +51,35 @@ module Opal
       property shadow_fg : Color? = nil
       property shadow_char : Char? = nil
 
+      # Drag and resize callbacks
+      property on_drag : Proc(Window, Int32, Int32, Nil)? = nil
+      property on_resize : Proc(Window, Int32, Int32, Nil)? = nil
+
       # Mouse dragging and resizing tracking
       @dragging_title : Bool = false
       @resizing : Bool = false
       @drag_offset_x : Int32 = 0
       @drag_offset_y : Int32 = 0
+      @last_render_x : Int32 = 0
+      @last_render_y : Int32 = 0
+
+      def dragging? : Bool
+        @dragging_title
+      end
+
+      def resizing? : Bool
+        @resizing
+      end
+
+      def on_drag(&block : (Window, Int32, Int32) -> Nil) : self
+        @on_drag = block
+        self
+      end
+
+      def on_resize(&block : (Window, Int32, Int32) -> Nil) : self
+        @on_resize = block
+        self
+      end
 
       def initialize(
         @title : String,
@@ -144,14 +171,21 @@ module Opal
       end
 
       def handle_mouse(event : Terminal::MouseEvent) : Bool
-        case event.button
-        when Terminal::MouseButton::Left
-          case event.action
-          when Terminal::MouseAction::Press
+        case event.action
+        when Terminal::MouseAction::Press
+          if event.button == Terminal::MouseButton::Left
             handle_mouse_press(event.x, event.y)
-          when Terminal::MouseAction::Motion
+          else
+            false
+          end
+        when Terminal::MouseAction::Motion
+          if @dragging_title || @resizing
             handle_mouse_drag(event.x, event.y)
-          when Terminal::MouseAction::Release
+          else
+            false
+          end
+        when Terminal::MouseAction::Release
+          if @dragging_title || @resizing
             @dragging_title = false
             @resizing = false
             true
@@ -164,58 +198,83 @@ module Opal
       end
 
       private def handle_mouse_press(mx : Int32, my : Int32) : Bool
-        # Check window hit bounds
+        eff_x = @last_render_x + @x
+        eff_y = @last_render_y + @y
         eff_h = @minimized ? 1 : @height
-        return false unless mx >= @x && mx < (@x + @width) && my >= @y && my < (@y + eff_h)
+
+        # Check window hit bounds
+        return false unless mx >= eff_x && mx < (eff_x + @width) && my >= eff_y && my < (eff_y + eff_h)
 
         @active = true
 
         # Check title bar button clicks (top-right area)
-        if my == @y
+        if my == eff_y
           # Close button [x]
-          if @closable && mx >= (@x + @width - 4) && mx <= (@x + @width - 2)
+          if @closable && mx >= (eff_x + @width - 4) && mx <= (eff_x + @width - 2)
             close
             return true
           end
 
           # Maximize button [^]
-          if @maximizable && mx >= (@x + @width - 8) && mx <= (@x + @width - 6)
+          if @maximizable && mx >= (eff_x + @width - 8) && mx <= (eff_x + @width - 6)
             toggle_maximize
             return true
           end
 
           # Minimize button [-]
-          if @minimizable && mx >= (@x + @width - 12) && mx <= (@x + @width - 10)
+          if @minimizable && mx >= (eff_x + @width - 12) && mx <= (eff_x + @width - 10)
             toggle_minimize
             return true
           end
 
           # Otherwise, start dragging title bar
           @dragging_title = true
-          @drag_offset_x = mx - @x
-          @drag_offset_y = my - @y
+          @drag_offset_x = mx - eff_x
+          @drag_offset_y = my - eff_y
           return true
         end
 
-        # Check bottom-right corner resize handle
-        if @resizable && !@minimized && mx >= (@x + @width - 2) && my >= (@y + @height - 2)
+        # Check bottom-right corner resize handle (generous 2x2 corner area for smooth interaction)
+        if @resizable && !@minimized && mx >= (eff_x + @width - 2) && mx < (eff_x + @width) &&
+           my >= (eff_y + @height - 2) && my < (eff_y + @height)
           @resizing = true
           return true
         end
 
-        true
+        # Forward mouse to client content if content is a Control
+        if !@minimized && (ch = @content).is_a?(Control)
+          ch.handle_mouse(Terminal::MouseEvent.new(
+            x: mx,
+            y: my,
+            button: Terminal::MouseButton::Left,
+            action: Terminal::MouseAction::Press
+          ))
+        else
+          true
+        end
       end
 
       private def handle_mouse_drag(mx : Int32, my : Int32) : Bool
+        eff_x = @last_render_x + @x
+        eff_y = @last_render_y + @y
+
         if @dragging_title && !@maximized
-          @x = mx - @drag_offset_x
-          @y = my - @drag_offset_y
+          new_x = (mx - @last_render_x) - @drag_offset_x
+          new_y = (my - @last_render_y) - @drag_offset_y
+          if new_x != @x || new_y != @y
+            @x = new_x
+            @y = new_y
+            @on_drag.try(&.call(self, @x, @y))
+          end
           return true
         elsif @resizing && !@maximized && !@minimized
-          new_w = mx - @x + 1
-          new_h = my - @y + 1
-          @width = Math.max(@min_width, new_w)
-          @height = Math.max(@min_height, new_h)
+          new_w = Math.max(@min_width, (mx - eff_x) + 1)
+          new_h = Math.max(@min_height, (my - eff_y) + 1)
+          if new_w != @width || new_h != @height
+            @width = new_w
+            @height = new_h
+            @on_resize.try(&.call(self, @width, @height))
+          end
           return true
         else
           false
@@ -227,9 +286,12 @@ module Opal
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
-        # Use window's internal coordinates and dimensions
-        win_x = @x
-        win_y = @y
+        @last_render_x = x
+        @last_render_y = y
+
+        # Use window's coordinates relative to container offset
+        win_x = x + @x
+        win_y = y + @y
         win_w = @width
         win_h = @minimized ? 1 : @height
 
@@ -243,7 +305,20 @@ module Opal
         c_resize = @resize_glyph || glyphs.window_resize
 
         border_style = @border || (@active ? th.window_border : Border.rounded)
-        border_c = @border_fg || (@active ? (@active_border_fg || th.primary) : (@inactive_border_fg || th.border))
+
+        # Dynamic themed border colors reflecting drag/resize state
+        border_c = if @dragging_title
+                     @drag_border_fg || th.accent
+                   elsif @resizing
+                     @resize_border_fg || th.warning
+                   elsif @border_fg
+                     @border_fg.not_nil!
+                   elsif @active
+                     @active_border_fg || th.primary
+                   else
+                     @inactive_border_fg || th.border
+                   end
+
         title_c = @title_fg || (@active ? th.accent : th.text)
         bg_c = @bg || th.background
         btn_c = th.text_muted
@@ -269,7 +344,7 @@ module Opal
         # 2. Solid background fill inside window
         Graphics::Primitives2D.fill_rect(buffer, win_x, win_y, win_w, win_h, ' ', fg: Color.none, bg: bg_c)
 
-        # 3. Window Border
+        # 3. Window Border (themed active / dragging / resizing)
         Graphics::Primitives2D.draw_rect(buffer, win_x, win_y, win_w, win_h, border: border_style, fg: border_c)
 
         # 4. Header Buttons & Title (placed from right to left to avoid collision)
@@ -321,9 +396,10 @@ module Opal
           end
         end
 
-        # 6. Resize handle glyph at bottom-right corner if resizable
+        # 6. Themed resize handle glyph at bottom-right corner if resizable
         if @resizable && !@maximized
-          buffer.put_char(win_x + win_w - 1, win_y + win_h - 1, c_resize, fg: border_c)
+          resize_c = @resize_handle_fg || (@resizing ? th.accent : border_c)
+          buffer.put_char(win_x + win_w - 1, win_y + win_h - 1, c_resize, fg: resize_c, bold: @resizing)
         end
       end
 
