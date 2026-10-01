@@ -28,15 +28,15 @@ describe Opal::UI::FileDialog do
   it "formats file sizes and icons" do
     entry_dir = Opal::UI::FileEntry.new("src", "./src", true)
     entry_dir.display_size.should eq("<DIR>")
-    entry_dir.icon.should eq("📁")
+    entry_dir.icon.should eq("[DIR]")
 
     entry_cr = Opal::UI::FileEntry.new("test.cr", "./test.cr", false, size: 2048_i64)
     entry_cr.display_size.should eq("2.0 KB")
-    entry_cr.icon.should eq("💎")
+    entry_cr.icon.should eq("[CR]")
 
     entry_bytes = Opal::UI::FileEntry.new("small.txt", "./small.txt", false, size: 100_i64)
     entry_bytes.display_size.should eq("100 B")
-    entry_bytes.icon.should eq("📝")
+    entry_bytes.icon.should eq("[DOC]")
   end
 
   it "navigates cursor up and down" do

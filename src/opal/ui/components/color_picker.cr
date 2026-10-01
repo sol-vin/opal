@@ -352,7 +352,7 @@ module Opal
         @last_h = height
 
         # 1. Header Title
-        title_str = "🎨 Color Picker & TrueColor Studio"
+        title_str = "Color Picker & TrueColor Studio"
         buffer.put_string(x, cur_y, title_str, fg: Color.cyan, bold: true)
         cur_y += 1
         buffer.put_string(x, cur_y, "─" * Math.min(width, 50), fg: Color.bright_black)

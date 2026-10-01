@@ -38,16 +38,16 @@ module Opal
 
       def icon : String
         if @name == ".." || @directory
-          "📁"
+          "[DIR]"
         else
           case File.extname(@name).downcase
-          when ".cr"                    then "💎"
-          when ".yml", ".yaml", ".json" then "⚙️"
-          when ".md", ".txt"            then "📝"
-          when ".png", ".jpg", ".svg"   then "🖼️"
-          when ".exe", ".bat", ".cmd"   then "⚡"
-          when ".lock"                  then "🔒"
-          else                               "📄"
+          when ".cr"                    then "[CR]"
+          when ".yml", ".yaml", ".json" then "[CFG]"
+          when ".md", ".txt"            then "[DOC]"
+          when ".png", ".jpg", ".svg"   then "[IMG]"
+          when ".exe", ".bat", ".cmd"   then "[BIN]"
+          when ".lock"                  then "[LCK]"
+          else                               "[-]"
           end
         end
       end
@@ -272,10 +272,10 @@ module Opal
         cur_y = y
 
         # 1. Header Path Breadcrumb
-        title_str = "📁 Path: #{@current_path}"
+        title_str = "Path: #{@current_path}"
         max_p_w = width - 2
         if VisualWidth.width(title_str) > max_p_w
-          title_str = "📁 ..." + title_str[-(max_p_w - 6)..]
+          title_str = "..." + title_str[-(max_p_w - 6)..]
         end
         buffer.put_string(x, cur_y, title_str, fg: Color.cyan, bold: true)
         cur_y += 1
