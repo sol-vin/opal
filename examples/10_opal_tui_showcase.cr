@@ -31,6 +31,7 @@ require "../src/opal/asciicast"
 #   [Shift+←] or [Shift+Tab] or [h] : Previous Slide
 #   [c] or [C]                 : Toggle Source Code Viewer Modal
 #   [?]                        : Toggle Context-Sensitive Markdown Guide
+#   [Ctrl+S]                   : Capture Screenshot & Copy to Clipboard
 #   [q] or [ESC] or [Ctrl+C]   : Exit Showcase
 #   Gamepad [LB] / [RB]        : Prev / Next Slide
 #   Gamepad [X] / [Y]          : Toggle Code / Guide Modals
@@ -321,7 +322,7 @@ class SpotlightSlide < ShowcaseSlide
   end
 
   def hints : String
-    "[WASD / Mouse] Move Light  │  [F] Toggle Feather  │  [+/-] Radius  │  [C] Tint"
+    "[WASD / Mouse] Move Light  │  [F] Toggle Feather  │  [+/-] Radius  │  [T] Tint"
   end
 
   def source_code : String
@@ -389,7 +390,7 @@ class SpotlightSlide < ShowcaseSlide
     when "-", "_"
       @radius = Math.max(4, @radius - 2)
       true
-    when "c"
+    when "t"
       @tint_idx = (@tint_idx + 1) % TINTS.size
       true
     else
@@ -528,7 +529,7 @@ class ScissorBufferSlide < ShowcaseSlide
   end
 
   def hints : String
-    "[WASD] Resize Scissor  │  [B] Blit Mode  │  [I] Invert Rect  │  [S] Scroll Rect"
+    "[WASD] Resize Scissor  │  [B] Blit Mode  │  [I] Invert Rect  │  [R] Scroll Rect"
   end
 
   def source_code : String
@@ -661,14 +662,18 @@ class OpalChatSlide < ShowcaseSlide
     {name: "@ci-bot", status: "offline", color: Opal::Color.bright_black},
   ]
 
-  MESSAGES = [
-    {user: "@sol.vin", time: "14:02", text: "Welcome everyone to Opal 2.0!", badge: "ADMIN"},
-    {user: "@ian", time: "14:05", text: "The new fixed-timestep 60Hz loop is buttery smooth.", badge: "DEV"},
-    {user: "@reviewer", time: "14:07", text: "Checking the 2-pane chat mockup. Zero text overflow!", badge: "QA"},
-    {user: "@sol.vin", time: "14:10", text: "Testing code block rendering inside chat message:", badge: "ADMIN"},
-    {user: "@sol.vin", time: "14:10", text: "  def pong_loop; game.step(0.0166); end", badge: "CODE"},
-    {user: "@ci-bot", time: "14:12", text: "✔ All 715 specs passed with 0 errors across all modules.", badge: "BOT"},
-  ]
+  property messages : Array(NamedTuple(user: String, time: String, text: String, badge: String))
+
+  def initialize
+    @messages = [
+      {user: "@sol.vin", time: "14:02", text: "Welcome everyone to Opal 2.0!", badge: "ADMIN"},
+      {user: "@ian", time: "14:05", text: "The new fixed-timestep 60Hz loop is buttery smooth.", badge: "DEV"},
+      {user: "@reviewer", time: "14:07", text: "Checking the 2-pane chat mockup. Zero text overflow!", badge: "QA"},
+      {user: "@sol.vin", time: "14:10", text: "Testing code block rendering inside chat message:", badge: "ADMIN"},
+      {user: "@sol.vin", time: "14:10", text: "  def pong_loop; game.step(0.0166); end", badge: "CODE"},
+      {user: "@ci-bot", time: "14:12", text: "✔ All 715 specs passed with 0 errors across all modules.", badge: "BOT"},
+    ]
+  end
 
   def title : String
     "App Mockup: OpalChat (2-Pane Split)"
@@ -679,7 +684,7 @@ class OpalChatSlide < ShowcaseSlide
   end
 
   def hints : String
-    "[↑/↓] Switch Channels  │  [Tab] Focus Input  │  [Type] Edit Chat Input"
+    "[↑/↓] Switch Channels  │  [Type] Chat Input  │  [Enter] Send Message"
   end
 
   def source_code : String
@@ -729,6 +734,15 @@ class OpalChatSlide < ShowcaseSlide
     when "down", "j"
       @active_channel = Math.min(CHANNELS.size - 1, @active_channel + 1)
       true
+    when "enter"
+      if @input_text.strip.size > 0
+        now_time = Time.local.to_s("%H:%M")
+        @messages << {user: "@you", time: now_time, text: @input_text.strip, badge: "YOU"}
+        @input_text = ""
+        true
+      else
+        false
+      end
     when "backspace"
       @input_text = @input_text[0...-1] if @input_text.size > 0
       true
@@ -776,7 +790,11 @@ class OpalChatSlide < ShowcaseSlide
     chat_box = Opal::UI::Box.new(title: "Channel: #{CHANNELS[@active_channel]}", border: :rounded, border_fg: Opal::Color.hex("#38ef7d"))
     chat_box.render(buffer, chat_x, y + 1, chat_w, h - 5)
 
-    MESSAGES.each_with_index do |msg, idx|
+    # Show newest messages that fit
+    max_msgs = (h - 7) // 2
+    visible_msgs = @messages.size > max_msgs ? @messages[-max_msgs..] : @messages
+
+    visible_msgs.each_with_index do |msg, idx|
       row_y = y + 3 + (idx * 2)
       break if row_y >= y + h - 6
 
@@ -794,8 +812,10 @@ class OpalChatSlide < ShowcaseSlide
     input_box.render(buffer, chat_x, input_y, chat_w, 3)
 
     cursor = @cursor_blink ? "█" : " "
-    buffer.put_string(chat_x + 2, input_y + 1, "❯ #{@input_text}#{cursor}", fg: Opal::Color.bright_white)
-    buffer.put_string(chat_x + chat_w - 10, input_y + 1, "[ Send ➔ ]", fg: Opal::Color.hex("#38ef7d"), bold: true)
+    max_inp_len = Math.max(5, chat_w - 18)
+    disp_text = @input_text.size > max_inp_len ? "..." + @input_text[-(max_inp_len - 3)..] : @input_text
+    buffer.put_string(chat_x + 2, input_y + 1, "❯ #{disp_text}#{cursor}", fg: Opal::Color.bright_white)
+    buffer.put_string(chat_x + chat_w - 12, input_y + 1, "[ Send ➔ ]", fg: Opal::Color.hex("#38ef7d"), bold: true)
   end
 end
 
@@ -902,7 +922,7 @@ class OpalPongSlide < ShowcaseSlide
     court_x = x + 4
     court_y = y + 2
     court_w = Math.min(@pong.court_width, w - 8)
-    court_h = Math.min(@pong.court_height, h - 6)
+    court_h = Math.min(@pong.court_height, h - 8)
 
     # 1. Top Scoreboard using Digits
     score_str = "#{@pong.player_score} - #{@pong.ai_score}"
@@ -952,7 +972,8 @@ class OpalPongSlide < ShowcaseSlide
 
     # HUD Status
     status_text = " STATE: #{@paused ? "PAUSED [Space]" : "RUNNING"} │ ENGINE: 60Hz FIXED-TIMESTEP │ PARTICLES: #{@pong.particles.size} "
-    buffer.put_string(court_x + 2, court_y + court_h + 5, status_text, fg: Opal::Color.bright_white, bg: Opal::Color.hex("#1f2937"))
+    status_y = Math.min(y + h - 1, court_y + 6 + court_h)
+    buffer.put_string(court_x + 2, status_y, status_text, fg: Opal::Color.bright_white, bg: Opal::Color.hex("#1f2937"))
   end
 end
 
@@ -1507,14 +1528,19 @@ class DropdownMetersSlide < ShowcaseSlide
       {name: "6. Searchable Style", preset: :searchable},
     ]
 
+    # Render inactive dropdowns first
     presets.each_with_index do |p, idx|
+      next if idx == @active_dropdown
       row_y = y + 3 + (idx * 2)
-      selected = (idx == @active_dropdown)
-      cursor = selected ? "▶ " : "  "
-
-      buffer.put_string(x + 2, row_y, "#{cursor}#{p[:name]}:", fg: selected ? Opal::Color.bright_yellow : Opal::Color.bright_white, bold: selected)
+      buffer.put_string(x + 2, row_y, "  #{p[:name]}:", fg: Opal::Color.bright_white)
       @dropdowns[idx].render(buffer, x + 28, row_y, 30, 1)
     end
+
+    # Render active/expanded dropdown last so its popup list renders on top
+    active_p = presets[@active_dropdown]
+    active_y = y + 3 + (@active_dropdown * 2)
+    buffer.put_string(x + 2, active_y, "▶ #{active_p[:name]}:", fg: Opal::Color.bright_yellow, bold: true)
+    @dropdowns[@active_dropdown].render(buffer, x + 28, active_y, 30, 1)
 
     # 2. Right Column: Fractional Meters
     right_x = x + 62
@@ -1938,6 +1964,8 @@ class ShowcaseAppModel
   property? show_guide : Bool = false
   property code_viewer : Opal::UI::CodeView? = nil
   property guide_viewer : Opal::UI::MarkdownViewer? = nil
+  property toast_message : String? = nil
+  property toast_timer : Int32 = 0
 
   def initialize
     @slides = [
@@ -1972,6 +2000,8 @@ class ShowcaseAppModel
         gv.tick
       end
 
+      @toast_timer -= 1 if @toast_timer > 0
+
       # Handle CheckSlide launch button
       if @current_idx == 0
         check_slide = @slides[0].as(CheckSlide)
@@ -1984,6 +2014,28 @@ class ShowcaseAppModel
       {self, schedule_tick}
     when Opal::TEA::KeyMsg
       key_str = msg.key.downcase
+
+      # 0. Global Screenshot Hotkey: Ctrl+S
+      if msg.matches?("ctrl+s") || (msg.ctrl? && (key_str == "s" || msg.char == 's' || msg.char == '\u0013'))
+        cols, rows = Opal::Terminal.default_driver.size
+        cols = cols.clamp(80, 140)
+        rows = rows.clamp(24, 45)
+        shot_buf = Opal::UI::Buffer.new(cols, rows)
+        render(shot_buf)
+
+        shot_dir = "demos/screenshots"
+        Dir.mkdir_p(shot_dir) unless Dir.exists?(shot_dir)
+        base_name = "showcase_slide_#{@current_idx + 1}"
+        ans_path = File.join(shot_dir, "#{base_name}.ans")
+        txt_path = File.join(shot_dir, "#{base_name}.txt")
+
+        shot_buf.screenshot(path: ans_path, format: :ansi)
+        shot_buf.screenshot(path: txt_path, format: :text, copy_to_clipboard: true)
+
+        @toast_message = "📷 Screenshot captured & copied to clipboard! (Saved #{base_name}.ans)"
+        @toast_timer = 40
+        return {self, Opal::TEA::Cmd.redraw}
+      end
 
       # 1. Modals Close / Toggle
       if @show_code
@@ -2042,6 +2094,14 @@ class ShowcaseAppModel
       # 5. Forward Key Event to Active Slide
       ev = Opal::Terminal::KeyEvent.new(msg.key, msg.char, msg.ctrl?, msg.alt?, msg.shift?)
       @slides[@current_idx].handle_key(ev)
+
+      # Check if CheckSlide requested launch
+      if @current_idx == 0 && @slides[0].as(CheckSlide).launch_requested?
+        @slides[0].as(CheckSlide).launch_requested = false
+        @current_idx = 1
+        return {self, Opal::TEA::Cmd.redraw}
+      end
+
       {self, Opal::TEA::Cmd.none}
     when Opal::TEA::MouseMsg
       cols, rows = Opal::Terminal.default_driver.size
@@ -2087,6 +2147,14 @@ class ShowcaseAppModel
         shift: msg.shift?
       )
       @slides[@current_idx].handle_mouse(ev)
+
+      # Check if CheckSlide requested launch
+      if @current_idx == 0 && @slides[0].as(CheckSlide).launch_requested?
+        @slides[0].as(CheckSlide).launch_requested = false
+        @current_idx = 1
+        return {self, Opal::TEA::Cmd.redraw}
+      end
+
       {self, Opal::TEA::Cmd.none}
     else
       {self, Opal::TEA::Cmd.none}
@@ -2122,7 +2190,7 @@ class ShowcaseAppModel
     # 3. Bottom Footer
     if rows >= 4
       buffer.put_string(0, rows - 2, "─" * cols, fg: Opal::Color.bright_black, max_width: cols)
-      footer_text = " [Shift+→] Next  [Shift+←] Prev  [c] Code  [?] Guide  [q] Quit │ #{active.hints}"
+      footer_text = " [Shift+→] Next  [Shift+←] Prev  [c] Code  [?] Guide  [Ctrl+S] Snap  [q] Quit │ #{active.hints}"
       buffer.put_string(0, rows - 1, footer_text, fg: Opal::Color.bright_white, max_width: cols)
     end
 
@@ -2131,6 +2199,17 @@ class ShowcaseAppModel
       render_modal(buffer, cols, rows, "SOURCE CODE: #{active.title}", cv)
     elsif @show_guide && (gv = @guide_viewer)
       render_modal(buffer, cols, rows, "MARKDOWN GUIDE: #{active.title}", gv)
+    end
+
+    # 5. Toast Notification Overlay
+    if (t_msg = @toast_message) && @toast_timer > 0
+      t_w = Math.min(cols - 4, t_msg.size + 6)
+      t_x = (cols - t_w) // 2
+      t_y = 2
+      buffer.fill(t_x, t_y, t_w, 3, ' ', bg: Opal::Color.hex("#064e3b"))
+      toast_box = Opal::UI::Box.new(border: :rounded, border_fg: Opal::Color.hex("#38ef7d"))
+      toast_box.render(buffer, t_x, t_y, t_w, 3)
+      buffer.put_string(t_x + 3, t_y + 1, t_msg, fg: Opal::Color.bright_white, bg: Opal::Color.hex("#064e3b"), bold: true, max_width: t_w - 6)
     end
   end
 

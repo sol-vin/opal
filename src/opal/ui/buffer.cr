@@ -1,3 +1,4 @@
+require "html"
 require "./cell"
 require "./rect"
 require "./mask"
@@ -808,6 +809,102 @@ module Opal
           end
         end
         self
+      end
+
+      # Exports the buffer as a self-contained HTML representation with styled CSS 24-bit colors.
+      def to_html(title : String = "Opal Terminal Frame") : String
+        String.build do |io|
+          io << "<!DOCTYPE html>\n<html>\n<head>\n"
+          io << "  <meta charset=\"utf-8\">\n"
+          io << "  <title>" << ::HTML.escape(title) << "</title>\n"
+          io << "  <style>\n"
+          io << "    body { background-color: #0c0c0c; margin: 0; padding: 16px; font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.25; }\n"
+          io << "    .terminal-frame { background-color: #0c0c0c; padding: 12px; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: inline-block; white-space: pre; color: #cccccc; }\n"
+          io << "  </style>\n"
+          io << "</head>\n<body>\n"
+          io << "<pre class=\"terminal-frame\">"
+
+          (0...@height).each do |y|
+            current_style : String? = nil
+            span_open = false
+
+            (0...@width).each do |x|
+              cell = get(x, y)
+              next if cell.continuation?
+
+              style_parts = [] of String
+              style_parts << "color: #{cell.fg.to_hex};" unless cell.fg.none?
+              style_parts << "background-color: #{cell.bg.to_hex};" unless cell.bg.none?
+              style_parts << "font-weight: bold;" if cell.bold?
+              style_parts << "font-style: italic;" if cell.italic?
+              style_parts << "text-decoration: underline;" if cell.underline?
+              style_parts << "opacity: 0.6;" if cell.dim?
+
+              cell_style = style_parts.empty? ? nil : style_parts.join(" ")
+
+              if cell_style != current_style
+                if span_open
+                  io << "</span>"
+                  span_open = false
+                end
+                if cell_style
+                  io << "<span style=\"" << cell_style << "\">"
+                  span_open = true
+                end
+                current_style = cell_style
+              end
+
+              ch = cell.char
+              case ch
+              when '&' then io << "&amp;"
+              when '<' then io << "&lt;"
+              when '>' then io << "&gt;"
+              when '"' then io << "&quot;"
+              else          io << ch
+              end
+            end
+
+            io << "</span>" if span_open
+            io << "\n" unless y == @height - 1
+          end
+
+          io << "</pre>\n</body>\n</html>\n"
+        end
+      end
+
+      # Captures this buffer as a screenshot string in the specified format (:ansi, :text, or :html).
+      # If `path` is provided, writes the content to disk.
+      # If `copy_to_clipboard` is true, copies the screenshot to the system clipboard.
+      def screenshot(
+        path : String? = nil,
+        format : Symbol = :ansi,
+        copy_to_clipboard : Bool = false,
+      ) : String
+        content = case format
+                  when :text, :plain
+                    render_to_string(with_ansi: false)
+                  when :html
+                    to_html
+                  else
+                    render_to_string(with_ansi: true)
+                  end
+
+        if path
+          dir = File.dirname(path)
+          Dir.mkdir_p(dir) unless dir.empty? || Dir.exists?(dir)
+          File.write(path, content)
+        end
+
+        if copy_to_clipboard
+          Opal.copy_to_clipboard(content)
+        end
+
+        content
+      end
+
+      # Captures this buffer as a screenshot and immediately copies it to the system clipboard.
+      def screenshot_to_clipboard(format : Symbol = :text) : String
+        screenshot(format: format, copy_to_clipboard: true)
       end
     end
   end

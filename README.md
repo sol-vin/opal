@@ -13,7 +13,7 @@
 
 <br/>
 
-[![asciicast](https://asciinema.org/a/1Q3UDeQihsbI7o0Y.svg)](https://asciinema.org/a/1Q3UDeQihsbI7o0Y)
+[![asciicast](https://asciinema.org/a/1qmRD41n9RJr3w4o.svg)](https://asciinema.org/a/1qmRD41n9RJr3w4o)
 
 </div>
 
@@ -141,7 +141,7 @@ Real, live recordings captured directly from Opal running in terminal sessions (
 
 | Feature Demo | Live Terminal Asciicast |
 | :--- | :--- |
-| **Grand 13-Slide Interactive Showcase Tour**<br/>• System prerequisites & capabilities check (by sol.vin)<br/>• Radial spotlight masking with feathered alpha dithering<br/>• Scissor clipping & buffer memory ops (copy, paste, invert, rotate)<br/>• Real-world app: OpalChat 2-pane split with unread badges<br/>• Real-world app: Playable OpalPong with 60Hz decoupled game loop<br/>• 3D Color Picker & Harmonies Palette Studio<br/>• High-visibility 3x5 block digits (`Digits`) & digital clock<br/>• Mermaid diagram viewer (Flowchart, Sequence, State, Class)<br/>• TUI HTML web browser with history & OSC 8 hyperlinks<br/>• 6 Dropdown style presets & 1/8th fractional Unicode meters<br/>• Multi-shader compositing pipeline (Matrix + CRT + Glitch + Bloom)<br/>• Tweens & 16 mathematical easing curves<br/>• Gamepad controller focus traversal & virtual cursor<br/>• `[c]` Source code viewer & `[?]` Markdown guide on every slide | [![asciicast](https://asciinema.org/a/1Q3UDeQihsbI7o0Y.svg)](https://asciinema.org/a/1Q3UDeQihsbI7o0Y) |
+| **Grand 13-Slide Interactive Showcase Tour**<br/>• System prerequisites & capabilities check (by sol.vin)<br/>• Radial spotlight masking with feathered alpha dithering<br/>• Scissor clipping & buffer memory ops (copy, paste, invert, rotate)<br/>• Real-world app: OpalChat 2-pane split with unread badges<br/>• Real-world app: Playable OpalPong with 60Hz decoupled game loop<br/>• 3D Color Picker & Harmonies Palette Studio<br/>• High-visibility 3x5 block digits (`Digits`) & digital clock<br/>• Mermaid diagram viewer (Flowchart, Sequence, State, Class)<br/>• TUI HTML web browser with history & OSC 8 hyperlinks<br/>• 6 Dropdown style presets & 1/8th fractional Unicode meters<br/>• Multi-shader compositing pipeline (Matrix + CRT + Glitch + Bloom)<br/>• Tweens & 16 mathematical easing curves<br/>• Gamepad controller focus traversal & virtual cursor<br/>• `[Ctrl+S]` ScreenBuffer snapshot & clipboard copy toast<br/>• `[c]` Source code viewer & `[?]` Markdown guide on every slide | [![asciicast](https://asciinema.org/a/1qmRD41n9RJr3w4o.svg)](https://asciinema.org/a/1qmRD41n9RJr3w4o) |
 | **Multi-Field Form Wizard**<br/>• Tab / Shift+Tab focus navigation<br/>• Masked secret/password inputs<br/>• Live inline validation feedback<br/>• Multi-select checkboxes | [![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO) |
 | **Live Fuzzy Search & Split Preview**<br/>• Realtime sub-millisecond filtering<br/>• Word-boundary rune highlighting<br/>• Instant split details pane | [![asciicast](https://asciinema.org/a/CdgldnJvhRGBGEuE.svg)](https://asciinema.org/a/CdgldnJvhRGBGEuE) |
 | **Cluster Analytics Dashboard**<br/>• Rolling Unicode Sparklines<br/>• Colorized percentage Gauges<br/>• Horizontal BarCharts & Trees<br/>• Catppuccin Mocha theme | [![asciicast](https://asciinema.org/a/J87u80gsmyKUwKx9.svg)](https://asciinema.org/a/J87u80gsmyKUwKx9) |

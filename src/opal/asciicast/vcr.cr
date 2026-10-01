@@ -121,6 +121,22 @@ module Opal
         instance.current_buffer
       end
 
+      def self.screenshot(
+        path : String? = nil,
+        format : Symbol = :ansi,
+        buffer : UI::Buffer? = nil,
+        copy_to_clipboard : Bool = false,
+      ) : String
+        instance.screenshot(path: path, format: format, buffer: buffer, copy_to_clipboard: copy_to_clipboard)
+      end
+
+      def self.screenshot_to_clipboard(
+        format : Symbol = :text,
+        buffer : UI::Buffer? = nil,
+      ) : String
+        instance.screenshot_to_clipboard(format: format, buffer: buffer)
+      end
+
       def self.total_frames : Int32
         instance.total_frames
       end
@@ -336,7 +352,32 @@ module Opal
       end
 
       def current_buffer : UI::Buffer
-        @player.try(&.current_buffer) || UI::Buffer.new(80, 24)
+        if pl = @player
+          pl.current_buffer
+        elsif rec = @recorder
+          rec.last_captured_buffer || UI::Buffer.new(rec.writer.width, rec.writer.height)
+        else
+          UI::Buffer.new(80, 24)
+        end
+      end
+
+      # Captures a screenshot from the current recording/playback state or passed buffer.
+      def screenshot(
+        path : String? = nil,
+        format : Symbol = :ansi,
+        buffer : UI::Buffer? = nil,
+        copy_to_clipboard : Bool = false,
+      ) : String
+        target = buffer || current_buffer
+        target.screenshot(path: path, format: format, copy_to_clipboard: copy_to_clipboard)
+      end
+
+      # Captures a screenshot and copies it directly to the system clipboard.
+      def screenshot_to_clipboard(
+        format : Symbol = :text,
+        buffer : UI::Buffer? = nil,
+      ) : String
+        screenshot(format: format, buffer: buffer, copy_to_clipboard: true)
       end
 
       def current_timestamp : Float64

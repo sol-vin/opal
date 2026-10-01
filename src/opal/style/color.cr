@@ -21,6 +21,10 @@ module Opal
       new(Type::None)
     end
 
+    def none? : Bool
+      @type == Type::None
+    end
+
     def self.ansi(code : Int32) : Color
       new(Type::ANSI16, code: code)
     end

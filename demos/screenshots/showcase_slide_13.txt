@@ -1,0 +1,24 @@
+❖ OPAL TUI ── Slide 13/13: [Gamepad Controller & Focus  [c] </> Code [?] Guide
+────────────────────────────────────────────────────────────────────────────────
+
+  GAMEPAD FOCUSABLE GUI CONTROLS:
+  Traverse controls using D-Pad / Left Stick, activate with [A] button.
+
+       [ Deploy Cluster ➔ ]
+
+     [ ] Enable Hardware Acceleration
+
+     Telemetry Rate:  █████████████░░░  80%
+
+  ▶    [ Reset Subsystems ]
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ [Shift+→] Next  [Shift+←] Prev  [c] Code  [?] Guide  [Ctrl+S] Snap  [q] Quit │

@@ -12,6 +12,7 @@ module Opal
       getter? paused : Bool = false
       getter frame_count : Int32 = 0
       property skip_frames_remaining : Int32 = 0
+      getter last_captured_buffer : UI::Buffer? = nil
       @last_frame_time : Time::Instant? = nil
       @min_frame_interval : Float64 = 0.016 # ~60fps maximum rate
       @last_buffer_hash : UInt64? = nil
@@ -72,9 +73,26 @@ module Opal
                 end
 
         @writer.draw_buffer(buffer, advance: delta)
+        @last_captured_buffer = buffer
         @last_buffer_hash = buf_hash
         @frame_count += 1
         true
+      end
+
+      # Captures a screenshot of the last recorded frame (or the passed buffer).
+      def screenshot(
+        path : String? = nil,
+        format : Symbol = :ansi,
+        buffer : UI::Buffer? = nil,
+        copy_to_clipboard : Bool = false,
+      ) : String
+        target = buffer || @last_captured_buffer || UI::Buffer.new(@writer.width, @writer.height)
+        target.screenshot(path: path, format: format, copy_to_clipboard: copy_to_clipboard)
+      end
+
+      # Captures a screenshot of the last recorded frame and copies it to the system clipboard.
+      def screenshot_to_clipboard(format : Symbol = :text, buffer : UI::Buffer? = nil) : String
+        screenshot(format: format, buffer: buffer, copy_to_clipboard: true)
       end
 
       # Pauses recording. Subsequent frame captures are ignored until `resume` is called.
