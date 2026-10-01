@@ -34,12 +34,14 @@ module Opal
 
       struct ButtonPress < Event
         getter button : Button
+
         def initialize(@button : Button)
         end
       end
 
       struct ButtonRelease < Event
         getter button : Button
+
         def initialize(@button : Button)
         end
       end
@@ -48,6 +50,7 @@ module Opal
         getter stick : Stick
         getter x : Float64 # Normalized -1.0 to 1.0
         getter y : Float64 # Normalized -1.0 to 1.0
+
         def initialize(@stick : Stick, @x : Float64, @y : Float64)
         end
       end
@@ -55,6 +58,7 @@ module Opal
       struct TriggerMove < Event
         getter trigger : Trigger
         getter value : Float64 # Normalized 0.0 to 1.0
+
         def initialize(@trigger : Trigger, @value : Float64)
         end
       end

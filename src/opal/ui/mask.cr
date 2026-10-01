@@ -90,7 +90,7 @@ module Opal
         feather : Float64 = 0.0,
         width : Int32 = 80,
         height : Int32 = 25,
-        aspect_ratio : Float64 = 2.0
+        aspect_ratio : Float64 = 2.0,
       ) : MaskMap
         map = MaskMap.new(width, height, 0.0)
         fcx = cx.to_f
@@ -127,7 +127,7 @@ module Opal
         width : Int32 = 80,
         height : Int32 = 25,
         start_val : Float64 = 0.0,
-        end_val : Float64 = 1.0
+        end_val : Float64 = 1.0,
       ) : MaskMap
         map = MaskMap.new(width, height, 0.0)
         rad = angle_degrees * Math::PI / 180.0
@@ -158,7 +158,7 @@ module Opal
         bh : Int32,
         feather : Float64 = 0.0,
         width : Int32 = 80,
-        height : Int32 = 25
+        height : Int32 = 25,
       ) : MaskMap
         map = MaskMap.new(width, height, 0.0)
         right = bx + bw

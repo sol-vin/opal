@@ -26,7 +26,7 @@ module Opal
         @scrollable : Bool = true,
         @auto_scroll : Bool = false,
         @scroll_speed : Float64 = 1.0,
-        @border : Border = Border.rounded
+        @border : Border = Border.rounded,
       )
         @diagram = Mermaid::Parser.parse(@source)
       end

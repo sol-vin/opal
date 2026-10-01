@@ -184,7 +184,7 @@ module Opal
         duration : Time::Span,
         easing : Easing | Symbol = Easing::Linear,
         @yoyo : Bool = false,
-        @looping : Bool = false
+        @looping : Bool = false,
       )
         @from = from_val
         @to = to_val
@@ -201,7 +201,7 @@ module Opal
         @to : Float64,
         @duration_ms : Int64 = 300_i64,
         easing : Symbol = :ease_out_quad,
-        @start_time : Time::Instant = Time.instant
+        @start_time : Time::Instant = Time.instant,
       )
         @duration = @duration_ms.milliseconds
         @easing = Easing::QuadOut

@@ -71,19 +71,19 @@ module Opal
         private def parse_button(btn : Button | Symbol) : Button
           return btn if btn.is_a?(Button)
           case btn
-          when :a            then Button::A
-          when :b            then Button::B
-          when :x            then Button::X
-          when :y            then Button::Y
-          when :dpad_up      then Button::DPadUp
-          when :dpad_down    then Button::DPadDown
-          when :dpad_left    then Button::DPadLeft
-          when :dpad_right   then Button::DPadRight
-          when :lb, :left_bumper   then Button::LB
-          when :rb, :right_bumper  then Button::RB
-          when :start        then Button::Start
-          when :back, :select then Button::Back
-          when :guide        then Button::Guide
+          when :a                    then Button::A
+          when :b                    then Button::B
+          when :x                    then Button::X
+          when :y                    then Button::Y
+          when :dpad_up              then Button::DPadUp
+          when :dpad_down            then Button::DPadDown
+          when :dpad_left            then Button::DPadLeft
+          when :dpad_right           then Button::DPadRight
+          when :lb, :left_bumper     then Button::LB
+          when :rb, :right_bumper    then Button::RB
+          when :start                then Button::Start
+          when :back, :select        then Button::Back
+          when :guide                then Button::Guide
           when :lthumb, :left_thumb  then Button::LThumb
           when :rthumb, :right_thumb then Button::RThumb
           else

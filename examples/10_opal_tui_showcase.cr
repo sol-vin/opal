@@ -80,40 +80,40 @@ class CheckSlide < ShowcaseSlide
 
     @checklist = [
       {
-        id: :truecolor,
-        label: "24-bit TrueColor ANSI Engine",
-        desc: "16.7M direct RGB terminal cell colors detected (#{ENV.fetch("COLORTERM", "truecolor")}).",
-        ok: truecolor_ok,
-        checked: truecolor_ok
+        id:      :truecolor,
+        label:   "24-bit TrueColor ANSI Engine",
+        desc:    "16.7M direct RGB terminal cell colors detected (#{ENV.fetch("COLORTERM", "truecolor")}).",
+        ok:      truecolor_ok,
+        checked: truecolor_ok,
       },
       {
-        id: :unicode,
-        label: "Unicode & Nerd Font Glyphs",
-        desc: "Shading (░▒▓█), fractional meters (▏..█), box borders (┌─┐).",
-        ok: unicode_ok,
-        checked: unicode_ok
+        id:      :unicode,
+        label:   "Unicode & Nerd Font Glyphs",
+        desc:    "Shading (░▒▓█), fractional meters (▏..█), box borders (┌─┐).",
+        ok:      unicode_ok,
+        checked: unicode_ok,
       },
       {
-        id: :mouse,
-        label: "Extended SGR Mouse Protocol (1006)",
-        desc: "Pixel/cell accurate mouse click, hover, drag, and wheel tracking.",
-        ok: mouse_ok,
-        checked: mouse_ok
+        id:      :mouse,
+        label:   "Extended SGR Mouse Protocol (1006)",
+        desc:    "Pixel/cell accurate mouse click, hover, drag, and wheel tracking.",
+        ok:      mouse_ok,
+        checked: mouse_ok,
       },
       {
-        id: :gamepad,
-        label: "Gamepad / Controller Subsystem",
-        desc: gamepad_ok ? "Hardware XInput controller connected on Slot 0." : "Mock / Virtual controller active with full D-Pad focus traversal.",
-        ok: true,
-        checked: true
+        id:      :gamepad,
+        label:   "Gamepad / Controller Subsystem",
+        desc:    gamepad_ok ? "Hardware XInput controller connected on Slot 0." : "Mock / Virtual controller active with full D-Pad focus traversal.",
+        ok:      true,
+        checked: true,
       },
       {
-        id: :viewport,
-        label: "Terminal Viewport Resolution",
-        desc: "Current geometry: #{cols}x#{rows} cells. (Recommended: 90x28+).",
-        ok: dim_ok,
-        checked: dim_ok
-      }
+        id:      :viewport,
+        label:   "Terminal Viewport Resolution",
+        desc:    "Current geometry: #{cols}x#{rows} cells. (Recommended: 90x28+).",
+        ok:      dim_ok,
+        checked: dim_ok,
+      },
     ]
   end
 
@@ -180,11 +180,11 @@ class CheckSlide < ShowcaseSlide
       if @selected_idx < @checklist.size
         item = @checklist[@selected_idx]
         @checklist[@selected_idx] = {
-          id: item[:id],
-          label: item[:label],
-          desc: item[:desc],
-          ok: item[:ok],
-          checked: !item[:checked]
+          id:      item[:id],
+          label:   item[:label],
+          desc:    item[:desc],
+          ok:      item[:ok],
+          checked: !item[:checked],
         }
       end
       true
@@ -205,11 +205,11 @@ class CheckSlide < ShowcaseSlide
           @selected_idx = idx
           item = @checklist[idx]
           @checklist[idx] = {
-            id: item[:id],
-            label: item[:label],
-            desc: item[:desc],
-            ok: item[:ok],
-            checked: !item[:checked]
+            id:      item[:id],
+            label:   item[:label],
+            desc:    item[:desc],
+            ok:      item[:ok],
+            checked: !item[:checked],
           }
           return true
         end
@@ -239,11 +239,11 @@ class CheckSlide < ShowcaseSlide
       else
         item = @checklist[@selected_idx]
         @checklist[@selected_idx] = {
-          id: item[:id],
-          label: item[:label],
-          desc: item[:desc],
-          ok: item[:ok],
-          checked: !item[:checked]
+          id:      item[:id],
+          label:   item[:label],
+          desc:    item[:desc],
+          ok:      item[:ok],
+          checked: !item[:checked],
         }
       end
       true
@@ -309,7 +309,7 @@ class SpotlightSlide < ShowcaseSlide
     {name: "Cyber Cyan", fg: Opal::Color.hex("#00f2fe")},
     {name: "Matrix Green", fg: Opal::Color.hex("#38ef7d")},
     {name: "Amber Phosphor", fg: Opal::Color.hex("#ffb199")},
-    {name: "Neon Violet", fg: Opal::Color.hex("#b06ab3")}
+    {name: "Neon Violet", fg: Opal::Color.hex("#b06ab3")},
   ]
 
   def title : String
@@ -444,7 +444,7 @@ class SpotlightSlide < ShowcaseSlide
       "  [00:01:25] Quantum entanglement key exchange complete. Entropy score: 0.99982                ",
       "  [00:01:26] Overclocking optical neural lattice to 8.4 GHz. Temperature: 34.2°C                ",
       "  [00:01:27] Warning: Minor magnetic eddy detected in quadrant 7. Compensating via coils...     ",
-      "  [00:01:28] Compensation successful. Variance eliminated within 4.2 milliseconds.             "
+      "  [00:01:28] Compensation successful. Variance eliminated within 4.2 milliseconds.             ",
     ]
 
     schematic_lines.each_with_index do |line, l_idx|
@@ -654,11 +654,11 @@ class OpalChatSlide < ShowcaseSlide
   property cursor_blink : Bool = true
 
   CHANNELS = ["# general", "# core-development", "# ui-showcase", "# announcements"]
-  USERS = [
+  USERS    = [
     {name: "@sol.vin", status: "online", color: Opal::Color.bright_green},
     {name: "@ian", status: "online", color: Opal::Color.bright_green},
     {name: "@reviewer", status: "idle", color: Opal::Color.bright_yellow},
-    {name: "@ci-bot", status: "offline", color: Opal::Color.bright_black}
+    {name: "@ci-bot", status: "offline", color: Opal::Color.bright_black},
   ]
 
   MESSAGES = [
@@ -667,7 +667,7 @@ class OpalChatSlide < ShowcaseSlide
     {user: "@reviewer", time: "14:07", text: "Checking the 2-pane chat mockup. Zero text overflow!", badge: "QA"},
     {user: "@sol.vin", time: "14:10", text: "Testing code block rendering inside chat message:", badge: "ADMIN"},
     {user: "@sol.vin", time: "14:10", text: "  def pong_loop; game.step(0.0166); end", badge: "CODE"},
-    {user: "@ci-bot", time: "14:12", text: "✔ All 715 specs passed with 0 errors across all modules.", badge: "BOT"}
+    {user: "@ci-bot", time: "14:12", text: "✔ All 715 specs passed with 0 errors across all modules.", badge: "BOT"},
   ]
 
   def title : String
@@ -1167,7 +1167,7 @@ class BigTextSlide < ShowcaseSlide
         "███    ███ ███    ███  ███    ███ ███       ",
         "███    ███ ███    ███  ███    ███ ███       ",
         "███    ███ ███    ███  ███    ███ ███       ",
-        " ▀██████▀  ████████▀   ███    █▀  ███▄▄▄▄▄▄ "
+        " ▀██████▀  ████████▀   ███    █▀  ███▄▄▄▄▄▄ ",
       ]
       banner_lines.each_with_index do |line, l_idx|
         buffer.put_string(x + 4, banner_y + 2 + l_idx, line, fg: Opal::Color.hex("#38ef7d"), bold: true)
@@ -1186,7 +1186,7 @@ class MermaidViewerSlide < ShowcaseSlide
 
   DIAGRAMS = [
     {
-      title: "Flowchart TD",
+      title:  "Flowchart TD",
       source: <<-MERMAID
       flowchart TD
           A[Client Request] --> B{Valid Auth?}
@@ -1196,7 +1196,7 @@ class MermaidViewerSlide < ShowcaseSlide
       MERMAID
     },
     {
-      title: "Sequence Diagram",
+      title:  "Sequence Diagram",
       source: <<-MERMAID
       sequenceDiagram
           User->>TUI: Key Press Event
@@ -1206,7 +1206,7 @@ class MermaidViewerSlide < ShowcaseSlide
       MERMAID
     },
     {
-      title: "State Diagram",
+      title:  "State Diagram",
       source: <<-MERMAID
       stateDiagram
           [*] --> Initializing
@@ -1217,7 +1217,7 @@ class MermaidViewerSlide < ShowcaseSlide
       MERMAID
     },
     {
-      title: "Class Diagram",
+      title:  "Class Diagram",
       source: <<-MERMAID
       classDiagram
           Element <|-- Control
@@ -1225,7 +1225,7 @@ class MermaidViewerSlide < ShowcaseSlide
           Control <|-- TextInput
           Element <|-- Box
       MERMAID
-    }
+    },
   ]
 
   def initialize
@@ -1423,7 +1423,7 @@ class DropdownMetersSlide < ShowcaseSlide
       Opal::UI::Dropdown.new(items: items, style: Opal::UI::DropdownStyle::Minimal),
       Opal::UI::Dropdown.new(items: items, style: Opal::UI::DropdownStyle::Double),
       Opal::UI::Dropdown.new(items: items, style: Opal::UI::DropdownStyle::Pill),
-      Opal::UI::Dropdown.new(items: items, style: Opal::UI::DropdownStyle::Searchable)
+      Opal::UI::Dropdown.new(items: items, style: Opal::UI::DropdownStyle::Searchable),
     ]
   end
 
@@ -1504,7 +1504,7 @@ class DropdownMetersSlide < ShowcaseSlide
       {name: "3. Minimal Style", preset: :minimal},
       {name: "4. Double Line Style", preset: :double},
       {name: "5. Pill Capsule Style", preset: :pill},
-      {name: "6. Searchable Style", preset: :searchable}
+      {name: "6. Searchable Style", preset: :searchable},
     ]
 
     presets.each_with_index do |p, idx|
@@ -1594,7 +1594,7 @@ class MultiShaderSlide < ShowcaseSlide
     when "2" then @crt_active = !@crt_active; true
     when "3" then @glitch_active = !@glitch_active; true
     when "4" then @vignette_active = !@vignette_active; true
-    else false
+    else          false
     end
   end
 
@@ -1659,7 +1659,7 @@ class TweensSlide < ShowcaseSlide
     {name: "BounceOut", ease: Opal::Animation::Easing::BounceOut},
     {name: "BounceInOut", ease: Opal::Animation::Easing::BounceInOut},
     {name: "ElasticIn", ease: Opal::Animation::Easing::ElasticIn},
-    {name: "ElasticOut", ease: Opal::Animation::Easing::ElasticOut}
+    {name: "ElasticOut", ease: Opal::Animation::Easing::ElasticOut},
   ]
 
   def title : String
@@ -1916,7 +1916,7 @@ class GamepadNavSlide < ShowcaseSlide
         " │  [↑]         (A)   [R] │  ",
         " │[←] [→]                 │  ",
         " └───────┐       ┌────────┘  ",
-        "         │  [↓]  │           "
+        "         │  [↓]  │           ",
       ]
 
       gamepad_art.each_with_index do |line, l_idx|
@@ -1953,7 +1953,7 @@ class ShowcaseAppModel
       DropdownMetersSlide.new,
       MultiShaderSlide.new,
       TweensSlide.new,
-      GamepadNavSlide.new
+      GamepadNavSlide.new,
     ] of ShowcaseSlide
   end
 
@@ -1982,7 +1982,6 @@ class ShowcaseAppModel
       end
 
       {self, schedule_tick}
-
     when Opal::TEA::KeyMsg
       key_str = msg.key.downcase
 
@@ -2044,7 +2043,6 @@ class ShowcaseAppModel
       ev = Opal::Terminal::KeyEvent.new(msg.key, msg.char, msg.ctrl?, msg.alt?, msg.shift?)
       @slides[@current_idx].handle_key(ev)
       {self, Opal::TEA::Cmd.none}
-
     when Opal::TEA::MouseMsg
       cols, rows = Opal::Terminal.default_driver.size
 
@@ -2090,7 +2088,6 @@ class ShowcaseAppModel
       )
       @slides[@current_idx].handle_mouse(ev)
       {self, Opal::TEA::Cmd.none}
-
     else
       {self, Opal::TEA::Cmd.none}
     end

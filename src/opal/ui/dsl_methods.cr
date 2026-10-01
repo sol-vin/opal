@@ -1048,7 +1048,7 @@ module Opal
         gradient : MeterGradient = MeterGradient::Heat,
         show_label : Bool = true,
         width : Int32? = nil,
-        height : Int32? = nil
+        height : Int32? = nil,
       ) : Meter
         m = Meter.new(value: value, orientation: orientation, gradient: gradient, show_label: show_label, width: width, height: height)
         add_element(m)
@@ -1080,7 +1080,7 @@ module Opal
         scrollable : Bool = true,
         auto_scroll : Bool = false,
         scroll_speed : Float64 = 1.0,
-        width : Int32 = 80
+        width : Int32 = 80,
       ) : MarkdownViewer
         mv = MarkdownViewer.new(content, width: width, scrollable: scrollable, auto_scroll: auto_scroll, scroll_speed: scroll_speed)
         add_element(mv)

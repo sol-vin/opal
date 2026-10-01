@@ -11,10 +11,10 @@ module Opal
     end
 
     enum MeterGradient
-      Heat    # Green -> Yellow -> Red
-      Cool    # Blue -> Cyan -> Green
-      Neon    # Purple -> Magenta -> Cyan
-      Solid   # Single solid theme color
+      Heat  # Green -> Yellow -> Red
+      Cool  # Blue -> Cyan -> Green
+      Neon  # Purple -> Magenta -> Cyan
+      Solid # Single solid theme color
     end
 
     # High-density progress and telemetry meter utilizing 1/8th Unicode fractional
@@ -33,7 +33,7 @@ module Opal
         @gradient : MeterGradient = MeterGradient::Heat,
         @show_label : Bool = true,
         width : Int32? = nil,
-        height : Int32? = nil
+        height : Int32? = nil,
       )
         w = width || (@orientation == MeterOrientation::Horizontal ? 20 : 1)
         h = height || (@orientation == MeterOrientation::Horizontal ? 1 : 10)

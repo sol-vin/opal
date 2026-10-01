@@ -128,27 +128,27 @@ module Opal
 
       private def self.create_node_from_tag(tag_name : String, attrs : Hash(String, String)) : Node
         type = case tag_name
-               when "h1"               then TagType::H1
-               when "h2"               then TagType::H2
-               when "h3"               then TagType::H3
-               when "h4"               then TagType::H4
-               when "h5"               then TagType::H5
-               when "h6"               then TagType::H6
-               when "p"                then TagType::Paragraph
-               when "a"                then TagType::Link
-               when "ul"               then TagType::List
-               when "ol"               then TagType::OrderedList
-               when "li"               then TagType::ListItem
-               when "table"            then TagType::Table
-               when "tr"               then TagType::TableRow
-               when "th"               then TagType::TableHeader
-               when "td"               then TagType::TableCell
-               when "code"             then TagType::Code
-               when "pre"              then TagType::Pre
-               when "blockquote"       then TagType::Blockquote
-               when "hr"               then TagType::Rule
-               when "img"              then TagType::Image
-               else                         TagType::Text
+               when "h1"         then TagType::H1
+               when "h2"         then TagType::H2
+               when "h3"         then TagType::H3
+               when "h4"         then TagType::H4
+               when "h5"         then TagType::H5
+               when "h6"         then TagType::H6
+               when "p"          then TagType::Paragraph
+               when "a"          then TagType::Link
+               when "ul"         then TagType::List
+               when "ol"         then TagType::OrderedList
+               when "li"         then TagType::ListItem
+               when "table"      then TagType::Table
+               when "tr"         then TagType::TableRow
+               when "th"         then TagType::TableHeader
+               when "td"         then TagType::TableCell
+               when "code"       then TagType::Code
+               when "pre"        then TagType::Pre
+               when "blockquote" then TagType::Blockquote
+               when "hr"         then TagType::Rule
+               when "img"        then TagType::Image
+               else                   TagType::Text
                end
 
         node = Node.new(type)

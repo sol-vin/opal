@@ -17,7 +17,7 @@ module Opal
         @child : Element? = nil,
         @feather : Bool = true,
         @offset_x : Int32 = 0,
-        @offset_y : Int32 = 0
+        @offset_y : Int32 = 0,
       )
       end
 

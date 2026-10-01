@@ -111,16 +111,16 @@ module Opal
     CircleFull         = '●'
 
     # --- Status, Markers & Bullets ---
-    Bullet        = '•'
-    SmallBullet   = '·'
-    Diamond       = '◆'
-    DiamondEmpty  = '◇'
-    Check         = '✓'
-    Cross         = '✗'
-    Gear          = '⚙'
-    Star          = '★'
-    StarEmpty     = '☆'
-    Warning       = '⚠'
+    Bullet       = '•'
+    SmallBullet  = '·'
+    Diamond      = '◆'
+    DiamondEmpty = '◇'
+    Check        = '✓'
+    Cross        = '✗'
+    Gear         = '⚙'
+    Star         = '★'
+    StarEmpty    = '☆'
+    Warning      = '⚠'
 
     # =========================================================================
     # Collections & Gradients
@@ -206,15 +206,15 @@ module Opal
     # Returns an arrow glyph for a given directional symbol
     def self.arrow(dir : Symbol) : Char
       case dir
-      when :up, :north       then ArrowUp
-      when :down, :south     then ArrowDown
-      when :left, :west      then ArrowLeft
-      when :right, :east     then ArrowRight
-      when :up_right, :ne    then ArrowUpRight
-      when :down_right, :se  then ArrowDownRight
-      when :down_left, :sw   then ArrowDownLeft
-      when :up_left, :nw     then ArrowUpLeft
-      else                        ArrowRight
+      when :up, :north      then ArrowUp
+      when :down, :south    then ArrowDown
+      when :left, :west     then ArrowLeft
+      when :right, :east    then ArrowRight
+      when :up_right, :ne   then ArrowUpRight
+      when :down_right, :se then ArrowDownRight
+      when :down_left, :sw  then ArrowDownLeft
+      when :up_left, :nw    then ArrowUpLeft
+      else                       ArrowRight
       end
     end
 

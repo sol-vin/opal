@@ -39,7 +39,7 @@ module Opal
         @direction : LayoutDirection = LayoutDirection::Vertical,
         @overflow : OverflowPolicy = OverflowPolicy::Hidden,
         @border : Border = Border.none,
-        @padding : Int32 = 0
+        @padding : Int32 = 0,
       )
         super()
       end

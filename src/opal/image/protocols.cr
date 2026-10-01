@@ -70,7 +70,7 @@ module Opal
       def self.encode_half_block(
         colors : Array(Array(Color)),
         width : Int32,
-        height : Int32
+        height : Int32,
       ) : String
         String.build do |io|
           (0...height).step(2).each do |y|

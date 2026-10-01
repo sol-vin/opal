@@ -37,7 +37,7 @@ describe "Opal::UI::Group Container" do
     buf = Opal::UI::Buffer.new(20, 5)
     grp.render(buf, 0, 0, 20, 5)
 
-    buf.get(0, 0).char.should eq('C') # ColA at x=0
+    buf.get(0, 0).char.should eq('C')  # ColA at x=0
     buf.get(10, 0).char.should eq('C') # ColB at x=10 (20 // 2)
   end
 
