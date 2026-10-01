@@ -456,7 +456,7 @@ module Opal
         cur_y = y
 
         # 1. Header with Active Shape Badge
-        buffer.put_string(x, cur_y, "🔮 2D/3D Color Spectrum Studio", fg: Color.cyan, bold: true)
+        buffer.put_string(x, cur_y, ">> 2D/3D Color Spectrum Studio", fg: Color.cyan, bold: true)
         shape_badge = " [ #{@shape.display_name} ] "
         buffer.put_string(x + 32, cur_y, shape_badge, fg: Color.black, bg: Color.cyan, bold: true)
         cur_y += 1

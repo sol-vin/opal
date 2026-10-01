@@ -31,7 +31,7 @@ module Opal
       def selected_item : String?
         m = matches
         return nil if m.empty?
-        idx = @cursor.clamp(0, m.size - 1)
+        idx = @cursor.clamp(0, Math.max(0, m.size - 1))
         m[idx].item
       end
 
@@ -163,12 +163,10 @@ module Opal
 
             # Render text with highlighted runes
             target_str = m.target
-            match_set = Set(Int32).new(m.matched_indices)
-
             col_x = x + 2
             target_str.each_char_with_index do |ch, ch_idx|
               break if col_x >= x + list_w - 1
-              is_matched = match_set.includes?(ch_idx)
+              is_matched = m.matched_indices.includes?(ch_idx)
 
               if is_active
                 if is_matched

@@ -174,7 +174,7 @@ class FormWizardSlide < ShowcaseSlide
       if @submitted
         buffer.put_string(x + 4, stat_y, "[OK] Form Validated & Ready for Deployment!", fg: Opal::Color.green, bold: true)
       else
-        buffer.put_string(x + 4, stat_y, "ℹ Edit fields with Tab/Space. Press [Enter] to validate.", fg: Opal::Color.cyan)
+        buffer.put_string(x + 4, stat_y, "[i] Edit fields with Tab/Space. Press [Enter] to validate.", fg: Opal::Color.cyan)
       end
     end
   end
@@ -1487,6 +1487,22 @@ class TextShaderSlide < ShowcaseSlide
   @vel_x : Float64 = 0.6
   @vel_y : Float64 = 0.3
 
+  # Pre-cached shader passes for zero-allocation rendering per frame
+  @matrix_pass = Opal::Shader::MatrixPass.new(speed: 1.2, density: 0.25, preserve_text: false)
+  @plasma_pass = Opal::Shader::PlasmaPass.new(scale: 0.14, speed: 1.6)
+  @fire_pass = Opal::Shader::FirePass.new(speed: 1.2)
+  @starfield_pass = Opal::Shader::StarfieldPass.new(speed: 1.4, count: 70, preserve_text: false)
+  @ripple_pass = Opal::Shader::RipplePass.new(speed: 2.2, frequency: 0.35, amplitude: 2.0)
+  @tunnel_pass = Opal::Shader::TunnelPass.new(speed: 1.4, rotation_speed: 0.6)
+  @sphere_pass = Opal::Shader::RaymarchSpherePass.new(speed: 1.2, radius: 0.82)
+  @voronoi_pass = Opal::Shader::VoronoiPass.new(speed: 0.8, scale: 0.18)
+  @mountain_pass = Opal::Shader::FractalLandscapePass.new(speed: 1.2)
+  @audio_pass = Opal::Shader::AudioVisualizerPass.new(speed: 1.2, bar_count: 14)
+  @crt_pass = Opal::Shader::CrtPass.new(intensity: 0.45, scanline_gap: 2, phosphor_tint: Opal::Color.green)
+  @glitch_pass = Opal::Shader::GlitchPass.new(intensity: 0.28, slice_height: 3)
+  @composite_crt = Opal::Shader::CrtPass.new(intensity: 0.35, scanline_gap: 2)
+  @composite_vignette = Opal::Shader::VignettePass.new(radius: 0.85, falloff: 0.4)
+
   SHADERS = [
     {id: 1, key: "1", name: "Matrix Rain", cat: "Procedural", desc: "Digital rain streams with glowing green trails"},
     {id: 2, key: "2", name: "Retro CRT", cat: "Post-Process", desc: "Phosphor glow, scanlines & subtle flicker"},
@@ -1712,57 +1728,51 @@ class TextShaderSlide < ShowcaseSlide
     # Apply active shader
     case @mode
     when 1
-      # Matrix Digital Rain
-      pass = Opal::Shader::MatrixPass.new(region: viewport_region, speed: 1.2, density: 0.25, preserve_text: false)
-      pass.apply(buffer, buffer, @time, @frame)
+      @matrix_pass.region = viewport_region
+      @matrix_pass.apply(buffer, buffer, @time, @frame)
     when 3
-      # Sine Plasma
-      pass = Opal::Shader::PlasmaPass.new(region: viewport_region, scale: 0.14, speed: 1.6)
-      pass.apply(buffer, buffer, @time, @frame)
+      @plasma_pass.region = viewport_region
+      @plasma_pass.apply(buffer, buffer, @time, @frame)
     when 5
-      # Ascending Fire
-      pass = Opal::Shader::FirePass.new(region: viewport_region, speed: 1.2)
-      pass.apply(buffer, buffer, @time, @frame)
+      @fire_pass.region = viewport_region
+      @fire_pass.apply(buffer, buffer, @time, @frame)
     when 6
-      # 3D Starfield
-      pass = Opal::Shader::StarfieldPass.new(region: viewport_region, speed: 1.4, count: 70, preserve_text: false)
-      pass.apply(buffer, buffer, @time, @frame)
+      @starfield_pass.region = viewport_region
+      @starfield_pass.apply(buffer, buffer, @time, @frame)
     when 7
-      # Water Ripple
-      pass = Opal::Shader::RipplePass.new(region: viewport_region, speed: 2.2, frequency: 0.35, amplitude: 2.0)
-      pass.apply(buffer, buffer, @time, @frame)
+      @ripple_pass.region = viewport_region
+      @ripple_pass.apply(buffer, buffer, @time, @frame)
     when 8
-      # 3D Tunnel
-      pass = Opal::Shader::TunnelPass.new(region: viewport_region, speed: 1.4, rotation_speed: 0.6)
-      pass.apply(buffer, buffer, @time, @frame)
+      @tunnel_pass.region = viewport_region
+      @tunnel_pass.apply(buffer, buffer, @time, @frame)
     when 9
-      # 3D Raymarched Shaded Sphere (NEW)
-      pass = Opal::Shader::RaymarchSpherePass.new(region: viewport_region, speed: 1.2, radius: 0.82)
-      pass.apply(buffer, buffer, @time, @frame)
+      @sphere_pass.region = viewport_region
+      @sphere_pass.apply(buffer, buffer, @time, @frame)
     when 10
-      # Voronoi Cellular Grid (NEW)
-      pass = Opal::Shader::VoronoiPass.new(region: viewport_region, speed: 0.8, scale: 0.18)
-      pass.apply(buffer, buffer, @time, @frame)
+      @voronoi_pass.region = viewport_region
+      @voronoi_pass.apply(buffer, buffer, @time, @frame)
     when 11
-      # Fractal Mountain Landscape (NEW)
-      pass = Opal::Shader::FractalLandscapePass.new(region: viewport_region, speed: 1.2)
-      pass.apply(buffer, buffer, @time, @frame)
+      @mountain_pass.region = viewport_region
+      @mountain_pass.apply(buffer, buffer, @time, @frame)
     when 12
-      # Audio Equalizer (NEW)
-      pass = Opal::Shader::AudioVisualizerPass.new(region: viewport_region, speed: 1.2, bar_count: 14)
-      pass.apply(buffer, buffer, @time, @frame)
+      @audio_pass.region = viewport_region
+      @audio_pass.apply(buffer, buffer, @time, @frame)
     when 13
-      # Composite Background Plasma
-      bg_pass = Opal::Shader::PlasmaPass.new(region: viewport_region, scale: 0.12, speed: 1.2)
-      bg_pass.apply(buffer, buffer, @time, @frame)
+      @plasma_pass.region = viewport_region
+      @plasma_pass.apply(buffer, buffer, @time, @frame)
     end
 
     # Render floating telemetry window if enabled
     if @bouncing
-      card_w = 38
-      card_h = 7
-      win_x = (x + @win_x.to_i).clamp(content_x + 1, content_x + content_w - card_w - 1)
-      win_y = (y + @win_y.to_i).clamp(cur_y + 1, cur_y + content_h - card_h - 1)
+      card_w = Math.min(38, Math.max(10, content_w - 2))
+      card_h = Math.min(7, Math.max(3, content_h - 2))
+      min_clamp_x = content_x + 1
+      max_clamp_x = Math.max(min_clamp_x, content_x + content_w - card_w - 1)
+      win_x = (x + @win_x.to_i).clamp(min_clamp_x, max_clamp_x)
+
+      min_clamp_y = cur_y + 1
+      max_clamp_y = Math.max(min_clamp_y, cur_y + content_h - card_h - 1)
+      win_y = (y + @win_y.to_i).clamp(min_clamp_y, max_clamp_y)
 
       b = Opal::UI::Box.new(
         child: Opal::UI::Text.new(
@@ -1784,17 +1794,16 @@ class TextShaderSlide < ShowcaseSlide
     # Screen-space post-processing passes applied after base rendering
     case @mode
     when 2
-      pass = Opal::Shader::CrtPass.new(region: viewport_region, intensity: 0.45, scanline_gap: 2, phosphor_tint: Opal::Color.green)
-      pass.apply(buffer, buffer, @time, @frame)
+      @crt_pass.region = viewport_region
+      @crt_pass.apply(buffer, buffer, @time, @frame)
     when 4
-      pass = Opal::Shader::GlitchPass.new(region: viewport_region, intensity: 0.28, slice_height: 3)
-      pass.apply(buffer, buffer, @time, @frame)
+      @glitch_pass.region = viewport_region
+      @glitch_pass.apply(buffer, buffer, @time, @frame)
     when 13
-      overlay_pipe = Opal.shader_pipeline do |p|
-        p.crt(region: viewport_region, intensity: 0.35, scanline_gap: 2)
-        p.vignette(region: viewport_region, radius: 0.85, falloff: 0.4)
-      end
-      overlay_pipe.apply(buffer, @time, @frame)
+      @composite_crt.region = viewport_region
+      @composite_crt.apply(buffer, buffer, @time, @frame)
+      @composite_vignette.region = viewport_region
+      @composite_vignette.apply(buffer, buffer, @time, @frame)
     end
   end
 end
@@ -2484,7 +2493,263 @@ class ThemeStoreSlide < ShowcaseSlide
 end
 
 # -----------------------------------------------------------------------------
-# Slide 31: Grand Finale & Conclusion (Markdown Summary)
+# Slide 31: Python Textual-Inspired Architecture (Dock, Grid, Controls & Screen)
+# -----------------------------------------------------------------------------
+class TextualControlsSlide < ShowcaseSlide
+  getter header : Opal::UI::Header
+  getter footer : Opal::UI::Footer
+  getter switch_sync : Opal::UI::Switch
+  getter switch_gpu : Opal::UI::Switch
+  getter radio_set : Opal::UI::RadioSet
+  getter collapsible : Opal::UI::Collapsible
+  getter digits : Opal::UI::Digits
+  getter loading_dots : Opal::UI::LoadingIndicator
+  getter loading_bars : Opal::UI::LoadingIndicator
+  getter placeholder : Opal::UI::Placeholder
+  getter rich_log : Opal::UI::RichLog
+  property focus_idx : Int32 = 0
+  property tick_count : Int32 = 0
+
+  def initialize
+    @header = Opal::UI::Header.new(
+      title: "OPAL TEXTUAL WORKSPACE",
+      subtitle: "Dock / Grid / Screen Engine",
+      icon: "[*]",
+      show_clock: true
+    )
+
+    @switch_sync = Opal::UI::Switch.new(label: "Live Telemetry", on: true)
+    @switch_gpu = Opal::UI::Switch.new(label: "Shader GPU Accel", on: true)
+
+    @radio_set = Opal::UI::RadioSet.new([
+      "Balanced Mode",
+      "High Performance",
+      "Battery Saver",
+    ], selected_index: 1)
+
+    child_card = Opal::UI::Text.new("Workers: 4 fibers\nEngine: Zero-Alloc\nQueue: 0 pending")
+    @collapsible = Opal::UI::Collapsible.new(
+      title: "Engine Diagnostics",
+      child: child_card,
+      collapsed: false
+    )
+
+    @digits = Opal::UI::Digits.new("98%", fg: :bright_green)
+    @loading_dots = Opal::UI::LoadingIndicator.new(label: "Worker Fiber Active", style: :dots, fg: :bright_cyan)
+    @loading_bars = Opal::UI::LoadingIndicator.new(label: "Render Pipeline 60fps", style: :bars, fg: :bright_yellow)
+    @placeholder = Opal::UI::Placeholder.new("Sub-Viewport", border: :rounded)
+
+    @rich_log = Opal::UI::RichLog.new(max_lines: 50)
+    @rich_log.write("[00:00:00] Textual engine initialized")
+    @rich_log.write("[00:00:01] Dock container mounted: left, center, right")
+    @rich_log.write("[00:00:02] QueryEngine ready: DOM selectors active")
+    @rich_log.write("[00:00:03] Background worker fiber spawned")
+
+    @switch_sync.on_change do |val|
+      @rich_log.write("[#{Time.local.to_s("%H:%M:%S")}] Telemetry switch -> #{val ? "ON" : "OFF"}")
+    end
+
+    @switch_gpu.on_change do |val|
+      @rich_log.write("[#{Time.local.to_s("%H:%M:%S")}] GPU Accel switch -> #{val ? "ENABLED" : "DISABLED"}")
+    end
+
+    @radio_set.on_change do |_idx, lbl|
+      @rich_log.write("[#{Time.local.to_s("%H:%M:%S")}] Power Profile -> #{lbl}")
+    end
+
+    @collapsible.on_toggle do |col|
+      @rich_log.write("[#{Time.local.to_s("%H:%M:%S")}] Diagnostics panel -> #{col ? "Collapsed" : "Expanded"}")
+    end
+
+    @footer = Opal::UI::Footer.new
+    @footer.add("Tab", "Cycle Focus")
+    @footer.add("Space", "Toggle")
+    @footer.add("1-3", "Profile")
+    @footer.add("L", "Push Log")
+
+    update_focus
+  end
+
+  def title : String
+    "Textual Architecture"
+  end
+
+  def category : String
+    "Modern Controls & Engine"
+  end
+
+  def hints : String
+    "[Tab] Cycle Focus  [Space] Toggle  [1-3] Select Mode  [L] Append Log"
+  end
+
+  private def focus_controls : Array(Opal::UI::Control)
+    [@switch_sync, @switch_gpu, @radio_set, @collapsible, @rich_log]
+  end
+
+  private def update_focus : Nil
+    controls = focus_controls
+    controls.each_with_index do |ctrl, idx|
+      ctrl.focused = (idx == @focus_idx)
+    end
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "tab"
+      @focus_idx = (@focus_idx + 1) % focus_controls.size
+      update_focus
+      true
+    when "l", "L"
+      @rich_log.write("[#{Time.local.to_s("%H:%M:%S")}] Manual telemetry packet sent")
+      true
+    when "1"
+      @radio_set.select_index(0)
+      true
+    when "2"
+      @radio_set.select_index(1)
+      true
+    when "3"
+      @radio_set.select_index(2)
+      true
+    else
+      ctrl = focus_controls[@focus_idx]?
+      if ctrl
+        ctrl.handle_key(key)
+      else
+        false
+      end
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    if @switch_sync.handle_mouse(event)
+      @focus_idx = 0
+      update_focus
+      return true
+    end
+    if @switch_gpu.handle_mouse(event)
+      @focus_idx = 1
+      update_focus
+      return true
+    end
+    if @radio_set.handle_mouse(event)
+      @focus_idx = 2
+      update_focus
+      return true
+    end
+    if @collapsible.handle_mouse(event)
+      @focus_idx = 3
+      update_focus
+      return true
+    end
+    if @rich_log.handle_mouse(event)
+      @focus_idx = 4
+      update_focus
+      return true
+    end
+    if @footer.handle_mouse(event)
+      return true
+    end
+    false
+  end
+
+  def tick : Nil
+    @loading_dots.tick
+    @loading_bars.tick
+    @tick_count += 1
+
+    # Simulate dynamic telemetry update
+    if @switch_sync.on?
+      if @tick_count % 30 == 0
+        cpu_load = 92 + (@tick_count % 8)
+        @digits.text = "#{cpu_load}%"
+      end
+
+      if @tick_count % 60 == 0
+        @rich_log.write("[#{Time.local.to_s("%H:%M:%S")}] [Worker ##{@tick_count // 60}] Heartbeat ping OK (0.4ms)")
+      end
+    end
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    return if w < 20 || h < 8
+
+    # 1. Render Top Header
+    @header.render(buffer, x, y, w, 1)
+
+    # 2. Render Bottom Footer
+    @footer.render(buffer, x, y + h - 1, w, 1)
+
+    # 3. Main Workspace Area (between Header and Footer)
+    main_y = y + 1
+    main_h = Math.max(0, h - 2)
+    return if main_h < 4
+
+    col_gap = 1
+    left_w = Math.min(28, (w * 0.32).to_i)
+    center_w = Math.min(26, (w * 0.30).to_i)
+    right_x = x + left_w + col_gap + center_w + col_gap
+    right_w = Math.max(16, (x + w) - right_x)
+
+    theme = Opal::Theme.current
+
+    # Left Column: Reactive Controls
+    left_x = x
+    left_box = Opal::UI::Box.new(border: :rounded, title: "Reactive Controls", border_fg: theme.border, title_fg: theme.primary)
+    left_box.render(buffer, left_x, main_y, left_w, main_h)
+
+    ctrl_y = main_y + 1
+    @switch_sync.render(buffer, left_x + 2, ctrl_y, left_w - 4, 1)
+    ctrl_y += 2
+    @switch_gpu.render(buffer, left_x + 2, ctrl_y, left_w - 4, 1)
+    ctrl_y += 2
+
+    buffer.put_string(left_x + 2, ctrl_y, "─" * Math.max(0, left_w - 4), fg: theme.border)
+    ctrl_y += 1
+
+    buffer.put_string(left_x + 2, ctrl_y, "Power Profile:", fg: theme.accent, bold: true)
+    ctrl_y += 1
+    @radio_set.render(buffer, left_x + 2, ctrl_y, left_w - 4, 3)
+    ctrl_y += 4
+
+    if ctrl_y < main_y + main_h - 2
+      buffer.put_string(left_x + 2, ctrl_y, "─" * Math.max(0, left_w - 4), fg: theme.border)
+      ctrl_y += 1
+      rem_h = Math.max(0, (main_y + main_h - 1) - ctrl_y)
+      @collapsible.render(buffer, left_x + 2, ctrl_y, left_w - 4, rem_h)
+    end
+
+    # Center Column: Telemetry & Block Digits
+    center_x = left_x + left_w + col_gap
+    center_box = Opal::UI::Box.new(border: :rounded, title: "Telemetry & Layout", border_fg: theme.border, title_fg: theme.accent)
+    center_box.render(buffer, center_x, main_y, center_w, main_h)
+
+    cen_y = main_y + 1
+    buffer.put_string(center_x + 2, cen_y, "System Efficiency:", fg: theme.text_muted)
+    cen_y += 1
+    @digits.render(buffer, center_x + 2, cen_y, center_w - 4, 5)
+    cen_y += 6
+
+    @loading_dots.render(buffer, center_x + 2, cen_y, center_w - 4, 1)
+    cen_y += 2
+    @loading_bars.render(buffer, center_x + 2, cen_y, center_w - 4, 1)
+    cen_y += 2
+
+    rem_box_h = Math.max(0, (main_y + main_h - 1) - cen_y)
+    if rem_box_h >= 3
+      @placeholder.render(buffer, center_x + 2, cen_y, center_w - 4, rem_box_h)
+    end
+
+    # Right Column: RichLog Event Stream
+    right_box = Opal::UI::Box.new(border: :rounded, title: "Async RichLog Stream", border_fg: theme.border, title_fg: theme.success)
+    right_box.render(buffer, right_x, main_y, right_w, main_h)
+
+    @rich_log.render(buffer, right_x + 1, main_y + 1, right_w - 2, Math.max(0, main_h - 2))
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 32: Grand Finale & Conclusion (Markdown Summary)
 # -----------------------------------------------------------------------------
 class FinaleSlide < ShowcaseSlide
   getter viewer : Opal::UI::MarkdownViewer
@@ -2495,6 +2760,7 @@ class FinaleSlide < ShowcaseSlide
 
     All core capabilities have been showcased:
     - [OK] **Interactive Controls** (Buttons, Dropdowns, ScrollBars)
+    - [OK] **Python Textual Architecture** (Dock, Grid, Switches, RadioSets, Collapsibles, Digits, RichLog, Workers)
     - [OK] **Multi-Field Form Wizard** with live inline validation & tab navigation
     - [OK] **Live Keystroke Fuzzy Search & Split Preview**
     - [OK] **Interactive FileDialog / FilePicker** with split preview
@@ -2595,6 +2861,7 @@ class ShowcaseAppModel
       Mesh3DSlide.new,
       WindowingSlide.new,
       ThemeStoreSlide.new,
+      TextualControlsSlide.new,
       FinaleSlide.new,
     ]
   end
@@ -2682,6 +2949,8 @@ class ShowcaseAppModel
   def render(buffer : Opal::UI::Buffer) : Nil
     cols = buffer.width
     rows = buffer.height
+    return if cols < 10 || rows < 5
+
     active = @slides[@current_idx]
 
     # Explicitly clear/fill entire canvas area with spaces to ensure zero dirty cells
@@ -2689,16 +2958,19 @@ class ShowcaseAppModel
 
     # Top Header Banner
     header_text = " [*] OPAL TUI SHOWCASE ── Slide #{@current_idx + 1}/#{@slides.size}: [#{active.title}] ── [#{active.category}]"
-    buffer.put_string(0, 0, header_text, fg: Opal::Color.bright_cyan, bold: true)
-    buffer.put_string(0, 1, "─" * cols, fg: Opal::Color.bright_black)
+    buffer.put_string(0, 0, header_text, fg: Opal::Color.bright_cyan, bold: true, max_width: cols)
+    buffer.put_string(0, 1, "─" * cols, fg: Opal::Color.bright_black, max_width: cols)
 
     # Active Slide Canvas
-    active.render(buffer, 0, 2, cols, rows - 4)
+    slide_h = Math.max(0, rows - 4)
+    active.render(buffer, 0, 2, cols, slide_h) if slide_h > 0
 
     # Bottom Footer
-    buffer.put_string(0, rows - 2, "─" * cols, fg: Opal::Color.bright_black)
-    footer_text = " [Shift+→] Next  [Shift+←] Prev  [ESC] Quit │ #{active.hints}"
-    buffer.put_string(0, rows - 1, footer_text, fg: Opal::Color.bright_white)
+    if rows >= 4
+      buffer.put_string(0, rows - 2, "─" * cols, fg: Opal::Color.bright_black, max_width: cols)
+      footer_text = " [Shift+→] Next  [Shift+←] Prev  [ESC] Quit │ #{active.hints}"
+      buffer.put_string(0, rows - 1, footer_text, fg: Opal::Color.bright_white, max_width: cols)
+    end
   end
 
   def view : String
@@ -2712,7 +2984,7 @@ class ShowcaseAppModel
   end
 
   private def schedule_tick : Opal::TEA::Cmd
-    Opal::TEA::Cmd.tick(300.milliseconds) do |_time|
+    Opal::TEA::Cmd.tick(50.milliseconds) do |_time|
       Opal::TEA::TickMsg.new
     end
   end

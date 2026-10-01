@@ -57,7 +57,11 @@ module Opal
 
             # Position cursor if not already at cell
             if cursor_x != x || cursor_y != y
-              io << "\e[#{y + 1};#{x + 1}H"
+              io << "\e["
+              (y + 1).to_s(io)
+              io << ';'
+              (x + 1).to_s(io)
+              io << 'H'
               cursor_x = x
               cursor_y = y
             end
@@ -77,14 +81,12 @@ module Opal
               last_fg = curr_cell.fg
               last_bg = curr_cell.bg
 
-              codes = [] of String
-              codes << "1" if last_bold
-              codes << "2" if last_dim
-              codes << "3" if last_italic
-              codes << "4" if last_underline
-              io << "\e[" + codes.join(';') + "m" unless codes.empty?
-              io << last_fg.fg_escape
-              io << last_bg.bg_escape
+              io << "\e[1m" if last_bold
+              io << "\e[2m" if last_dim
+              io << "\e[3m" if last_italic
+              io << "\e[4m" if last_underline
+              last_fg.write_fg_escape(io)
+              last_bg.write_bg_escape(io)
             end
 
             # Write character
@@ -109,7 +111,9 @@ module Opal
         io << Terminal::Screen::CURSOR_HOME
 
         (0...buffer.height).each do |y|
-          io << "\e[#{y + 1};1H"
+          io << "\e["
+          (y + 1).to_s(io)
+          io << ";1H"
           last_fg = Color.none
           last_bg = Color.none
           last_bold = false
@@ -123,8 +127,8 @@ module Opal
               io << "\e[0m"
               io << "\e[1m" if cell.bold?
               io << "\e[2m" if cell.dim?
-              io << cell.fg.fg_escape
-              io << cell.bg.bg_escape
+              cell.fg.write_fg_escape(io)
+              cell.bg.write_bg_escape(io)
               last_bold = cell.bold?
               last_dim = cell.dim?
               last_fg = cell.fg

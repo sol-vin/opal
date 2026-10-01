@@ -234,7 +234,8 @@ module Opal
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
         longest_item = (@items.map { |i| VisualWidth.width(i) }.max? || 10)
-        box_w = (longest_item + 6).clamp(16, available_w)
+        min_w = Math.min(16, Math.max(1, available_w))
+        box_w = (longest_item + 6).clamp(min_w, Math.max(min_w, available_w))
         {box_w, 1}
       end
 

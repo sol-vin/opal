@@ -598,6 +598,149 @@ module Opal
         el
       end
 
+      def switch(
+        label : String? = nil,
+        on : Bool = false,
+        disabled : Bool = false,
+        &block : Bool -> Nil
+      ) : Switch
+        el = Switch.new(label, on, disabled, &block)
+        set_root_or_child(el)
+        el
+      end
+
+      def switch(
+        label : String? = nil,
+        on : Bool = false,
+        disabled : Bool = false,
+      ) : Switch
+        el = Switch.new(label, on, disabled)
+        set_root_or_child(el)
+        el
+      end
+
+      def radio_set(
+        items : Array(String | RadioButton),
+        selected_index : Int32? = 0,
+        horizontal : Bool = false,
+        disabled : Bool = false,
+        &block : (Int32, String) -> Nil
+      ) : RadioSet
+        el = RadioSet.new(items, selected_index, horizontal, disabled, &block)
+        set_root_or_child(el)
+        el
+      end
+
+      def radio_set(
+        items : Array(String | RadioButton),
+        selected_index : Int32? = 0,
+        horizontal : Bool = false,
+        disabled : Bool = false,
+      ) : RadioSet
+        el = RadioSet.new(items, selected_index, horizontal, disabled)
+        set_root_or_child(el)
+        el
+      end
+
+      def collapsible(
+        title : String,
+        collapsed : Bool = true,
+        disabled : Bool = false,
+        &block : Builder -> Nil
+      ) : Collapsible
+        sub_builder = Builder.new
+        block.call(sub_builder)
+        el = Collapsible.new(title: title, child: sub_builder.root, collapsed: collapsed, disabled: disabled)
+        set_root_or_child(el)
+        el
+      end
+
+      def digits(
+        text : String,
+        fg : Color | Symbol | String = :bright_cyan,
+        bg : Color | Symbol | String = Color.none,
+        bold : Bool = true,
+      ) : Digits
+        el = Digits.new(text, fg: fg, bg: bg, bold: bold)
+        set_root_or_child(el)
+        el
+      end
+
+      def rich_log(
+        max_lines : Int32 = 1000,
+        auto_scroll : Bool = true,
+        highlight_ansi : Bool = true,
+      ) : RichLog
+        el = RichLog.new(max_lines: max_lines, auto_scroll: auto_scroll, highlight_ansi: highlight_ansi)
+        set_root_or_child(el)
+        el
+      end
+
+      def loading_indicator(
+        label : String? = nil,
+        style : Symbol = :dots,
+        fg : Color | Symbol | String = Color.none,
+      ) : LoadingIndicator
+        el = LoadingIndicator.new(label: label, style: style, fg: Color.from(fg))
+        set_root_or_child(el)
+        el
+      end
+
+      def header(
+        title : String = "Opal Application",
+        subtitle : String? = nil,
+        icon : String? = "[*]",
+        show_clock : Bool = true,
+      ) : Header
+        el = Header.new(title: title, subtitle: subtitle, icon: icon, show_clock: show_clock)
+        set_root_or_child(el)
+        el
+      end
+
+      def footer(
+        bindings : Array(NamedTuple(key: String, desc: String)) = [] of NamedTuple(key: String, desc: String),
+      ) : Footer
+        el = Footer.new(bindings)
+        set_root_or_child(el)
+        el
+      end
+
+      def placeholder(
+        label : String? = nil,
+        border : Symbol | Border = :rounded,
+      ) : Placeholder
+        el = Placeholder.new(label: label, border: border)
+        set_root_or_child(el)
+        el
+      end
+
+      def dock(&block : DockContainer -> Nil) : DockContainer
+        dc = DockContainer.new
+        block.call(dc)
+        set_root_or_child(dc)
+        dc
+      end
+
+      def grid(
+        columns : Array(GridTrack | Int32 | Float64 | String) = [GridTrack.fr(1.0)],
+        rows : Array(GridTrack | Int32 | Float64 | String) = [GridTrack.fr(1.0)],
+        gutter_x : Int32 = 1,
+        gutter_y : Int32 = 0,
+        &block : GridContainer -> Nil
+      ) : GridContainer
+        gc = GridContainer.new(columns: columns, rows: rows, gutter_x: gutter_x, gutter_y: gutter_y)
+        block.call(gc)
+        set_root_or_child(gc)
+        gc
+      end
+
+      def content_switcher(current : String? = nil, &block : ContentSwitcher -> Nil) : ContentSwitcher
+        cs = ContentSwitcher.new(current: current)
+        block.call(cs)
+        set_root_or_child(cs)
+        cs
+      end
+
       private def set_root_or_child(el : Element) : Nil
         @root ||= el
       end
@@ -957,6 +1100,94 @@ module Opal
         add(el)
         el
       end
+
+      def switch(
+        label : String? = nil,
+        on : Bool = false,
+        disabled : Bool = false,
+        &block : Bool -> Nil
+      ) : Switch
+        el = Switch.new(label, on, disabled, &block)
+        add(el)
+        el
+      end
+
+      def switch(
+        label : String? = nil,
+        on : Bool = false,
+        disabled : Bool = false,
+      ) : Switch
+        el = Switch.new(label, on, disabled)
+        add(el)
+        el
+      end
+
+      def radio_set(
+        items : Array(String | RadioButton),
+        selected_index : Int32? = 0,
+        horizontal : Bool = false,
+        disabled : Bool = false,
+        &block : (Int32, String) -> Nil
+      ) : RadioSet
+        el = RadioSet.new(items, selected_index, horizontal, disabled, &block)
+        add(el)
+        el
+      end
+
+      def radio_set(
+        items : Array(String | RadioButton),
+        selected_index : Int32? = 0,
+        horizontal : Bool = false,
+        disabled : Bool = false,
+      ) : RadioSet
+        el = RadioSet.new(items, selected_index, horizontal, disabled)
+        add(el)
+        el
+      end
+
+      def collapsible(
+        title : String,
+        collapsed : Bool = true,
+        disabled : Bool = false,
+        &block : Builder -> Nil
+      ) : Collapsible
+        sub_builder = Builder.new
+        block.call(sub_builder)
+        el = Collapsible.new(title: title, child: sub_builder.root, collapsed: collapsed, disabled: disabled)
+        add(el)
+        el
+      end
+
+      def digits(
+        text : String,
+        fg : Color | Symbol | String = :bright_cyan,
+        bg : Color | Symbol | String = Color.none,
+        bold : Bool = true,
+      ) : Digits
+        el = Digits.new(text, fg: fg, bg: bg, bold: bold)
+        add(el)
+        el
+      end
+
+      def rich_log(
+        max_lines : Int32 = 1000,
+        auto_scroll : Bool = true,
+        highlight_ansi : Bool = true,
+      ) : RichLog
+        el = RichLog.new(max_lines: max_lines, auto_scroll: auto_scroll, highlight_ansi: highlight_ansi)
+        add(el)
+        el
+      end
+
+      def loading_indicator(
+        label : String? = nil,
+        style : Symbol = :dots,
+        fg : Color | Symbol | String = Color.none,
+      ) : LoadingIndicator
+        el = LoadingIndicator.new(label: label, style: style, fg: Color.from(fg))
+        add(el)
+        el
+      end
     end
 
     # Builder for table rows
@@ -1033,6 +1264,38 @@ module Opal
       builder = Builder.new
       block.call(builder)
       builder.root || Text.new("")
+    end
+
+    # Creates and returns a DockContainer configured via DSL block
+    def self.dock(&block : DockContainer -> Nil) : DockContainer
+      dc = DockContainer.new
+      block.call(dc)
+      dc
+    end
+
+    # Creates and returns a GridContainer configured via DSL block
+    def self.grid(
+      columns : Array(GridTrack | Int32 | Float64 | String) = [GridTrack.fr(1.0)],
+      rows : Array(GridTrack | Int32 | Float64 | String) = [GridTrack.fr(1.0)],
+      gutter_x : Int32 = 1,
+      gutter_y : Int32 = 0,
+      &block : GridContainer -> Nil
+    ) : GridContainer
+      gc = GridContainer.new(columns: columns, rows: rows, gutter_x: gutter_x, gutter_y: gutter_y)
+      block.call(gc)
+      gc
+    end
+
+    # Creates a Screen with declarative root composed via Builder block
+    def self.screen(name : String, title : String? = nil, &block : Builder -> Nil) : Screen
+      root_el = build(&block)
+      Screen.new(name: name, title: title, root: root_el)
+    end
+
+    # Creates a ModalScreen with declarative root composed via Builder block
+    def self.modal_screen(name : String = "modal", title : String? = nil, &block : Builder -> Nil) : ModalScreen
+      root_el = build(&block)
+      ModalScreen.new(name: name, title: title, root: root_el)
     end
   end
 end

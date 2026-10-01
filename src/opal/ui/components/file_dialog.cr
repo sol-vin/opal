@@ -131,7 +131,7 @@ module Opal
       def selected_entry : FileEntry?
         fe = filtered_entries
         return nil if fe.empty?
-        idx = @cursor.clamp(0, fe.size - 1)
+        idx = @cursor.clamp(0, Math.max(0, fe.size - 1))
         fe[idx]
       end
 
@@ -298,7 +298,8 @@ module Opal
         return if list_h <= 0
 
         has_preview = width >= 50
-        list_w = has_preview ? ((width * 0.55).to_i.clamp(24, width - 20)) : width
+        max_w_clamp = Math.max(24, width - 20)
+        list_w = has_preview ? ((width * 0.55).to_i.clamp(24, max_w_clamp)) : width
 
         # 3. Render Entries List
         if fe.empty?

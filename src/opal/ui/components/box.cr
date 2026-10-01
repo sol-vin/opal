@@ -34,6 +34,14 @@ module Opal
         @padding_top = @padding_right = @padding_bottom = @padding_left = padding
       end
 
+      def children : Array(Element)
+        if c = @child
+          [c]
+        else
+          [] of Element
+        end
+      end
+
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
         eff_border = @border || current_theme.box_border
         border_x = eff_border.active? ? 2 : 0

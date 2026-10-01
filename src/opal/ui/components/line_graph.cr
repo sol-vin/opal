@@ -80,12 +80,21 @@ module Opal
           cur_y += 1
         end
 
-        # Calculate data value range
-        all_vals = @series.flat_map(&.data)
-        return if all_vals.empty?
+        # Calculate data value range without heap allocations
+        has_vals = false
+        min_v = Float64::MAX
+        max_v = -Float64::MAX
+        @series.each do |s|
+          s.data.each do |v|
+            has_vals = true
+            min_v = v if v < min_v
+            max_v = v if v > max_v
+          end
+        end
+        return unless has_vals
 
-        min_val = @min_y || (all_vals.min? || 0.0)
-        max_val = @max_y || (all_vals.max? || 100.0)
+        min_val = @min_y || min_v
+        max_val = @max_y || max_v
         max_val = min_val + 1.0 if (max_val - min_val).abs < 1e-6
 
         # Layout graph grid

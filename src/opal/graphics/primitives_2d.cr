@@ -201,6 +201,8 @@ module Opal
         shadow_char : Char = '░',
         fg : Color = Color.rgb(40, 40, 40),
       ) : Nil
+        return if width <= 0 || height <= 0
+
         # Right shadow
         (1..height).each do |row|
           buffer.put_char(x + width, y + row, shadow_char, fg: fg)
@@ -401,6 +403,7 @@ module Opal
         shadow_char : Char = '░',
         title : String? = nil,
       ) : Nil
+        return if width <= 0 || height <= 0
         draw_rect(buffer, x, y, width, height, border: border, fg: border_fg)
         draw_shadow(buffer, x, y, width, height, shadow_char: shadow_char)
         if title

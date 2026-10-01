@@ -62,7 +62,7 @@ module Opal
       def selected_action : CommandAction?
         m = matches
         return nil if m.empty?
-        idx = @cursor.clamp(0, m.size - 1)
+        idx = @cursor.clamp(0, Math.max(0, m.size - 1))
         m[idx].item
       end
 
@@ -136,7 +136,7 @@ module Opal
         card_buf.put_string(pal_w - 1, pal_h - 1, b.bottom_right, fg: Color.cyan)
 
         # Search box on line 1
-        card_buf.put_string(2, 1, "🔍 ", fg: Color.cyan)
+        card_buf.put_string(2, 1, "[?] ", fg: Color.cyan)
         search_prompt = @query.empty? ? "Type a command..." : @query
         prompt_fg = @query.empty? ? Color.bright_black : Color.white
         max_prompt_w = pal_w - 7

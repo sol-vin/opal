@@ -632,6 +632,12 @@ module Opal
         l_len = Math.sqrt(lx * lx + ly * ly + lz * lz)
         lx /= l_len; ly /= l_len; lz /= l_len
 
+        hx = lx; hy = ly; hz = lz + 1.0
+        h_len = Math.sqrt(hx * hx + hy * hy + hz * hz)
+        if h_len > 0.0001
+          hx /= h_len; hy /= h_len; hz /= h_len
+        end
+
         r_sq = @radius * @radius
 
         (ry...(ry + rh)).each do |y|
@@ -650,14 +656,12 @@ module Opal
               norm_z = nz / @radius
 
               diff = Math.max(0.0, norm_x * lx + norm_y * ly + norm_z * lz)
-
-              hx = lx; hy = ly; hz = lz + 1.0
-              h_len = Math.sqrt(hx * hx + hy * hy + hz * hz)
-              if h_len > 0.0001
-                hx /= h_len; hy /= h_len; hz /= h_len
-              end
               ndoth = Math.max(0.0, norm_x * hx + norm_y * hy + norm_z * hz)
-              spec = (ndoth ** 16) * 0.8
+
+              nd2 = ndoth * ndoth
+              nd4 = nd2 * nd2
+              nd8 = nd4 * nd4
+              spec = (nd8 * nd8) * 0.8
 
               intensity = (0.15 + diff * 0.75 + spec).clamp(0.0, 1.0)
               shaded_c = Color.lerp(Color.black, @sphere_color, intensity)
@@ -730,8 +734,8 @@ module Opal
             gx = (x - rx).to_f * @scale
             ix = gx.floor.to_i
 
-            min_d1 = 999.0
-            min_d2 = 999.0
+            min_d1_sq = 999.0
+            min_d2_sq = 999.0
 
             (-1..1).each do |dy|
               ny = iy + dy
@@ -739,22 +743,27 @@ module Opal
                 nx = ix + dx
 
                 hash = ((nx.to_i64 &* 374761393_i64) ^ (ny.to_i64 &* 668265263_i64))
-                phase_x = ((hash % 1000).to_f / 1000.0) * Math::PI * 2.0
-                phase_y = (((hash >> 10) % 1000).to_f / 1000.0) * Math::PI * 2.0
+                phase_x = ((hash % 1000).to_f / 1000.0) * FastMath::TWO_PI
+                phase_y = (((hash >> 10) % 1000).to_f / 1000.0) * FastMath::TWO_PI
 
                 px = nx.to_f + 0.5 + FastMath.sin(t + phase_x) * 0.4
                 py = ny.to_f + 0.5 + FastMath.cos(t * 1.3 + phase_y) * 0.4
 
-                dist = Math.sqrt((gx - px)**2 + (gy - py)**2)
+                dx_dist = gx - px
+                dy_dist = gy - py
+                dist_sq = dx_dist * dx_dist + dy_dist * dy_dist
 
-                if dist < min_d1
-                  min_d2 = min_d1
-                  min_d1 = dist
-                elsif dist < min_d2
-                  min_d2 = dist
+                if dist_sq < min_d1_sq
+                  min_d2_sq = min_d1_sq
+                  min_d1_sq = dist_sq
+                elsif dist_sq < min_d2_sq
+                  min_d2_sq = dist_sq
                 end
               end
             end
+
+            min_d1 = Math.sqrt(min_d1_sq)
+            min_d2 = Math.sqrt(min_d2_sq)
 
             edge_dist = min_d2 - min_d1
             is_edge = edge_dist < 0.18
@@ -823,23 +832,31 @@ module Opal
 
         t = time * @speed
 
-        (rx...(rx + rw)).each do |x|
-          norm_x = (x - rx).to_f
-
-          # Layer 1: Distant mountains (slow scroll)
+        mountains = Slice(Float64).new(rw) do |i|
+          norm_x = i.to_f
           m_x = norm_x * 0.05 + t * 0.2
-          h_mountain = (rh * 0.45) + (FastMath.sin(m_x) * 0.6 + FastMath.sin(m_x * 2.3 + 1.2) * 0.3 + FastMath.sin(m_x * 5.1) * 0.1) * (rh * 0.25)
+          (rh * 0.45) + (FastMath.sin(m_x) * 0.6 + FastMath.sin(m_x * 2.3 + 1.2) * 0.3 + FastMath.sin(m_x * 5.1) * 0.1) * (rh * 0.25)
+        end
 
-          # Layer 2: Midground ridge (medium scroll)
+        ridges = Slice(Float64).new(rw) do |i|
+          norm_x = i.to_f
           r_x = norm_x * 0.08 + t * 0.6
-          h_ridge = (rh * 0.65) + (FastMath.sin(r_x) * 0.5 + FastMath.sin(r_x * 2.7 + 0.8) * 0.35 + FastMath.sin(r_x * 6.0) * 0.15) * (rh * 0.2)
+          (rh * 0.65) + (FastMath.sin(r_x) * 0.5 + FastMath.sin(r_x * 2.7 + 0.8) * 0.35 + FastMath.sin(r_x * 6.0) * 0.15) * (rh * 0.2)
+        end
 
-          # Layer 3: Foreground hills (fast scroll)
+        hills = Slice(Float64).new(rw) do |i|
+          norm_x = i.to_f
           f_x = norm_x * 0.12 + t * 1.4
-          h_fore = (rh * 0.82) + (FastMath.sin(f_x) * 0.4 + FastMath.sin(f_x * 3.1 + 2.0) * 0.4) * (rh * 0.12)
+          (rh * 0.82) + (FastMath.sin(f_x) * 0.4 + FastMath.sin(f_x * 3.1 + 2.0) * 0.4) * (rh * 0.12)
+        end
 
-          (ry...(ry + rh)).each do |y|
-            rel_y = (y - ry).to_f
+        (ry...(ry + rh)).each do |y|
+          rel_y = (y - ry).to_f
+          (rx...(rx + rw)).each do |x|
+            col_idx = x - rx
+            h_fore = hills[col_idx]
+            h_ridge = ridges[col_idx]
+            h_mountain = mountains[col_idx]
             cell = source.get(x, y)
 
             if rel_y >= h_fore

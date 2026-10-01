@@ -210,6 +210,30 @@ module Opal
       end
     end
 
+    # Writes foreground ANSI escape sequence directly to an IO without intermediate String allocations
+    def write_fg_escape(io : IO) : Nil
+      return if @type == Type::None || Color.no_color?
+
+      case @type
+      when Type::ANSI16
+        io << "\e["
+        @code.to_s(io)
+        io << 'm'
+      when Type::ANSI256
+        io << "\e[38;5;"
+        @code.to_s(io)
+        io << 'm'
+      when Type::RGB
+        io << "\e[38;2;"
+        @r.to_s(io)
+        io << ';'
+        @g.to_s(io)
+        io << ';'
+        @b.to_s(io)
+        io << 'm'
+      end
+    end
+
     # Emits the ANSI escape code for background
     def bg_escape : String
       return "" if @type == Type::None || Color.no_color?
@@ -225,6 +249,30 @@ module Opal
         "\e[48;2;#{@r};#{@g};#{@b}m"
       else
         ""
+      end
+    end
+
+    # Writes background ANSI escape sequence directly to an IO without intermediate String allocations
+    def write_bg_escape(io : IO) : Nil
+      return if @type == Type::None || Color.no_color?
+
+      case @type
+      when Type::ANSI16
+        io << "\e["
+        (@code + 10).to_s(io)
+        io << 'm'
+      when Type::ANSI256
+        io << "\e[48;5;"
+        @code.to_s(io)
+        io << 'm'
+      when Type::RGB
+        io << "\e[48;2;"
+        @r.to_s(io)
+        io << ';'
+        @g.to_s(io)
+        io << ';'
+        @b.to_s(io)
+        io << 'm'
       end
     end
 
