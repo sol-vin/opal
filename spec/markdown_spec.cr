@@ -70,7 +70,11 @@ describe "Opal Terminal Markdown Viewer" do
     buf.to_s.should contain("Fetching docs...")
 
     # Wait for fiber
-    sleep 100.milliseconds
+    100.times do
+      break if async_v.resolved?
+      Fiber.yield
+      sleep 10.milliseconds
+    end
     async_v.resolved?.should be_true
     buf.clear
     async_v.render(buf, 0, 0, 40, 10)

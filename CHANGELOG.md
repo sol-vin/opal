@@ -1,4 +1,67 @@
 # OPAL CHANGELOG
+## [0.1.54] - 2026-10-01
+### ✨ Features & Improvements
+- ✦ initial release of Opal TUI & CLI DSL framework (`f3df915`)
+- ✦ add 9 major UX innovations (forms, fuzzy search, dataviz, overlays, markdown, themes, command palette, osc, animation) (`2b4a07a`)
+- ✦ **[CLI,TEA]** add global option ordering, command categorization, typo suggestion, powershell completion, and diff-rendered TEA (`64b8da0`)
+- ✦ **[CLI]** add raw_args to Context for full token passthrough to subcommand delegates (`22f797a`)
+- ✦ **[UI]** add SplitView, CodeView, Tabs, HexViewer and enhanced Table with cursor and windowed scrolling (`ebfde31`)
+- ✦ **[DEMOS]** add live asciinema showcases and automated recorder/uploader toolchain (`11f5f72`)
+- ✦ **[UI]** add FileDialog, ColorPicker, ColorPicker3D, and Text Shaders (`54c32ad`)
+- ✦ **[DEMOS]** record 23-slide showcase asciicast via terminal puppeting and feature in README (`84f9c0b`)
+- ✦ **[UI]** add opaque window backgrounds, image to ascii engine, and demoscene shaders (`2a4ce55`)
+- ✦ **[TERMINAL]** enable Windows mouse support, optimize buffer memory stability, and enrich showcase demo (`d86900d`)
+- ✦ implement right-click drag/rotate and left-click raycast color picking in 3D color picker (`5631977`)
+- ✦ **[COLOR_PICKER]** implement mouse clicks and dragging for color choice bars and preset swatches in Slide 7 (`8062e3b`)
+- ✦ **[UI]** implement per-control input hooks, puppeting and UI Engine architecture (`fe8b1d1`)
+- ✦ **[ASCIICAST]** standardize asciicast feature as optional require 'opal/asciicast' (`0a1dae3`)
+- ✦ **[UI, GRAPHICS, SHADER, STYLE]** add advanced controls, 2D/3D primitives, multi-layer compositing, theme store & presets, optimize shaders, and purge emojis (`aa76242`)
+- ✦ **[THEME]** declarative theme DSL, character swaps, pattern borders, and deep overflow hardening (`44d56a2`)
+- ✦ Python Textual-inspired architecture, performance optimizations, and crash fixes (`81875fa`)
+- ✦ complete emoji purge, CP437 ascii enum, themed file dialogs, comprehensive mouse support, pipe-break protection, and 32-slide showcase cast (`791389c`)
+- ✦ **[UI]** add generic radare2 binary metrics chart component (`b6310c8`)
+- ✦ **[CLI]** add unix cli utilities, argument DSL, and component print mode (`4c29e42`)
+- ✦ Add terminal ResizeEvent, poll_event support, and diff_renderer screen clearing on resize (`ff11681`)
+- ✦ dual-mode DSL blending, asciicast VCR tape deck & playback, 34-slide showcase recording (`e04a54d`)
+- ✦ integrate sol-vin/carbon automated versioning, changelog orchestration, and pre-commit hook (`1f4a0b7`)
+- ✦ Scissor/Mask modes, 60Hz game loop & Pong, Gamepad, Mermaid/HTML viewers, 13-slide showcase overhaul with Code/Guide modals (`4afa966`)
+
+### 🐛 Bug Fixes
+- ✓ **[DEMOS]** eliminate asciicast screen flickering and preserve 24-bit ANSI colors (`f3c2b4a`)
+- ✓ **[UI]** handle wide character cells, eliminate 3d cube gaps, and update showcase cast (`7df7d6a`)
+- ✓ **[TEA]** eliminate screen flickering with DiffRenderer and update showcase asciicast (`a27ef41`)
+- ✓ **[UI]** resolve Windows PowerShell character leakage on slide transitions (`cc3a6c4`)
+- ✓ **[SHOWCASE]** fix spacebar recognition for Slide 10 donut chart toggle (`4459bda`)
+- ✓ **[UI]** replace remaining emoji icons and headers with ASCII symbols (`cb42a19`)
+- ✓ **[TERMINAL]** declare LibC::Pollfd, POLLIN, and poll in PosixDriver for Linux/macOS, and format codebase (`b7192ea`)
+- ✓ **[TERMINAL]** use ULong instead of LibC::ULong inside LibC block for Linux poll (`ba2c498`)
+- ✓ **[TERMINAL]** use UInt64 for Linux poll nfds parameter (`799f84a`)
+- ✓ **[TERMINAL]** unify PollFD struct and poll signature with LibC::SizeT (`6c56cd8`)
+- ✓ **[TERMINAL]** use primitive types for PollFD and poll in LibC (`158d027`)
+- ✓ **[POSIX]** use 1_u64 for poll nfds instead of LibC::SizeT (`e783f69`)
+- ✓ **[POSIX]** alias poll function to opal_poll to avoid C binding collisions (`71c19dd`)
+- ✓ **[POSIX]** use Void* for fds pointer in poll signature (`7cee091`)
+
+### 📚 Documentation
+- 📖 update showcase asciicast badge to latest recording (`17fd5a0`)
+- 📖 **[CHANGELOG]** synchronize and detail entries in CHANGELOG.md (`2ef130f`)
+
+### 🛠️ Chores & Tooling
+- • enforce LF line endings and scope format check to ubuntu (`f16c5de`)
+- • add GitHub Actions workflow to build and deploy docs to GitHub Pages (`d3949de`)
+- • **[BUFFER]** add render_to_string with ANSI escape support (`2bdd487`)
+- • add allow_unknown_options and on_help custom handler to Command and App (`f8d8d6e`)
+- • pass Context to Command#on_help handler (`7722348`)
+- • **[APP]** call help_handler with nil in help subcommand (`841abba`)
+- • **[TREE]** add Tree#add(label, color, icon) overload returning TreeNode (`b9a28b4`)
+- • format codebase with crystal tool format (`8d1e349`)
+- • add apt-get update step before installing crystal on ubuntu runners (`827cf2e`)
+- • fix code formatting and add examples 10-12 to compilation checks (`4361c76`)
+- • format src/opal/asciicast.cr (`aedd598`)
+- • format codebase with crystal tool format (`d952468`)
+- • apply crystal tool format across codebase (`d1bd78b`)
+
+---
 ## [0.1.53] - 2026-10-01
 ### ✨ Features & Improvements
 - ✦ initial release of Opal TUI & CLI DSL framework (`f3df915`)
