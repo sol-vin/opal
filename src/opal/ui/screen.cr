@@ -19,6 +19,20 @@ module Opal
         super()
       end
 
+      def self.new(name : String, title : String? = nil, &)
+        sub = Builder.new
+        with sub yield sub
+        new(name, title, root: sub.root)
+      end
+
+      # Declaratively composes or re-composes the screen root element
+      def compose(&) : self
+        sub = Builder.new
+        with sub yield sub
+        @root = sub.root
+        self
+      end
+
       # Called when the screen is pushed onto the active screen stack
       def on_mount : Nil
         @mounted = true
@@ -87,6 +101,17 @@ module Opal
         @dim_backdrop : Bool = true,
       )
         super(name, title, root)
+      end
+
+      def self.new(
+        name : String = "modal",
+        title : String? = nil,
+        dim_backdrop : Bool = true,
+        &
+      )
+        sub = Builder.new
+        with sub yield sub
+        new(name: name, title: title, root: sub.root, dim_backdrop: dim_backdrop)
       end
 
       # Dismisses the modal screen and passes result to completion callback

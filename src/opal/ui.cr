@@ -62,7 +62,7 @@ require "./ui/dsl"
 
 module Opal
   # Convenience shortcut to render a declarative UI tree
-  def self.render_ui(width : Int32 = 80, height : Int32 = 24, &block : UI::Builder -> Nil) : String
-    UI.render(width, height, &block)
+  def self.render_ui(width : Int32 = 80, height : Int32 = 24, &) : String
+    UI.render(width, height) { |b| with b yield b }
   end
 end

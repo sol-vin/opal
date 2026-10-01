@@ -1,4 +1,5 @@
 require "../src/opal"
+require "../src/opal/asciicast"
 
 # =============================================================================
 # [*] OPAL FULL-FEATURED TUI SHOWCASE & INTERACTIVE DEMO APP
@@ -2749,7 +2750,492 @@ class TextualControlsSlide < ShowcaseSlide
 end
 
 # -----------------------------------------------------------------------------
-# Slide 32: Grand Finale & Conclusion (Markdown Summary)
+# Slide 32: Declarative UI & Dual-Mode DSL Blending (Interactive App)
+# -----------------------------------------------------------------------------
+class DslBlendingSlide < ShowcaseSlide
+  property mode : Int32 = 1 # 1: Implicit, 2: Explicit, 3: OOP Blending
+
+  def title : String
+    "Declarative UI & Dual-Mode DSL Blending"
+  end
+
+  def category : String
+    "Developer UX & Layout DSL"
+  end
+
+  def hints : String
+    "[1] Implicit Block   [2] Explicit Receiver   [3] OOP Blending (add/<<)   [Space] Cycle Modes"
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "1"
+      @mode = 1
+      true
+    when "2"
+      @mode = 2
+      true
+    when "3"
+      @mode = 3
+      true
+    when "space", " ", "right", "down", "tab"
+      @mode = (@mode % 3) + 1
+      true
+    when "left", "up"
+      @mode = (@mode == 1 ? 3 : @mode - 1)
+      true
+    else
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    if event.action.press?
+      @mode = (@mode % 3) + 1
+      return true
+    end
+    false
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    return if w < 30 || h < 10
+
+    theme = Opal::Theme.current
+
+    # Top Mode Selector Bar
+    buffer.put_string(x + 2, y, "MODE: ", fg: theme.text_muted, bold: true)
+
+    t1 = " [1] Implicit Block DSL "
+    t2 = " [2] Explicit Receiver DSL "
+    t3 = " [3] OOP Blending (add/<<) "
+
+    cx = x + 8
+    # Tab 1
+    if @mode == 1
+      buffer.put_string(cx, y, t1, fg: Opal::Color.black, bg: theme.accent, bold: true)
+    else
+      buffer.put_string(cx, y, t1, fg: theme.text_muted)
+    end
+    cx += t1.size + 1
+
+    # Tab 2
+    if @mode == 2
+      buffer.put_string(cx, y, t2, fg: Opal::Color.black, bg: theme.accent, bold: true)
+    else
+      buffer.put_string(cx, y, t2, fg: theme.text_muted)
+    end
+    cx += t2.size + 1
+
+    # Tab 3
+    if @mode == 3
+      buffer.put_string(cx, y, t3, fg: Opal::Color.black, bg: theme.accent, bold: true)
+    else
+      buffer.put_string(cx, y, t3, fg: theme.text_muted)
+    end
+
+    # Content layout: 2 columns
+    content_y = y + 2
+    content_h = Math.max(0, h - 3)
+    col_w = (w - 3) // 2
+    left_x = x + 1
+    right_x = left_x + col_w + 1
+    right_w = Math.max(10, (x + w) - right_x - 1)
+
+    # Left Column: Crystal Code Snippet
+    code_box = Opal::UI::Box.new(border: :rounded, title: "Crystal DSL Code Pattern", border_fg: theme.border, title_fg: theme.primary)
+    code_box.render(buffer, left_x, content_y, col_w, content_h)
+
+    # Right Column: Live Rendered Output
+    out_box = Opal::UI::Box.new(border: :rounded, title: "Live Rendered Widget Output", border_fg: theme.border, title_fg: theme.success)
+    out_box.render(buffer, right_x, content_y, right_w, content_h)
+
+    # Draw Code & Widget based on mode
+    case @mode
+    when 1
+      render_mode_implicit(buffer, left_x + 2, content_y + 1, col_w - 4, right_x + 2, content_y + 1, right_w - 4, content_h - 2)
+    when 2
+      render_mode_explicit(buffer, left_x + 2, content_y + 1, col_w - 4, right_x + 2, content_y + 1, right_w - 4, content_h - 2)
+    when 3
+      render_mode_oop(buffer, left_x + 2, content_y + 1, col_w - 4, right_x + 2, content_y + 1, right_w - 4, content_h - 2)
+    end
+  end
+
+  private def render_mode_implicit(buffer : Opal::UI::Buffer, lx : Int32, ly : Int32, lw : Int32, rx : Int32, ry : Int32, rw : Int32, rh : Int32) : Nil
+    theme = Opal::Theme.current
+    lines = [
+      {"# 1. Zero-parameter block (receiver auto-bound)", theme.text_muted},
+      {"Opal.box(title: \"Dashboard\", border: :rounded) do", Opal::Color.bright_yellow},
+      {"  vstack do", Opal::Color.cyan},
+      {"    badge \"DEPLOYED\", fg: Color.black, bg: Color.green", Opal::Color.white},
+      {"    text \"Active Nodes: 12 / 12\", fg: Color.bright_white", Opal::Color.white},
+      {"    gauge 0.85, label: \"Active 85%\"", Opal::Color.white},
+      {"    hstack do", Opal::Color.cyan},
+      {"      button \"Restart\", style: :warning", Opal::Color.white},
+      {"      button \"Scale Up\", style: :primary", Opal::Color.white},
+      {"    end", Opal::Color.cyan},
+      {"  end", Opal::Color.cyan},
+      {"end", Opal::Color.bright_yellow},
+      {"", theme.text_muted},
+      {"// Under the hood: `with builder yield builder`", theme.accent},
+      {"// executes methods directly in builder context!", theme.text_muted},
+    ]
+
+    lines.each_with_index do |(line, color), idx|
+      break if idx >= rh
+      buffer.put_string(lx, ly + idx, line, fg: color, max_width: lw)
+    end
+
+    widget = Opal::UI::Box.new(title: "Dashboard", border: :rounded) do
+      vstack do
+        badge "DEPLOYED", fg: Opal::Color.black, bg: Opal::Color.bright_green
+        text "Active Nodes: 12 / 12", fg: Opal::Color.bright_white
+        gauge 0.85, label: "Active 85%"
+        hstack do
+          button "Restart", style: :warning
+          button "Scale Up", style: :primary
+        end
+      end
+    end
+    widget.render(buffer, rx, ry, rw, Math.min(rh, 9))
+
+    note_y = ry + 10
+    if note_y < ry + rh
+      buffer.put_string(rx, note_y, "[INFO] Zero boilerplate. No receiver prefixes required.", fg: theme.accent, bold: true)
+      buffer.put_string(rx, note_y + 1, "Natural nesting mirrors terminal DOM hierarchy.", fg: theme.text_muted)
+    end
+  end
+
+  private def render_mode_explicit(buffer : Opal::UI::Buffer, lx : Int32, ly : Int32, lw : Int32, rx : Int32, ry : Int32, rw : Int32, rh : Int32) : Nil
+    theme = Opal::Theme.current
+    lines = [
+      {"# 2. Explicit receiver block (avoids self shadow)", theme.text_muted},
+      {"Opal.box(title: \"Explicit Receiver\", border: :rounded) do |b|", Opal::Color.bright_yellow},
+      {"  b.vstack do |v|", Opal::Color.cyan},
+      {"    v.badge \"ISOLATED\", fg: Color.black, bg: Color.cyan", Opal::Color.white},
+      {"    v.text \"Outer class methods remain accessible!\", fg: Color.white", Opal::Color.white},
+      {"    v.gauge 0.60, label: \"Storage 60%\"", Opal::Color.white},
+      {"    v.hstack do |h|", Opal::Color.cyan},
+      {"      h.button \"Profile\", style: :default", Opal::Color.white},
+      {"      h.button \"Inspect\", style: :success", Opal::Color.white},
+      {"    end", Opal::Color.cyan},
+      {"  end", Opal::Color.cyan},
+      {"end", Opal::Color.bright_yellow},
+      {"", theme.text_muted},
+      {"// Both implicit and explicit blocks are supported", theme.accent},
+      {"// concurrently on every container and component!", theme.text_muted},
+    ]
+
+    lines.each_with_index do |(line, color), idx|
+      break if idx >= rh
+      buffer.put_string(lx, ly + idx, line, fg: color, max_width: lw)
+    end
+
+    widget = Opal::UI::Box.new(title: "Explicit Receiver", border: :rounded) do |b|
+      b.vstack do |v|
+        v.badge "ISOLATED", fg: Opal::Color.black, bg: Opal::Color.bright_cyan
+        v.text "Outer class methods remain accessible!", fg: Opal::Color.white
+        v.gauge 0.60, label: "Storage 60%"
+        v.hstack do |h|
+          h.button "Profile", style: :default
+          h.button "Inspect", style: :success
+        end
+      end
+    end
+    widget.render(buffer, rx, ry, rw, Math.min(rh, 9))
+
+    note_y = ry + 10
+    if note_y < ry + rh
+      buffer.put_string(rx, note_y, "[INFO] Explicit receivers preserve caller scope (`self`).", fg: theme.accent, bold: true)
+      buffer.put_string(rx, note_y + 1, "Ideal when referencing model instance methods/properties.", fg: theme.text_muted)
+    end
+  end
+
+  private def render_mode_oop(buffer : Opal::UI::Buffer, lx : Int32, ly : Int32, lw : Int32, rx : Int32, ry : Int32, rw : Int32, rh : Int32) : Nil
+    theme = Opal::Theme.current
+    lines = [
+      {"# 3. Hybrid OOP Blending with `add` and `<<`", theme.text_muted},
+      {"box = Opal::UI::Box.new(title: \"Hybrid OOP\", border: :rounded) do", Opal::Color.bright_yellow},
+      {"  badge \"HYBRID\", fg: Color.white, bg: Color.magenta", Opal::Color.white},
+      {"  text \"DSL + Object instance composition\"", Opal::Color.white},
+      {"end", Opal::Color.bright_yellow},
+      {"", theme.text_muted},
+      {"# Direct child object composition:", theme.accent},
+      {"btn = Opal::UI::Button.new(\"OOP Button\", variant: :danger)", Opal::Color.white},
+      {"box.add btn", Opal::Color.bright_cyan},
+      {"", theme.text_muted},
+      {"# Shovel operator composition:", theme.accent},
+      {"box << Opal::UI::Gauge.new(0.95, label: \"Memory 95%\")", Opal::Color.bright_cyan},
+    ]
+
+    lines.each_with_index do |(line, color), idx|
+      break if idx >= rh
+      buffer.put_string(lx, ly + idx, line, fg: color, max_width: lw)
+    end
+
+    widget = Opal::UI::Box.new(title: "Hybrid OOP", border: :rounded) do
+      badge "HYBRID", fg: Opal::Color.white, bg: Opal::Color.magenta
+      text "DSL + Object instance composition", fg: Opal::Color.white
+    end
+    btn = Opal::UI::Button.new("OOP Button", variant: :danger)
+    prog = Opal::UI::Gauge.new(0.95, label: "Memory 95%")
+    widget.add btn
+    widget << prog
+
+    widget.render(buffer, rx, ry, rw, Math.min(rh, 9))
+
+    note_y = ry + 10
+    if note_y < ry + rh
+      buffer.put_string(rx, note_y, "[INFO] Seamless interoperability between DSL and OOP.", fg: theme.accent, bold: true)
+      buffer.put_string(rx, note_y + 1, "Any existing UI::Element can be appended directly via `add` or `<<`.", fg: theme.text_muted)
+    end
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 33: Asciinema VCR Tape Deck & Playback Engine (Interactive App)
+# -----------------------------------------------------------------------------
+class VcrTapeDeckSlide < ShowcaseSlide
+  enum VcrState
+    Stopped
+    Recording
+    Paused
+    Playing
+  end
+
+  property vcr_state : VcrState = VcrState::Playing
+  property frame_idx : Int32 = 0
+  property total_frames : Int32 = 12
+  property respect_overlays : Bool = true
+  property tick_counter : Int32 = 0
+  property sample_tape : Array(Opal::UI::Buffer)
+
+  REELS = ["◴", "◷", "◶", "◵"]
+
+  def initialize
+    @sample_tape = [] of Opal::UI::Buffer
+    # Pre-generate 12 distinct animated frames for the tape deck
+    12.times do |f|
+      buf = Opal::UI::Buffer.new(34, 10)
+      buf.fill(0, 0, 34, 10, ' ')
+      buf.put_string(1, 1, "SIGNAL: [CH-0#{f % 4 + 1}] 44.1kHz", fg: Opal::Color.bright_black)
+
+      wave_chars = ["_", "-", "~", "^", "'", "^", "~", "-", "_"]
+      (1..32).each do |wx|
+        val = ((Math.sin((wx + f * 3) * 0.4) + 1.0) * 2.5).to_i.clamp(0, 5)
+        wy = 7 - val
+        ch = wave_chars[(wx + f) % wave_chars.size]
+        col = (f % 2 == 0) ? Opal::Color.bright_green : Opal::Color.bright_cyan
+        buf.set(wx, wy, Opal::UI::Cell.new(ch[0], fg: col))
+      end
+
+      pct = ((f + 1) * 8.3).to_i.clamp(0, 100)
+      bar_len = (pct * 20) // 100
+      buf.put_string(1, 8, "SPECT: [", fg: Opal::Color.white)
+      buf.put_string(9, 8, "=" * bar_len, fg: Opal::Color.yellow)
+      buf.put_string(9 + bar_len, 8, " " * (20 - bar_len), fg: Opal::Color.black)
+      buf.put_string(29, 8, "]", fg: Opal::Color.white)
+      buf.put_string(1, 9, "FRAME ##{f + 1} / 12  SYNC: OK", fg: Opal::Color.bright_black)
+
+      @sample_tape << buf
+    end
+  end
+
+  def title : String
+    "Asciinema VCR Tape Deck & Playback Engine"
+  end
+
+  def category : String
+    "Direct Buffer Recording"
+  end
+
+  def hints : String
+    "[R] Record  [P] Pause  [S] Stop  [Space] Capture  [N] Next  [B] Prev  [0] Rewind  [O] Overlays"
+  end
+
+  def tick : Nil
+    @tick_counter += 1
+    if @vcr_state == VcrState::Playing
+      if @tick_counter % 3 == 0
+        @frame_idx = (@frame_idx + 1) % @sample_tape.size
+      end
+    elsif @vcr_state == VcrState::Recording
+      if @tick_counter % 4 == 0
+        capture_frame
+      end
+    end
+  end
+
+  def capture_frame : Nil
+    new_buf = Opal::UI::Buffer.new(34, 10)
+    new_buf.fill(0, 0, 34, 10, ' ')
+    f = @sample_tape.size
+    new_buf.put_string(1, 1, "REC LIVE: [PKT ##{f + 1}]", fg: Opal::Color.bright_red, bold: true)
+
+    (1..32).each do |wx|
+      val = ((Math.sin((wx + f * 5) * 0.5) + 1.0) * 2.5).to_i.clamp(0, 5)
+      wy = 7 - val
+      new_buf.set(wx, wy, Opal::UI::Cell.new('*', fg: Opal::Color.bright_yellow))
+    end
+    new_buf.put_string(1, 8, "CAPTURED AT T+#{(f * 0.05).round(2)}s", fg: Opal::Color.bright_white)
+    @sample_tape << new_buf
+    @frame_idx = @sample_tape.size - 1
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "r", "R"
+      @vcr_state = VcrState::Recording
+      true
+    when "p", "P"
+      @vcr_state = (@vcr_state == VcrState::Paused ? VcrState::Playing : VcrState::Paused)
+      true
+    when "s", "S"
+      @vcr_state = VcrState::Stopped
+      true
+    when "space", " "
+      capture_frame
+      true
+    when "n", "N", "right"
+      @vcr_state = VcrState::Stopped
+      @frame_idx = Math.min(@sample_tape.size - 1, @frame_idx + 1)
+      true
+    when "b", "B", "left"
+      @vcr_state = VcrState::Stopped
+      @frame_idx = Math.max(0, @frame_idx - 1)
+      true
+    when "0", "home"
+      @vcr_state = VcrState::Stopped
+      @frame_idx = 0
+      true
+    when "o", "O"
+      @respect_overlays = !@respect_overlays
+      true
+    else
+      false
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    if event.action.press?
+      @frame_idx = (@frame_idx + 1) % @sample_tape.size
+      return true
+    end
+    false
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    return if w < 30 || h < 10
+
+    theme = Opal::Theme.current
+    reel_icon = REELS[(@tick_counter // 2) % REELS.size]
+
+    # Split: Left Tape Deck Console (w*0.52), Right CRT Monitor (remaining)
+    left_w = Math.min(50, (w * 0.52).to_i)
+    right_x = x + left_w + 1
+    right_w = Math.max(20, (x + w) - right_x)
+    content_y = y + 1
+    content_h = Math.max(0, h - 2)
+
+    # 1. Left: VCR Tape Deck Console Box
+    deck_box = Opal::UI::Box.new(border: :rounded, title: "Opal VCR Deck [Model OPAL-9000]", border_fg: theme.border, title_fg: theme.primary)
+    deck_box.render(buffer, x, content_y, left_w, content_h)
+
+    # Transport Status indicator
+    cur_y = content_y + 1
+    buffer.put_string(x + 2, cur_y, "STATUS: ", fg: theme.text_muted, bold: true)
+    case @vcr_state
+    when VcrState::Recording
+      buffer.put_string(x + 10, cur_y, "[● REC] LIVE CAPTURE", fg: Opal::Color.bright_white, bg: Opal::Color.bright_red, bold: true)
+    when VcrState::Playing
+      buffer.put_string(x + 10, cur_y, "[▶ PLAY] 60 FPS", fg: Opal::Color.black, bg: Opal::Color.bright_green, bold: true)
+    when VcrState::Paused
+      buffer.put_string(x + 10, cur_y, "[❚❚ PAUSED] HOLD", fg: Opal::Color.black, bg: Opal::Color.yellow, bold: true)
+    when VcrState::Stopped
+      buffer.put_string(x + 10, cur_y, "[■ STOPPED] READY", fg: Opal::Color.bright_white, bg: Opal::Color.bright_black)
+    end
+
+    # Animated Cassette Tape Reels
+    cur_y += 2
+    cassette_bar = (left_w - 24) > 4 ? "═" * ((left_w - 24) // 2) : "═══"
+    tape_active = (@vcr_state == VcrState::Recording || @vcr_state == VcrState::Playing)
+    r_left = tape_active ? reel_icon : "◴"
+    r_right = tape_active ? reel_icon : "◴"
+    tape_str = "(#{r_left}#{cassette_bar}[ TAPE CASSETTE ]#{cassette_bar}#{r_right})"
+    buffer.put_string(x + 2, cur_y, tape_str, fg: tape_active ? Opal::Color.bright_cyan : Opal::Color.bright_black, bold: true)
+
+    # VU Level Meters
+    cur_y += 2
+    vu_l = ((Math.sin(@tick_counter * 0.3) + 1.0) * 8).to_i.clamp(2, 16)
+    vu_r = ((Math.cos(@tick_counter * 0.25) + 1.0) * 8).to_i.clamp(2, 16)
+    buffer.put_string(x + 2, cur_y, "CH-L: [", fg: Opal::Color.white)
+    buffer.put_string(x + 9, cur_y, "█" * vu_l, fg: vu_l > 12 ? Opal::Color.bright_red : Opal::Color.bright_green)
+    buffer.put_string(x + 9 + vu_l, cur_y, "░" * (16 - vu_l), fg: Opal::Color.bright_black)
+    buffer.put_string(x + 26, cur_y, "] -#{18 - vu_l} dB", fg: theme.text_muted)
+
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "CH-R: [", fg: Opal::Color.white)
+    buffer.put_string(x + 9, cur_y, "█" * vu_r, fg: vu_r > 12 ? Opal::Color.bright_red : Opal::Color.bright_green)
+    buffer.put_string(x + 9 + vu_r, cur_y, "░" * (16 - vu_r), fg: Opal::Color.bright_black)
+    buffer.put_string(x + 26, cur_y, "] -#{18 - vu_r} dB", fg: theme.text_muted)
+
+    # Timecode & Frame Telemetry
+    cur_y += 2
+    seconds = (@frame_idx * 0.05)
+    tc_str = sprintf("TC: 00:00:%05.2f │ FR: %02d/%02d", seconds, @frame_idx + 1, @sample_tape.size)
+    buffer.put_string(x + 2, cur_y, tc_str, fg: Opal::Color.bright_yellow, bold: true)
+
+    cur_y += 1
+    overlay_badge = @respect_overlays ? "[ON] (Respects Target)" : "[OFF] (Overwrite)"
+    buffer.put_string(x + 2, cur_y, "Compositing Overlays: ", fg: theme.text_muted)
+    buffer.put_string(x + 24, cur_y, overlay_badge, fg: @respect_overlays ? Opal::Color.bright_green : Opal::Color.bright_red, bold: true)
+
+    # Tactile Transport Key Guide
+    cur_y += 2
+    buffer.put_string(x + 2, cur_y, "Transport Controls:", fg: theme.accent, bold: true)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "[R] Rec   [P] Pause   [S] Stop   [Space] Capture", fg: Opal::Color.white)
+    cur_y += 1
+    buffer.put_string(x + 2, cur_y, "[N] Next  [B] Prev    [0] Rewind [O] Overlays", fg: Opal::Color.white)
+
+    # 2. Right: CRT Playback Monitor Box
+    mon_box = Opal::UI::Box.new(border: :rounded, title: "CRT Monitor & Direct Buffer Playback", border_fg: theme.border, title_fg: theme.success)
+    mon_box.render(buffer, right_x, content_y, right_w, content_h)
+
+    # Blit Current Tape Frame into Monitor
+    frame_buf = @sample_tape[@frame_idx]? || @sample_tape.first
+    blit_w = Math.min(frame_buf.width, right_w - 4)
+    blit_h = Math.min(frame_buf.height, content_h - 4)
+    mon_canvas_x = right_x + 2
+    mon_canvas_y = content_y + 1
+
+    # If respect_overlays is ON, draw a persistent HUD overlay FIRST, then composite tape!
+    if @respect_overlays
+      buffer.put_string(mon_canvas_x + blit_w - 12, mon_canvas_y, "[HUD: ACTIVE]", fg: Opal::Color.bright_magenta, bold: true)
+      buffer.put_string(mon_canvas_x, mon_canvas_y + blit_h - 1, "+ TARGET OVERLAY LAYER +", fg: Opal::Color.bright_cyan)
+    end
+
+    # Blit cells respecting overlays:
+    (0...blit_h).each do |sy|
+      (0...blit_w).each do |sx|
+        cell = frame_buf.get(sx, sy)
+        if @respect_overlays
+          # Only blit if source cell is not empty/transparent space
+          next if cell.char == ' ' && cell.bg == Opal::Color.none
+        end
+        buffer.set(mon_canvas_x + sx, mon_canvas_y + sy, cell)
+      end
+    end
+
+    # Persistent CRT Corner markings
+    buffer.put_string(mon_canvas_x, mon_canvas_y, "┌", fg: Opal::Color.bright_black)
+    buffer.put_string(mon_canvas_x + blit_w - 1, mon_canvas_y, "┐", fg: Opal::Color.bright_black)
+    buffer.put_string(mon_canvas_x, mon_canvas_y + blit_h - 1, "└", fg: Opal::Color.bright_black)
+    buffer.put_string(mon_canvas_x + blit_w - 1, mon_canvas_y + blit_h - 1, "┘", fg: Opal::Color.bright_black)
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Slide 34: Grand Finale & Conclusion (Markdown Summary)
 # -----------------------------------------------------------------------------
 class FinaleSlide < ShowcaseSlide
   getter viewer : Opal::UI::MarkdownViewer
@@ -2779,6 +3265,8 @@ class FinaleSlide < ShowcaseSlide
     - [OK] **Modals, Toasts, Command Palette & Autocomplete**
     - [OK] **OSC 8 Hyperlinks & OSC 52 Desktop Clipboard**
     - [OK] **The Elm Architecture (TEA) Reactive Engine**
+    - [OK] **Declarative UI & Dual-Mode DSL Blending** (Implicit blocks, explicit receivers, OOP add/<<)
+    - [OK] **Asciinema VCR Tape Deck & Playback Engine** (Direct buffer capture, frame stepping, overlay compositing)
 
     ### >> Getting Started
     Add Opal to your `shard.yml`:
@@ -2862,6 +3350,8 @@ class ShowcaseAppModel
       WindowingSlide.new,
       ThemeStoreSlide.new,
       TextualControlsSlide.new,
+      DslBlendingSlide.new,
+      VcrTapeDeckSlide.new,
       FinaleSlide.new,
     ]
   end

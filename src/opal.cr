@@ -16,6 +16,11 @@ require "./opal/async/worker"
 # Unifies The Elm Architecture (Bubbletea), Declarative Layout (Ink),
 # and Low-Level Double-Buffered Terminal Diffing (Blessed).
 module Opal
+  # Top-level DSL mixin allowing any class or namespace to write Opal DSL directly
+  module DSL
+    include UI::DSL
+  end
+
   # Creates a clickable OSC 8 hyperlink for modern terminals.
   def self.hyperlink(text : String, url : String, id : String? = nil) : String
     Terminal::OSC.hyperlink(text, url, id)

@@ -27,15 +27,19 @@ Opal's asciicast subsystem provides first-class support for creating, parsing, a
 To keep the core Opal framework ultra-lightweight and free of JSON or HTTP overhead when building standard CLI tools and TUIs, the asciicast subsystem is packaged as an **optional require**:
 
 ```crystal
-require "opal"            # Standard Opal framework
-require "opal/asciicast"  # Opt into Asciinema v2 recording & parsing
+require "opal"                      # Standard Opal framework
+require "opal/asciicast"            # Opt into Asciinema v2 recording & parsing
+require "opal/asciicast/asciinema"  # Opt into VCR tape deck & playback engine
 ```
 
-When required, `opal/asciicast` equips applications with:
-1. **`Opal::Asciicast::Writer`**: High-level recording engine that converts `UI::Buffer` frames, simulated typing cadence, and screen manipulation into timed ANSI events.
-2. **`Opal::Asciicast::Reader`**: Parser reading `.cast` files or streams into structured `Recording` objects with duration, outputs, and event filtering.
-3. **`Opal::Asciicast::Driver`**: Headless `Terminal::Driver` that records live application writes directly into an asciicast stream, allowing any `Opal.form`, `Opal::TEA::Program`, prompt, or interactive UI to be recorded headlessly.
-4. **`Opal::Asciicast::Uploader`**: Client for publishing `.cast` recordings to Asciinema.org and generating embeddable SVG markdown badges.
+When required, `opal/asciicast` and `opal/asciicast/asciinema` equip applications with:
+1. **`Opal::Asciicast::ScreenRecorder`**: Direct `UI::Buffer` screen recorder capturing pixel-perfect frames without flicker or terminal diff artifacts.
+2. **`Opal::Asciicast::PlaybackEngine`**: In-memory ANSI buffer reconstructor with frame-by-frame navigation, seeking, timeline stepping, and overlay compositing.
+3. **`Opal::VCR` (`Opal::Asciicast::VCR`)**: Tactile VCR tape deck providing `record`, `pause`, `resume`, `stop`, `save`, `wait_frames`, `skip_frames`, `hold`, and frame-by-frame playback (`next_frame`, `prev_frame`, `goto_frame`, `seek`, `rewind`). Both singleton and multi-deck instanced modes (`VCR.new`) are supported.
+4. **`Opal::Asciicast::Writer`**: High-level recording engine that converts `UI::Buffer` frames, simulated typing cadence, and screen manipulation into timed ANSI events.
+5. **`Opal::Asciicast::Reader`**: Parser reading `.cast` files or streams into structured `Recording` objects with duration, outputs, and event filtering.
+6. **`Opal::Asciicast::Driver`**: Headless `Terminal::Driver` that records live application writes directly into an asciicast stream, allowing any `Opal.form`, `Opal::TEA::Program`, prompt, or interactive UI to be recorded headlessly.
+7. **`Opal::Asciicast::Uploader`**: Client for publishing `.cast` recordings to Asciinema.org and generating embeddable SVG markdown badges.
 
 ---
 
@@ -308,7 +312,116 @@ puts "Markdown: [![asciicast](#{result.svg_url})](#{result.cast_url})"
 
 ---
 
+### Example 5: Direct Screen Buffer Recording (`ScreenRecorder`)
+
+Capture terminal buffer snapshots directly from any running application without flicker:
+
+```crystal
+require "opal"
+require "opal/asciicast"
+
+recorder = Opal::Asciicast::ScreenRecorder.new("session.cast", width: 80, height: 24)
+recorder.start
+
+# Render any UI component tree into an in-memory buffer
+buffer = Opal::UI::Buffer.new(80, 24)
+tree = Opal::UI.build do
+  box(title: "Direct Buffer") { text "No flicker recording" }
+end
+tree.render(buffer, 0, 0, 80, 24)
+
+# Record the exact buffer frame
+recorder.capture_frame(buffer, advance: 0.1)
+
+# Pace recording
+recorder.wait_frames(3, delay_per_frame: 0.05)
+recorder.hold(1.0) # hold final frame for 1 second
+
+recorder.stop
+recorder.save
+```
+
+---
+
+### Example 6: Tactile VCR Cassette Recording & Playback (`Opal::VCR`)
+
+```crystal
+require "opal"
+require "opal/asciicast/asciinema"
+
+# 1. Block recording with automatic pacing & save on exit
+Opal::VCR.record("demo.cast", width: 80, height: 24, title: "VCR Demo") do |vcr|
+  # Capture initial frame
+  vcr.capture(buffer1, advance: 0.1)
+
+  # Frame skipping and pacing
+  vcr.wait_frames(5, delay_per_frame: 0.04)
+
+  # Pause recording temporarily
+  vcr.pause
+  # ... perform private setup not meant to be recorded ...
+  vcr.resume
+
+  vcr.capture(buffer2, advance: 0.1)
+  vcr.hold(1.5) # Freeze frame for 1.5 seconds
+end
+
+# 2. Frame-by-frame stepping and inspection
+vcr = Opal::VCR.new
+vcr.load("demo.cast")
+
+puts "Total frames: #{vcr.total_frames}"
+puts "Duration: #{vcr.duration}s"
+
+# Step through timeline
+frame1 = vcr.next_frame
+frame2 = vcr.next_frame
+prev   = vcr.prev_frame
+start  = vcr.rewind
+seek   = vcr.seek(1.2) # seek to 1.2 seconds
+
+# Composite frame into an existing buffer while respecting overlays
+target_buf = Opal::UI::Buffer.new(100, 30)
+vcr.render_frame(target_buf, x: 2, y: 1, respect_overlays: true)
+```
+
+---
+
 ## [DOC] API Reference
+
+### `Opal::VCR` (`Opal::Asciicast::VCR`)
+
+- `self.record(path, width = 80, height = 24, title = "Opal Session", &block) : VCR`: Scoped recording block with auto-save.
+- `self.record(path, width = 80, height = 24, title = "Opal Session") : VCR`: Non-block imperative recording.
+- `self.capture(buffer : UI::Buffer, advance : Float64? = nil) : Bool`: Captures buffer snapshot.
+- `self.wait_frames(count = 1, delay_per_frame = 0.05) : VCR`: Advances timeline by N frames.
+- `self.skip_frames(count : Int32) : VCR`: Discards next N frame captures.
+- `self.hold(seconds : Float64) : VCR`: Freezes current frame in playback.
+- `self.pause : VCR` / `self.resume : VCR`: Pauses/resumes recording.
+- `self.stop : VCR` / `self.save(path = nil) : Nil`: Terminates and writes cast file.
+- `self.load(path_or_content : String) : VCR`: Loads cast for playback.
+- `self.next_frame : PlaybackFrame` / `self.prev_frame : PlaybackFrame`: Step frame-by-frame.
+- `self.goto_frame(index : Int32) : PlaybackFrame`: Jump to specific frame index.
+- `self.seek(seconds : Float64) : PlaybackFrame`: Seek timeline by timestamp.
+- `self.rewind : PlaybackFrame`: Return to frame 0.
+- `self.render_frame(target, x = 0, y = 0, respect_overlays = false)`: Composite frame with overlay preservation.
+- `VCR.new`: Instantiate isolated, independent cassette decks for concurrent recording/playback.
+
+### `Opal::Asciicast::ScreenRecorder`
+
+- `start : self` / `stop : self`: Controls recording state.
+- `capture_frame(buffer : UI::Buffer, advance : Float64? = nil) : Bool`: Records raw screen buffer.
+- `wait_frames(count, delay)` / `skip_frames(count)` / `hold(seconds)`: Frame pacing and skipping.
+- `pause` / `resume`: Temporary pause without stopping session.
+- `save(path = nil)`: Writes `.cast` file.
+
+### `Opal::Asciicast::PlaybackEngine`
+
+- `load(path_or_content : String)`: Reads and parses asciicast timeline into terminal buffer frames.
+- `frames : Array(PlaybackFrame)`: All reconstructed buffer frames.
+- `next_frame` / `prev_frame` / `goto_frame` / `seek` / `rewind`: Timeline navigation.
+- `render_frame(target : Buffer, x = 0, y = 0, respect_overlays = false)`: Buffer blitting.
+- `play(speed = 1.0, loop = false, &block)`: Real-time playback loop.
 
 ### `Opal::Asciicast`
 
@@ -336,3 +449,4 @@ puts "Markdown: [![asciicast](#{result.svg_url})](#{result.cast_url})"
 - `inputs : Array(Event)`: Subset of events with type `"i"`.
 - `markers : Array(Event)`: Subset of events with type `"m"`.
 - `total_output_text : String`: Concatenated output text.
+

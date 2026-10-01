@@ -2,9 +2,9 @@ require "./spec_helper"
 require "../examples/10_opal_tui_showcase"
 
 describe ShowcaseAppModel do
-  it "initializes with 32 slides" do
+  it "initializes with 34 slides" do
     app = ShowcaseAppModel.new
-    app.slides.size.should eq(32)
+    app.slides.size.should eq(34)
     app.current_idx.should eq(0)
   end
 
@@ -24,7 +24,7 @@ describe ShowcaseAppModel do
     app = ShowcaseAppModel.new
     shift_right_msg = Opal::TEA::KeyMsg.new("right", shift: true)
 
-    32.times do |step|
+    34.times do |step|
       app.current_idx.should eq(step)
       app.update(shift_right_msg)
     end
@@ -52,9 +52,47 @@ describe ShowcaseAppModel do
     app = ShowcaseAppModel.new
     view_out = app.view
     view_out.should contain("OPAL TUI SHOWCASE")
-    view_out.should contain("Slide 1/32")
+    view_out.should contain("Slide 1/34")
     view_out.should contain("Next")
     view_out.should contain("Quit")
+  end
+
+  it "cycles modes on Slide 32 (DslBlendingSlide)" do
+    app = ShowcaseAppModel.new
+    slide = app.slides[31].as(DslBlendingSlide)
+    slide.mode.should eq(1)
+
+    slide.handle_key(Opal::Terminal::KeyEvent.new("2", '2'))
+    slide.mode.should eq(2)
+
+    slide.handle_key(Opal::Terminal::KeyEvent.new("3", '3'))
+    slide.mode.should eq(3)
+
+    slide.handle_key(Opal::Terminal::KeyEvent.new("space", ' '))
+    slide.mode.should eq(1)
+  end
+
+  it "operates tape controls on Slide 33 (VcrTapeDeckSlide)" do
+    app = ShowcaseAppModel.new
+    slide = app.slides[32].as(VcrTapeDeckSlide)
+    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Playing)
+
+    # Pause
+    slide.handle_key(Opal::Terminal::KeyEvent.new("p", 'p'))
+    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Paused)
+
+    # Stop
+    slide.handle_key(Opal::Terminal::KeyEvent.new("s", 's'))
+    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Stopped)
+
+    # Record
+    slide.handle_key(Opal::Terminal::KeyEvent.new("r", 'r'))
+    slide.vcr_state.should eq(VcrTapeDeckSlide::VcrState::Recording)
+
+    # Toggle overlay
+    orig_overlay = slide.respect_overlays
+    slide.handle_key(Opal::Terminal::KeyEvent.new("o", 'o'))
+    slide.respect_overlays.should eq(!orig_overlay)
   end
 
   it "toggles donut mode on slide 10 (PieChartSlide) when pressing space" do

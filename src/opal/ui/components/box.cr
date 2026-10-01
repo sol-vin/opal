@@ -35,12 +35,53 @@ module Opal
         @padding_top = @padding_right = @padding_bottom = @padding_left = padding
       end
 
+      def self.new(
+        border : Symbol | Border | String | Nil = nil,
+        border_fg : Color | Symbol | String | Nil = nil,
+        padding : Int32 = 0,
+        title : String? = nil,
+        title_fg : Color | Symbol | String | Nil = nil,
+        bg : Color | Symbol | String = Color.none,
+        &
+      )
+        sub = Builder.new
+        with sub yield sub
+        new(
+          child: sub.root,
+          border: border,
+          border_fg: border_fg,
+          padding: padding,
+          title: title,
+          title_fg: title_fg,
+          bg: bg
+        )
+      end
+
       def children : Array(Element)
         if c = @child
           [c]
         else
           [] of Element
         end
+      end
+
+      # Appends a child element to the box. If a child already exists, wraps both in a VStack.
+      def add(element : Element) : self
+        if c = @child
+          if c.is_a?(VStack)
+            c.add(element)
+          else
+            @child = VStack.new([c, element])
+          end
+        else
+          @child = element
+        end
+        self
+      end
+
+      # Shovel alias for `add`
+      def <<(element : Element) : self
+        add(element)
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}

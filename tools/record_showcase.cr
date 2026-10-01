@@ -1,12 +1,14 @@
 require "./cast_writer"
 require "../src/opal"
+require "../src/opal/asciicast"
 require "../examples/10_opal_tui_showcase"
 
 module Opal
   module Tools
     # Automated puppet driver that programs genuine keystrokes, ticks, and state
-    # transitions into the 25-slide Opal TUI Showcase application, capturing
-    # true double-buffered ANSI frames into an Asciinema v2 recording (.cast).
+    # transitions into the 34-slide Opal TUI Showcase application, capturing
+    # true double-buffered ANSI frames into an Asciinema v2 recording (.cast)
+    # using Opal's native VCR direct-buffer tape deck engine.
     class ShowcaseRecorder
       WIDTH  = 96
       HEIGHT = 26
@@ -15,18 +17,18 @@ module Opal
         new.run(output_path)
       end
 
-      @cast : CastWriter
+      @vcr : Asciicast::VCR
       @app : ShowcaseAppModel
 
       def initialize
-        @cast = CastWriter.new(width: WIDTH, height: HEIGHT, title: "Opal TUI Full Showcase Tour")
+        @vcr = Asciicast::VCR.new
         @app = ShowcaseAppModel.new
       end
 
       private def render_frame(advance : Float64 = 0.05) : Nil
         buf = Opal::UI::Buffer.new(WIDTH, HEIGHT)
         @app.render(buf)
-        @cast.draw_buffer(buf, advance: advance)
+        @vcr.capture(buf, advance)
       end
 
       private def send_key(key : String, char : Char? = nil, ctrl : Bool = false, alt : Bool = false, shift : Bool = false, advance : Float64 = 0.08) : Nil
@@ -53,20 +55,22 @@ module Opal
       end
 
       private def next_slide(pause_before : Float64 = 1.0) : Nil
-        @cast.pause(pause_before)
+        @vcr.hold(pause_before)
         send_key("shift+right", advance: 0.15)
       end
 
       def run(output_path : String) : Nil
-        puts "[DEMO] Puppeting Opal 32-Slide TUI Showcase Demo..."
+        puts "[DEMO] Puppeting Opal 34-Slide TUI Showcase Demo via VCR Tape Deck..."
+
+        @vcr.record(output_path, width: WIDTH, height: HEIGHT, title: "Opal TUI Full Showcase Tour")
 
         # 1. Shell prompt introduction
-        @cast.write("\e[?25h\e[1;36msol-vin@terminal\e[0m:\e[1;34m~/opal\e[0m$ ", 0.0)
-        @cast.type_text("crystal run examples/10_opal_tui_showcase.cr\r\n", cps: 24.0)
-        @cast.pause(0.25)
+        @vcr.write_terminal("\e[?25h\e[1;36msol-vin@terminal\e[0m:\e[1;34m~/opal\e[0m$ ", 0.0)
+        @vcr.type_text("crystal run examples/10_opal_tui_showcase.cr\r\n", cps: 24.0)
+        @vcr.hold(0.25)
 
         # Enter alternate screen buffer & hide cursor
-        @cast.write("\e[?1049h\e[2J\e[H\e[?25l", 0.05)
+        @vcr.write_terminal("\e[?1049h\e[2J\e[H\e[?25l", 0.05)
 
         # =====================================================================
         # Slide 1: Welcome & Overview (Markdown)
@@ -88,7 +92,7 @@ module Opal
         "prod-us".each_char do |ch|
           send_key(ch.to_s, ch, advance: 0.08)
         end
-        @cast.pause(0.2)
+        @vcr.hold(0.2)
 
         # Tab to token
         send_key("tab", advance: 0.15)
@@ -96,7 +100,7 @@ module Opal
         "993".each_char do |ch|
           send_key(ch.to_s, ch, advance: 0.08)
         end
-        @cast.pause(0.2)
+        @vcr.hold(0.2)
 
         # Tab to region (select)
         send_key("tab", advance: 0.15)
@@ -130,7 +134,7 @@ module Opal
         "pay".each_char do |ch|
           send_key(ch.to_s, ch, advance: 0.12)
         end
-        @cast.pause(0.3)
+        @vcr.hold(0.3)
         send_key("down", advance: 0.2)
         send_key("enter", advance: 0.25)
         next_slide(1.0)
@@ -288,7 +292,7 @@ module Opal
         "git c".each_char do |ch|
           send_key(ch.to_s, ch, advance: 0.12)
         end
-        @cast.pause(0.4)
+        @vcr.hold(0.4)
         send_key("enter", advance: 0.25)
         next_slide(1.0)
 
@@ -300,7 +304,7 @@ module Opal
         "git c".each_char do |ch|
           send_key(ch.to_s, ch, advance: 0.12)
         end
-        @cast.pause(0.3)
+        @vcr.hold(0.3)
         send_key("tab", advance: 0.25) # Auto-expand ghost suggestion
         send_key("enter", advance: 0.25)
         next_slide(1.0)
@@ -380,7 +384,7 @@ module Opal
         send_key("up", advance: 0.12)
         send_key("right", advance: 0.12)
         send_key("right", advance: 0.12)
-        @cast.pause(0.2)
+        @vcr.hold(0.2)
         # Switch shape to 3D Sphere with 'm'
         send_key("m", advance: 0.25)
         send_key("d", advance: 0.12)
@@ -533,25 +537,52 @@ module Opal
         next_slide(1.2)
 
         # =====================================================================
-        # Slide 32: Grand Finale & Summary Checklist
+        # Slide 32: Declarative UI & Dual-Mode DSL Blending (Implicit vs Explicit vs OOP)
         # =====================================================================
-        puts "  → Slide 32: Grand Finale"
+        puts "  → Slide 32: Declarative UI & Dual-Mode DSL Blending"
+        render_frame(0.4)
+        send_key("2", advance: 0.45)
+        send_key("3", advance: 0.45)
+        send_key("1", advance: 0.35)
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 33: Asciinema VCR Tape Deck & Playback Engine (Tactile Tape Controls)
+        # =====================================================================
+        puts "  → Slide 33: Asciinema VCR Tape Deck & Playback"
+        render_frame(0.4)
+        3.times { send_tick(0.2) }
+        send_key("p", advance: 0.3)
+        send_key("n", advance: 0.25)
+        send_key("n", advance: 0.25)
+        send_key("o", advance: 0.3)
+        send_key("space", advance: 0.3)
+        send_key("0", advance: 0.25)
+        send_key("p", advance: 0.25)
+        2.times { send_tick(0.2) }
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 34: Grand Finale & Summary Checklist
+        # =====================================================================
+        puts "  → Slide 34: Grand Finale"
         render_frame(0.4)
         send_key("pagedown", advance: 0.25)
         send_key("pageup", advance: 0.25)
-        @cast.pause(2.5) # Hold final frame so asciicast captures full matrix!
+        @vcr.hold(2.5) # Hold final frame so asciicast captures full matrix!
 
         # Cleanly quit demo via Escape
         send_key("escape", advance: 0.1)
 
         # Exit alternate screen & restore cursor
-        @cast.write("\e[?1049l\e[?25h", 0.05)
-        @cast.write("sol-vin@terminal:~/opal$ ", 0.02)
-        @cast.pause(0.5)
+        @vcr.write_terminal("\e[?1049l\e[?25h", 0.05)
+        @vcr.write_terminal("sol-vin@terminal:~/opal$ ", 0.02)
+        @vcr.hold(0.5)
 
-        # Save asciicast
-        @cast.save(output_path)
-        puts "[OK] Showcase recording saved successfully to #{output_path}!"
+        # Save asciicast tape deck
+        @vcr.stop
+        @vcr.save(output_path)
+        puts "[OK] Showcase recording saved successfully via VCR to #{output_path}!"
       end
     end
   end

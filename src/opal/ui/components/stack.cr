@@ -11,9 +11,24 @@ module Opal
         @children = [] of Element
       end
 
+      def initialize(elements : Enumerable(Element), @spacing : Int32 = 0)
+        @children = [] of Element
+        elements.each { |e| @children << e }
+      end
+
+      def self.new(spacing : Int32 = 0, &)
+        sb = StackBuilder.new
+        with sb yield sb
+        new(sb.elements, spacing: spacing)
+      end
+
       def add(element : Element) : self
         @children << element
         self
+      end
+
+      def <<(element : Element) : self
+        add(element)
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
@@ -60,9 +75,24 @@ module Opal
         @children = [] of Element
       end
 
+      def initialize(elements : Enumerable(Element), @spacing : Int32 = 0)
+        @children = [] of Element
+        elements.each { |e| @children << e }
+      end
+
+      def self.new(spacing : Int32 = 0, &)
+        sb = StackBuilder.new
+        with sb yield sb
+        new(sb.elements, spacing: spacing)
+      end
+
       def add(element : Element) : self
         @children << element
         self
+      end
+
+      def <<(element : Element) : self
+        add(element)
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}

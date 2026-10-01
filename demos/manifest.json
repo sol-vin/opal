@@ -1,6 +1,6 @@
 {
-  "install_id": "2a10705a-74a3-4c4f-b46a-7fd92d0c3b93",
-  "claim_url": "https://asciinema.org/connect/2a10705a-74a3-4c4f-b46a-7fd92d0c3b93",
+  "install_id": "ca5b5864-0f75-493a-8b6d-ed62ac18f308",
+  "claim_url": "https://asciinema.org/connect/ca5b5864-0f75-493a-8b6d-ed62ac18f308",
   "demos": [
     {
       "filename": "01_form_wizard.cast",
@@ -45,10 +45,10 @@
     {
       "filename": "06_opal_tui_showcase.cast",
       "title": "Opal TUI Full Showcase Tour",
-      "cast_url": "https://asciinema.org/a/MRp3jBhiI54d1Ogz",
-      "svg_url": "https://asciinema.org/a/MRp3jBhiI54d1Ogz.svg",
-      "cast_id": "MRp3jBhiI54d1Ogz",
-      "markdown": "[![asciicast](https://asciinema.org/a/MRp3jBhiI54d1Ogz.svg)](https://asciinema.org/a/MRp3jBhiI54d1Ogz)"
+      "cast_url": "https://asciinema.org/a/jCBChISE2qKxOMeG",
+      "svg_url": "https://asciinema.org/a/jCBChISE2qKxOMeG.svg",
+      "cast_id": "jCBChISE2qKxOMeG",
+      "markdown": "[![asciicast](https://asciinema.org/a/jCBChISE2qKxOMeG.svg)](https://asciinema.org/a/jCBChISE2qKxOMeG)"
     }
   ]
 }

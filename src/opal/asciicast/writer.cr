@@ -35,6 +35,12 @@ module Opal
         @elapsed = 0.0_f64
       end
 
+      getter elapsed : Float64
+
+      def current_time : Float64
+        @elapsed
+      end
+
       def width : Int32
         @header.width
       end

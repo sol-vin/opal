@@ -13,7 +13,7 @@
 
 <br/>
 
-[![asciicast](https://asciinema.org/a/MRp3jBhiI54d1Ogz.svg)](https://asciinema.org/a/MRp3jBhiI54d1Ogz)
+[![asciicast](https://asciinema.org/a/jCBChISE2qKxOMeG.svg)](https://asciinema.org/a/jCBChISE2qKxOMeG)
 
 </div>
 
@@ -83,13 +83,14 @@ require "opal"
 - [Animation & Easing Engine](#-animation--easing-engine)
 - [CLI Application DSL](#-cli-application-dsl)
 - [Fluent Styling & Layout](#-fluent-styling--layout)
+- [Declarative UI & Dual-Mode DSL Blending](#-declarative-ui--dual-mode-dsl-blending)
 - [Interactive Prompts](#-interactive-prompts)
 - [Autocomplete & Ghost Text DSL](#-autocomplete--ghost-text-dsl)
 - [Interactive Controls & Puppeting Engine](#-interactive-controls--puppeting-engine)
 - [KeyMap & MouseMap DSLs](#-keymap--mousemap-dsls)
 - [The Elm Architecture (TEA)](#-the-elm-architecture-tea)
 - [Testing with MockDriver](#-testing-with-mockdriver)
-- [Asciicast Terminal Recording (`opal/asciicast`)](#-asciicast-terminal-recording)
+- [Asciicast & Asciinema VCR Recording (`opal/asciicast`)](#-asciicast--asciinema-vcr-recording)
 - [Examples](#-examples)
 - [Cross-Platform Support](#-cross-platform-support)
 - [License](#-license)
@@ -140,7 +141,7 @@ Real, live recordings captured directly from Opal running in terminal sessions (
 
 | Feature Demo | Live Terminal Asciicast |
 | :--- | :--- |
-| **Grand 26-Slide TUI Showcase Tour**<br/>• Full interactive tour across all Opal features<br/>• Multi-field form wizard with live validation<br/>• Live fuzzy search & file dialog explorer<br/>• 2D/3D rotatable color cubes, spheres & wheels<br/>• Image to ASCII engine (Half-block & Nearest-char)<br/>• Text shaders (Matrix rain, CRT, Starfield, Ripple, Tunnel) with bouncing window<br/>• Circular PieCharts & Cartesian LineGraphs<br/>• Sparklines, tables, code/hex views, modals & TEA | [![asciicast](https://asciinema.org/a/MRp3jBhiI54d1Ogz.svg)](https://asciinema.org/a/MRp3jBhiI54d1Ogz) |
+| **Grand 34-Slide TUI Showcase Tour**<br/>• Full interactive tour across all Opal features<br/>• Multi-field form wizard with live validation<br/>• Live fuzzy search & file dialog explorer<br/>• 2D/3D rotatable color cubes, spheres & wheels<br/>• Image to ASCII engine (Half-block & Nearest-char)<br/>• Text shaders (Matrix rain, CRT, Starfield, Ripple, Tunnel) with bouncing window<br/>• Circular PieCharts & Cartesian LineGraphs<br/>• Sparklines, tables, code/hex views, modals & TEA<br/>• Declarative UI & Dual-Mode DSL Blending<br/>• Asciinema VCR Tape Deck & Playback Engine | [![asciicast](https://asciinema.org/a/jCBChISE2qKxOMeG.svg)](https://asciinema.org/a/jCBChISE2qKxOMeG) |
 | **Multi-Field Form Wizard**<br/>• Tab / Shift+Tab focus navigation<br/>• Masked secret/password inputs<br/>• Live inline validation feedback<br/>• Multi-select checkboxes | [![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO) |
 | **Live Fuzzy Search & Split Preview**<br/>• Realtime sub-millisecond filtering<br/>• Word-boundary rune highlighting<br/>• Instant split details pane | [![asciicast](https://asciinema.org/a/CdgldnJvhRGBGEuE.svg)](https://asciinema.org/a/CdgldnJvhRGBGEuE) |
 | **Cluster Analytics Dashboard**<br/>• Rolling Unicode Sparklines<br/>• Colorized percentage Gauges<br/>• Horizontal BarCharts & Trees<br/>• Catppuccin Mocha theme | [![asciicast](https://asciinema.org/a/J87u80gsmyKUwKx9.svg)](https://asciinema.org/a/J87u80gsmyKUwKx9) |
@@ -492,6 +493,83 @@ puts rendered
 
 ---
 
+## [UI] Declarative UI & Dual-Mode DSL Blending
+
+> [!NOTE]
+> For in-depth architectural details and component tables, see the [Architecture Guide: DSL & Blending](docs/architecture/dsl_and_blending.md).
+
+Opal's UI DSL provides first-class support for **dual-mode block execution** (`with builder yield builder`) and **OOP-DSL blending**, allowing you to seamlessly mix declarative blocks with traditional component instances.
+
+### 1. Concise Implicit Mode vs Explicit Receiver Mode
+
+```crystal
+# Concise Implicit Syntax: No block parameters required
+dashboard = Opal.render_ui(width: 80, height: 12) do
+  box(title: "Status Monitor", border: :rounded) do
+    vstack(spacing: 1) do
+      text "Cluster Node 01", fg: :cyan
+      gauge ratio: 0.85, label: "CPU: 85%"
+      hstack(spacing: 2) do
+        badge "HEALTHY", :green
+        badge "US-EAST-1", :blue
+      end
+    end
+  end
+end
+
+# Explicit Receiver Syntax: Full typed parameter control
+explicit = Opal.render_ui(width: 80, height: 12) do |ui|
+  ui.box(title: "Status Monitor", border: :rounded) do |b|
+    b.vstack(spacing: 1) do |v|
+      v.text "Cluster Node 01", fg: :cyan
+    end
+  end
+end
+```
+
+### 2. Blending Traditional OOP Instances into Declarative DSL
+
+Any component created with `.new` can be directly embedded into DSL blocks using `add(el)`, `<< el`, or `custom(el)`:
+
+```crystal
+# 1. Create components traditionally
+my_chart = Opal::UI::LineGraph.new
+my_chart.add_series("Traffic", [10.0, 45.0, 30.0, 90.0], :cyan)
+
+my_log = Opal::UI::RichLog.new
+my_log.log("Worker connected")
+
+# 2. Embed into declarative DSL tree
+screen = Opal::UI.build do
+  vstack(spacing: 1) do
+    text "System Overview"
+    add my_chart        # via add
+    self << my_log      # via shovel << operator
+  end
+end
+```
+
+### 3. Container Constructors with DSL Blocks
+
+Container classes (`Box`, `VStack`, `HStack`, `Screen`, `ModalScreen`) accept declarative DSL blocks directly:
+
+```crystal
+# Construct Box declaratively
+box = Opal::UI::Box.new(title: "Block Box", border: :double) do
+  text "Line 1"
+  text "Line 2"
+end
+
+# Construct Screen with declarative root
+screen = Opal::UI::Screen.new("main", title: "App Screen") do
+  box(title: "Content") do
+    text "Screen body"
+  end
+end
+```
+
+---
+
 ## [PROMPT] Interactive Prompts
 
 ```crystal
@@ -675,7 +753,7 @@ end
 
 ---
 
-## [DEMO] Asciicast Terminal Recording (`opal/asciicast`)
+## [DEMO] Asciicast & Asciinema VCR Recording (`opal/asciicast`)
 
 > [!NOTE]
 > For in-depth architectural design, format specifications, and parser details, see the [Architecture Guide: Asciicast System](docs/architecture/asciicast.md).
@@ -686,25 +764,69 @@ This feature is modular and packaged as an **optional require**:
 
 ```crystal
 require "opal"
-require "opal/asciicast"
+require "opal/asciicast"            # Screen recording, parsing, and driver
+require "opal/asciicast/asciinema"  # VCR tape deck & playback engine
 ```
 
-### 1. Programmatic Session Recording (`Opal::Asciicast.record`)
-Record buffer frames, simulate human typing cadence with timing jitter, and save directly to `.cast`:
+### 1. Tactile VCR Cassette Recording & Playback (`Opal::VCR`)
+
+Control your recordings like a physical tape deck with `record`, `capture`, `pause`, `resume`, `stop`, `save`, and frame pacing:
 
 ```crystal
-Opal::Asciicast.record("demo.cast", width: 80, height: 20, title: "System Monitor") do |cast|
-  cast.write("\e[?25h\e[1;36muser@terminal\e[0m:$ ", advance: 0.0)
-  cast.type_text("crystal run app.cr\r\n", cps: 20.0)
-  cast.pause(0.5)
+# Block recording with automatic pacing and save
+Opal::VCR.record("session.cast", width: 80, height: 24, title: "VCR Demo") do |vcr|
+  # Capture initial buffer frame
+  vcr.capture(buffer1, advance: 0.1)
 
-  buf = Opal::UI::Buffer.new(78, 16)
-  buf.put_string(2, 2, "[RUN] Opal 60fps Double Buffered Output", fg: Opal::Color.cyan, bold: true)
-  cast.draw_buffer(buf, advance: 0.5)
+  # Pace multi-frame transitions
+  vcr.wait_frames(count: 3, delay_per_frame: 0.05)
+
+  # Temporarily pause recording for background setup
+  vcr.pause
+  # ... private setup ...
+  vcr.resume
+
+  vcr.capture(buffer2, advance: 0.1)
+  vcr.hold(1.5) # Freeze final frame for 1.5s
 end
+
+# Inspect and step through recorded frames
+vcr = Opal::VCR.new
+vcr.load("session.cast")
+
+puts "Frames: #{vcr.total_frames} | Duration: #{vcr.duration}s"
+
+# Step frame-by-frame
+frame = vcr.next_frame
+prev  = vcr.prev_frame
+seek  = vcr.seek(1.0) # seek to 1 second
+start = vcr.rewind
+
+# Composite frame into a canvas while respecting existing UI overlays
+target = Opal::UI::Buffer.new(100, 30)
+vcr.render_frame(target, x: 2, y: 1, respect_overlays: true)
 ```
 
-### 2. Headless Recording with `Opal::Asciicast::Driver`
+### 2. Direct Screen Buffer Recording (`ScreenRecorder`)
+
+Record raw double-buffered frames (`Opal::UI::Buffer`) directly from your UI components:
+
+```crystal
+recorder = Opal::Asciicast::ScreenRecorder.new("screen.cast", width: 80, height: 24)
+recorder.start
+
+# Render any UI element directly into buffer
+buf = Opal::UI::Buffer.new(80, 24)
+my_ui.render(buf, 0, 0, 80, 24)
+
+# Capture exact frame without terminal flicker
+recorder.capture_frame(buf, advance: 0.1)
+recorder.hold(1.0)
+recorder.stop.save
+```
+
+### 3. Headless Interactive Recording with `Opal::Asciicast::Driver`
+
 Pass the headless driver into any Opal prompt, form wizard, or TEA program to record user interactions without an active terminal:
 
 ```crystal
@@ -721,13 +843,14 @@ end
 driver.save("demos/form.cast")
 ```
 
-### 3. Parsing & Assertions with `Opal::Asciicast.read`
+### 4. Parsing & Assertions with `Opal::Asciicast.read`
+
 ```crystal
-recording = Opal::Asciicast.read("demo.cast")
+recording = Opal::Asciicast.read("session.cast")
 puts "Duration: #{recording.duration}s | Outputs: #{recording.outputs.size}"
 ```
 
-For a complete runnable demonstration, check out [`examples/14_asciicast_recording.cr`](examples/14_asciicast_recording.cr).
+For a complete runnable demonstration, check out [`examples/14_asciicast_recording.cr`](examples/14_asciicast_recording.cr) and [`examples/18_dsl_blending_and_asciinema.cr`](examples/18_dsl_blending_and_asciinema.cr).
 
 ---
 
@@ -749,6 +872,7 @@ Explore all runnable examples in the [`examples/`](examples/) directory:
 - [`12_3d_color_picker.cr`](examples/12_3d_color_picker.cr) — Interactive 3D RGB Cube, 3D Sphere, 2D Wheel, and Spectrum color pickers with pitch/yaw rotation and surface raycasting.
 - [`13_control_input_hooks_and_puppeting.cr`](examples/13_control_input_hooks_and_puppeting.cr) — Multi-control focus orchestration with `Opal::UI::Engine`, custom input hooks (`on_input`), Vim navigation, and automated background puppeting.
 - [`14_asciicast_recording.cr`](examples/14_asciicast_recording.cr) — Standardized Asciinema v2 recording with `require "opal/asciicast"`, programmatic buffer capture, and headless driver execution.
+- [`18_dsl_blending_and_asciinema.cr`](examples/18_dsl_blending_and_asciinema.cr) — Dual-mode declarative DSL blending (concise implicit vs explicit receiver, traditional OOP interoperability) and tactile VCR recording/playback with timeline stepping.
 
 Run any example:
 

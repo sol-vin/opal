@@ -316,5 +316,8 @@ module Opal
         end
       end
     end
+
+    # Convenience alias
+    alias Scrollbar = ScrollBar
   end
 end
