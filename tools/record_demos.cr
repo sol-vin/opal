@@ -8,7 +8,7 @@ require "../src/opal"
 module Opal
   module Tools
     def self.record_all
-      puts "🎬 Recording Opal Asciinema Demos (Zero-Flicker, Full Color)..."
+      puts "[DEMO] Recording Opal Asciinema Demos (Zero-Flicker, Full Color)..."
 
       record_form_wizard
       record_fuzzy_finder
@@ -16,7 +16,7 @@ module Opal
       record_autocomplete
       record_cli_toolchain
 
-      puts "✨ All 5 demo casts generated successfully in demos/!"
+      puts "[OK] All 5 demo casts generated successfully in demos/!"
     end
 
     # 1. Multi-Field Form Wizard Demo
@@ -118,7 +118,7 @@ module Opal
       buf_done = UI::Buffer.new(78, 18)
       # Draw success card
       card = UI.build do |ui|
-        ui.box(border: :rounded, border_fg: :green, title: "✔ Microservice Configuration Captured", title_fg: :green) do |b|
+        ui.box(border: :rounded, border_fg: :green, title: "[OK] Microservice Configuration Captured", title_fg: :green) do |b|
           b.vstack(spacing: 1) do |vs|
             vs.text("Service Name   : auth-gateway", bold: true, fg: :white)
             vs.text("HTTP Port      : 8443 (TLS Enabled)", fg: :cyan)
@@ -136,7 +136,7 @@ module Opal
       cast.pause(3.0)
 
       cast.save("demos/01_form_wizard.cast")
-      puts "  ✓ Generated demos/01_form_wizard.cast"
+      puts "  [OK] Generated demos/01_form_wizard.cast"
     end
 
     # 2. Live Fuzzy Finder Demo
@@ -199,7 +199,7 @@ module Opal
       # Press Enter -> Success checkout
       buf_done = UI::Buffer.new(78, 16)
       done_card = UI.build do |ui|
-        ui.box(border: :rounded, border_fg: :green, title: "✔ Git Checkout") do |b|
+        ui.box(border: :rounded, border_fg: :green, title: "[OK] Git Checkout") do |b|
           b.vstack(spacing: 1) do |v|
             v.text("Switched to branch 'feat/fuzzy-finder'!", bold: true, fg: :green)
             v.text("Your branch is up to date with 'origin/feat/fuzzy-finder'.", fg: :white)
@@ -213,7 +213,7 @@ module Opal
       cast.pause(3.0)
 
       cast.save("demos/02_fuzzy_finder.cast")
-      puts "  ✓ Generated demos/02_fuzzy_finder.cast"
+      puts "  [OK] Generated demos/02_fuzzy_finder.cast"
     end
 
     # 3. Cluster Analytics Dashboard Demo
@@ -245,7 +245,7 @@ module Opal
 
         buf = UI::Buffer.new(78, 23)
         element = UI.build do |ui|
-          ui.box(border: :rounded, border_fg: theme.primary, title: "💎 Opal Cluster Analytics", title_fg: theme.accent) do |card|
+          ui.box(border: :rounded, border_fg: theme.primary, title: "[*] Opal Cluster Analytics", title_fg: theme.accent) do |card|
             card.vstack(spacing: 1) do |vs|
               vs.box(border: :single, border_fg: theme.border, padding: 0, title: "CPU Load Trend") do |b|
                 b.vstack do |v|
@@ -266,10 +266,10 @@ module Opal
 
               vs.box(border: :single, border_fg: theme.border, padding: 0, title: "Service Topology") do |b|
                 b.tree do |t|
-                  t.node("Opal Cluster Gateway", color: theme.primary, icon: "🌐") do |gateway|
-                    gateway.add("Authentication Service", color: theme.success, icon: "🔒")
-                    gateway.add("Search & Index Service", color: theme.secondary, icon: "🔍")
-                    gateway.add("Telemetry Agent", color: theme.warning, icon: "📊")
+                  t.node("Opal Cluster Gateway", color: theme.primary, icon: "[NET]") do |gateway|
+                    gateway.add("Authentication Service", color: theme.success, icon: "[SEC]")
+                    gateway.add("Search & Index Service", color: theme.secondary, icon: "[SEARCH]")
+                    gateway.add("Telemetry Agent", color: theme.warning, icon: "[VIZ]")
                   end
                 end
               end
@@ -283,7 +283,7 @@ module Opal
 
       cast.pause(3.0)
       cast.save("demos/03_cluster_dashboard.cast")
-      puts "  ✓ Generated demos/03_cluster_dashboard.cast"
+      puts "  [OK] Generated demos/03_cluster_dashboard.cast"
     end
 
     # 4. Ghost-Text Autocomplete Demo
@@ -291,10 +291,10 @@ module Opal
       cast = CastWriter.new(width: 80, height: 16, title: "Opal Inline Ghost-Text Autocomplete")
 
       cast.write("\e[?25h", 0.0)
-      cast.write("\e[1;35m💎 Opal Interactive Shell (v0.1.0)\e[0m\r\n", 0.0)
+      cast.write("\e[1;35m[*] Opal Interactive Shell (v0.1.0)\e[0m\r\n", 0.0)
       cast.write("Type commands with inline ghost-text. Press [Tab] to complete.\r\n\r\n", 0.1)
 
-      prompt = "\e[1;36mopal\e[0m \e[1;32m❯\e[0m "
+      prompt = "\e[1;36mopal\e[0m \e[1;32m>\e[0m "
 
       # Command 1: checkout feat/autocomplete
       cast.write(prompt, 0.3)
@@ -321,7 +321,7 @@ module Opal
       cast.pause(0.4)
 
       # Enter
-      cast.write("\r\n\e[32m✔ Switched to branch 'feat/autocomplete'\e[0m\r\n\r\n", 0.2)
+      cast.write("\r\n\e[32m[OK] Switched to branch 'feat/autocomplete'\e[0m\r\n\r\n", 0.2)
 
       # Command 2: status
       cast.write(prompt, 0.25)
@@ -341,8 +341,8 @@ module Opal
       tbl = String.build do |io|
         io << "  \e[1;36mFile                Status        Staged\e[0m\r\n"
         io << "  ───────────────────────────────────────────\r\n"
-        io << "  \e[33msrc/opal/input.cr\e[0m   Modified      \e[32m[✔] Yes\e[0m\r\n"
-        io << "  \e[32msrc/opal/form.cr\e[0m    Added         \e[32m[✔] Yes\e[0m\r\n"
+        io << "  \e[33msrc/opal/input.cr\e[0m   Modified      \e[32m[[OK]] Yes\e[0m\r\n"
+        io << "  \e[32msrc/opal/form.cr\e[0m    Added         \e[32m[[OK]] Yes\e[0m\r\n"
         io << "  \e[90mexamples/demo.cr\e[0m    Untracked     \e[90m[ ] No\e[0m\r\n"
       end
 
@@ -350,7 +350,7 @@ module Opal
       cast.pause(3.0)
 
       cast.save("demos/04_ghost_autocomplete.cast")
-      puts "  ✓ Generated demos/04_ghost_autocomplete.cast"
+      puts "  [OK] Generated demos/04_ghost_autocomplete.cast"
     end
 
     # 5. CLI Toolchain Demo (Lapis Revamp)
@@ -390,7 +390,7 @@ module Opal
         cast.write("\r\e[2K  \e[36m#{s}\e[0m Compiling release binary with LLVM optimizations...", 0.08)
       end
 
-      cast.write("\r\e[2K  \e[32m✔\e[0m LLVM codegen completed in 1.2s\r\n\r\n", 0.2)
+      cast.write("\r\e[2K  \e[32m[OK]\e[0m LLVM codegen completed in 1.2s\r\n\r\n", 0.2)
 
       # Progress bar
       cast.write("  Linking binary:\r\n", 0.1)
@@ -402,11 +402,11 @@ module Opal
         cast.write("\r\e[2K  [\e[36m#{bar_fill}\e[90m#{bar_empty}\e[0m] \e[1m#{pct}%\e[0m (#{step + 1}/10 objects linked)", 0.1)
       end
 
-      cast.write("\r\n\r\n  \e[1;32m✔ Successfully built bin/lapis in 2.1s (4.2 MB)!\e[0m\r\n", 0.3)
+      cast.write("\r\n\r\n  \e[1;32m[OK] Successfully built bin/lapis in 2.1s (4.2 MB)!\e[0m\r\n", 0.3)
       cast.pause(3.0)
 
       cast.save("demos/05_cli_toolchain.cast")
-      puts "  ✓ Generated demos/05_cli_toolchain.cast"
+      puts "  [OK] Generated demos/05_cli_toolchain.cast"
     end
   end
 end

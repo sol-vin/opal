@@ -1,10 +1,10 @@
-# 🎬 Architecture: Asciicast Terminal Recording (`opal/asciicast`)
+# [DEMO] Architecture: Asciicast Terminal Recording (`opal/asciicast`)
 
 This document details the architectural design, lifecycle, and usage patterns of Opal's standardized Asciinema recording subsystem (`Opal::Asciicast`).
 
 ---
 
-## 📑 Table of Contents
+## [TOC] Table of Contents
 
 - [Overview & Modular Design](#-overview--modular-design)
 - [Asciinema v2 Format Specification](#-asciinema-v2-format-specification)
@@ -19,7 +19,7 @@ This document details the architectural design, lifecycle, and usage patterns of
 
 ---
 
-## 🌟 Overview & Modular Design
+## >> Overview & Modular Design
 
 Opal's asciicast subsystem provides first-class support for creating, parsing, and uploading terminal session recordings in the standard **Asciinema v2 (`.cast`)** format.
 
@@ -39,7 +39,7 @@ When required, `opal/asciicast` equips applications with:
 
 ---
 
-## 📄 Asciinema v2 Format Specification
+## [FILE] Asciinema v2 Format Specification
 
 An Asciinema v2 recording is a newline-delimited JSON (JSONL) document composed of:
 - **Line 1 (Header)**: A JSON object describing session metadata:
@@ -61,7 +61,7 @@ Event types supported by the spec:
 
 ---
 
-## 🏛️ Class Hierarchy & Subsystems
+## [ARCH] Class Hierarchy & Subsystems
 
 ```mermaid
 classDiagram
@@ -164,7 +164,7 @@ classDiagram
 
 ---
 
-## 🎥 Headless Recording with `Asciicast::Driver`
+## [REC] Headless Recording with `Asciicast::Driver`
 
 Instead of running external capture utilities or requiring an active TTY, `Opal::Asciicast::Driver` acts as a drop-in `Terminal::Driver`. You can instantiate your application, feed synthetic inputs, and record flawless, 60fps asciicasts directly from automated tests or CI pipelines:
 
@@ -193,7 +193,7 @@ sequenceDiagram
 
 ---
 
-## 💻 Complete Copy-Pasteable Examples
+## [CODE] Complete Copy-Pasteable Examples
 
 ### Example 1: Programmatic Screen Recording with `Asciicast.record`
 
@@ -218,7 +218,7 @@ Opal::Asciicast.record(
 
   # Render styled UI buffer
   buf = Opal::UI::Buffer.new(78, 16)
-  buf.put_string(2, 1, "🚀 SYSTEM METRICS MONITOR", fg: Opal::Color.cyan, bold: true)
+  buf.put_string(2, 1, "[RUN] SYSTEM METRICS MONITOR", fg: Opal::Color.cyan, bold: true)
   buf.put_string(2, 2, "─" * 74, fg: Opal::Color.bright_black)
 
   sparkline = Opal::UI::Sparkline.new([10.0, 25.0, 45.0, 70.0, 85.0, 60.0, 95.0, 80.0])
@@ -308,7 +308,7 @@ puts "Markdown: [![asciicast](#{result.svg_url})](#{result.cast_url})"
 
 ---
 
-## 📖 API Reference
+## [DOC] API Reference
 
 ### `Opal::Asciicast`
 

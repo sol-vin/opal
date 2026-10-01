@@ -53,6 +53,10 @@ module Opal
         {cols, rows}
       end
 
+      def initialize(output : IO = STDOUT, input : IO = STDIN)
+        super(output, input)
+      end
+
       def raw_mode(&)
         RawMode.run do
           yield
@@ -60,11 +64,15 @@ module Opal
       end
 
       def write(str : String) : Nil
-        STDOUT.print str
+        @output.print str
+      rescue IO::Error
+        # Handle broken pipes gracefully when output is piped to tools
       end
 
       def flush : Nil
-        STDOUT.flush
+        @output.flush
+      rescue IO::Error
+        # Handle broken pipes on flush
       end
 
       def enable_mouse : Nil

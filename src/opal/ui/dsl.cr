@@ -28,6 +28,8 @@ require "./components/scrollbar"
 require "./components/window"
 require "./components/canvas_2d"
 require "./components/mesh_3d"
+require "./components/checkbox"
+require "./components/slider"
 
 module Opal
   module UI
@@ -619,6 +621,56 @@ module Opal
         el
       end
 
+      def checkbox(
+        label : String? = nil,
+        checked : Bool = false,
+        disabled : Bool = false,
+        &block : Bool -> Nil
+      ) : Checkbox
+        el = Checkbox.new(label, checked, disabled, &block)
+        set_root_or_child(el)
+        el
+      end
+
+      def checkbox(
+        label : String? = nil,
+        checked : Bool = false,
+        disabled : Bool = false,
+      ) : Checkbox
+        el = Checkbox.new(label, checked, disabled)
+        set_root_or_child(el)
+        el
+      end
+
+      def slider(
+        value : Number = 0.0,
+        min : Number = 0.0,
+        max : Number = 100.0,
+        step : Number = 1.0,
+        label : String? = nil,
+        show_value : Bool = true,
+        disabled : Bool = false,
+        &block : Float64 -> Nil
+      ) : Slider
+        el = Slider.new(value, min, max, step, label, show_value, disabled, &block)
+        set_root_or_child(el)
+        el
+      end
+
+      def slider(
+        value : Number = 0.0,
+        min : Number = 0.0,
+        max : Number = 100.0,
+        step : Number = 1.0,
+        label : String? = nil,
+        show_value : Bool = true,
+        disabled : Bool = false,
+      ) : Slider
+        el = Slider.new(value, min, max, step, label, show_value, disabled)
+        set_root_or_child(el)
+        el
+      end
+
       def radio_set(
         items : Array(String | RadioButton),
         selected_index : Int32? = 0,
@@ -1118,6 +1170,56 @@ module Opal
         disabled : Bool = false,
       ) : Switch
         el = Switch.new(label, on, disabled)
+        add(el)
+        el
+      end
+
+      def checkbox(
+        label : String? = nil,
+        checked : Bool = false,
+        disabled : Bool = false,
+        &block : Bool -> Nil
+      ) : Checkbox
+        el = Checkbox.new(label, checked, disabled, &block)
+        add(el)
+        el
+      end
+
+      def checkbox(
+        label : String? = nil,
+        checked : Bool = false,
+        disabled : Bool = false,
+      ) : Checkbox
+        el = Checkbox.new(label, checked, disabled)
+        add(el)
+        el
+      end
+
+      def slider(
+        value : Number = 0.0,
+        min : Number = 0.0,
+        max : Number = 100.0,
+        step : Number = 1.0,
+        label : String? = nil,
+        show_value : Bool = true,
+        disabled : Bool = false,
+        &block : Float64 -> Nil
+      ) : Slider
+        el = Slider.new(value, min, max, step, label, show_value, disabled, &block)
+        add(el)
+        el
+      end
+
+      def slider(
+        value : Number = 0.0,
+        min : Number = 0.0,
+        max : Number = 100.0,
+        step : Number = 1.0,
+        label : String? = nil,
+        show_value : Bool = true,
+        disabled : Bool = false,
+      ) : Slider
+        el = Slider.new(value, min, max, step, label, show_value, disabled)
         add(el)
         el
       end

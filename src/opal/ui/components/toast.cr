@@ -30,10 +30,10 @@ module Opal
 
       def level_badge : {String, Color}
         case @level
-        when :success then {"✔ SUCCESS", Color.green}
-        when :warning then {"⚠ WARNING", Color.yellow}
-        when :error   then {"✖ ERROR  ", Color.red}
-        else               {"ℹ INFO   ", Color.cyan}
+        when :success then {"[OK] SUCCESS", Color.green}
+        when :warning then {"[!] WARNING", Color.yellow}
+        when :error   then {"[X] ERROR  ", Color.red}
+        else               {"[i] INFO   ", Color.cyan}
         end
       end
     end

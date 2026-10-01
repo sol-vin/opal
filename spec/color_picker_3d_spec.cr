@@ -70,8 +70,8 @@ describe Opal::UI::ColorPicker3D do
     rendered.should contain("Hex:")
     rendered.should contain("RGB:")
 
-    # Virtual cursor crosshair '✛' should be on canvas
-    rendered.should contain("✛")
+    # Virtual cursor crosshair '+' should be on canvas
+    rendered.should contain("+")
   end
 
   it "renders 2D polar circle wheel" do

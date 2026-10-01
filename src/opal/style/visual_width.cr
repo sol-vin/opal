@@ -30,32 +30,32 @@ module Opal
          (cp >= 0xFE30 && cp <= 0xFE6F) ||                 # CJK Compatibility Forms
          (cp >= 0xFF01 && cp <= 0xFF60) ||                 # Fullwidth forms
          (cp >= 0xFFE0 && cp <= 0xFFE6) ||                 # Fullwidth symbols
-         (cp == 0x231A || cp == 0x231B) ||                 # ⌚, ⌛
-         (cp >= 0x23E9 && cp <= 0x23EC) ||                 # ⏩, ⏪, ⏫, ⏬
-         (cp == 0x23F0 || cp == 0x23F3) ||                 # ⏰, ⏳
-         (cp == 0x25FD || cp == 0x25FE) ||                 # ◽, ◾
-         (cp >= 0x2614 && cp <= 0x2615) ||                 # ☔, ☕
-         (cp >= 0x2648 && cp <= 0x2653) ||                 # ♈..♓
-         (cp == 0x267F) ||                                 # ♿
-         (cp == 0x2693) ||                                 # ⚓
-         (cp >= 0x26A0 && cp <= 0x26A1) ||                 # ⚠️, ⚡
-         (cp >= 0x26AA && cp <= 0x26AB) ||                 # ⚪, ⚫
-         (cp >= 0x26BD && cp <= 0x26BE) ||                 # ⚽, ⚾
-         (cp >= 0x26C4 && cp <= 0x26C5) ||                 # ⛄, ⛅
-         (cp == 0x26CE || cp == 0x26D4) ||                 # ⛎, ⛔
-         (cp == 0x26EA) ||                                 # ⛪
-         (cp >= 0x26F2 && cp <= 0x26F3) ||                 # ⛲, ⛳
-         (cp == 0x26F5 || cp == 0x26FA || cp == 0x26FD) || # ⛵, ⛺, ⛽
-         (cp == 0x2705) ||                                 # ✅
-         (cp >= 0x270A && cp <= 0x270B) ||                 # ✊, ✋
-         (cp == 0x2728) ||                                 # ✨
-         (cp == 0x274C || cp == 0x274E) ||                 # ❌, ❎
-         (cp >= 0x2753 && cp <= 0x2755) ||                 # ❓, ❔, ❕
-         (cp == 0x2757) ||                                 # ❗
-         (cp >= 0x2795 && cp <= 0x2797) ||                 # ➕, ➖, ➗
-         (cp == 0x27B0 || cp == 0x27BF) ||                 # ➰, ➿
-         (cp >= 0x2B1B && cp <= 0x2B1C) ||                 # ⬛, ⬜
-         (cp == 0x2B50 || cp == 0x2B55)                    # ⭐, ⭕
+         (cp == 0x231A || cp == 0x231B) ||                 # Time symbols
+         (cp >= 0x23E9 && cp <= 0x23EC) ||                 # Media controls
+         (cp == 0x23F0 || cp == 0x23F3) ||                 # Clock symbols
+         (cp == 0x25FD || cp == 0x25FE) ||                 # Medium squares
+         (cp >= 0x2614 && cp <= 0x2615) ||                 # Weather / beverage
+         (cp >= 0x2648 && cp <= 0x2653) ||                 # Zodiac symbols
+         (cp == 0x267F) ||                                 # Accessibility symbol
+         (cp == 0x2693) ||                                 # Anchor
+         (cp >= 0x26A0 && cp <= 0x26A1) ||                 # Warning / electrical
+         (cp >= 0x26AA && cp <= 0x26AB) ||                 # Medium circles
+         (cp >= 0x26BD && cp <= 0x26BE) ||                 # Sport balls
+         (cp >= 0x26C4 && cp <= 0x26C5) ||                 # Weather symbols
+         (cp == 0x26CE || cp == 0x26D4) ||                 # Zodiac / traffic
+         (cp == 0x26EA) ||                                 # Building
+         (cp >= 0x26F2 && cp <= 0x26F3) ||                 # Landmark symbols
+         (cp == 0x26F5 || cp == 0x26FA || cp == 0x26FD) || # Transport / fuel
+         (cp == 0x2705) ||                                 # Check mark
+         (cp >= 0x270A && cp <= 0x270B) ||                 # Hand symbols
+         (cp == 0x2728) ||                                 # Sparkle
+         (cp == 0x274C || cp == 0x274E) ||                 # Cross marks
+         (cp >= 0x2753 && cp <= 0x2755) ||                 # Question marks
+         (cp == 0x2757) ||                                 # Exclamation mark
+         (cp >= 0x2795 && cp <= 0x2797) ||                 # Math signs
+         (cp == 0x27B0 || cp == 0x27BF) ||                 # Curly loops
+         (cp >= 0x2B1B && cp <= 0x2B1C) ||                 # Large squares
+         (cp == 0x2B50 || cp == 0x2B55)                    # Star / circle
         return 2
       end
 

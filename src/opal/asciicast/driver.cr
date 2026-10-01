@@ -20,6 +20,7 @@ module Opal
         writer : Writer? = nil,
         @time_advance : Float64 = 0.05,
       )
+        super()
         @writer = writer || Writer.new(width: width, height: height, title: title)
         @event_queue = [] of (Terminal::KeyEvent | Terminal::MouseEvent)
       end

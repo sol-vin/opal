@@ -46,9 +46,9 @@ describe Opal::UI::Buffer do
 
   it "properly sets and clears continuation cells for wide characters" do
     buf = Opal::UI::Buffer.new(20, 2)
-    # Write emoji (width 2) at column 4
-    buf.put_char(4, 0, '🔍')
-    buf.get(4, 0).char.should eq('🔍')
+    # Write CJK wide character (width 2) at column 4
+    buf.put_char(4, 0, '漢')
+    buf.get(4, 0).char.should eq('漢')
     buf.get(4, 0).continuation?.should be_false
     buf.get(5, 0).continuation?.should be_true
 
@@ -61,7 +61,7 @@ describe Opal::UI::Buffer do
 
   it "clears preceding wide char when overwriting its continuation cell" do
     buf = Opal::UI::Buffer.new(20, 2)
-    buf.put_char(4, 0, '🚀')
+    buf.put_char(4, 0, '字')
     buf.get(5, 0).continuation?.should be_true
 
     # Overwriting continuation cell at 5 clears cell 4
@@ -74,12 +74,12 @@ describe Opal::UI::Buffer do
   it "prevents phantom continuation cells when replacing adjacent wide characters" do
     buf = Opal::UI::Buffer.new(20, 2)
     # Put wide char at 6 (continuation at 7)
-    buf.put_char(6, 0, '💎')
+    buf.put_char(6, 0, '語')
     buf.get(7, 0).continuation?.should be_true
 
     # Now put wide char at 5 (continuation at 6). Old continuation at 7 must be cleared!
-    buf.put_char(5, 0, '🔮')
-    buf.get(5, 0).char.should eq('🔮')
+    buf.put_char(5, 0, '文')
+    buf.get(5, 0).char.should eq('文')
     buf.get(6, 0).continuation?.should be_true
     buf.get(7, 0).continuation?.should be_false
     buf.get(7, 0).char.should eq(' ')
@@ -88,7 +88,7 @@ describe Opal::UI::Buffer do
   it "safely clamps wide characters placed on the last column to prevent line wrap" do
     buf = Opal::UI::Buffer.new(10, 2)
     # Attempt to put 2-width character on column 9 (last column)
-    buf.put_char(9, 0, '🔍')
+    buf.put_char(9, 0, '漢')
     # Should replace with space rather than writing half a character past bounds
     buf.get(9, 0).char.should eq(' ')
     buf.get(9, 0).continuation?.should be_false
@@ -96,10 +96,10 @@ describe Opal::UI::Buffer do
 
   it "clears sliced continuation cells on fill boundaries" do
     buf = Opal::UI::Buffer.new(20, 4)
-    buf.put_char(2, 1, '💎') # cols 2 and 3
-    buf.put_char(6, 1, '🔮') # cols 6 and 7
+    buf.put_char(2, 1, '語') # cols 2 and 3
+    buf.put_char(6, 1, '文') # cols 6 and 7
 
-    # Fill rectangle from x=3 to x=6 (touches continuation of 💎 and left of 🔮)
+    # Fill rectangle from x=3 to x=6 (touches continuation of 語 and left of 文)
     buf.fill(3, 1, 4, 1, Opal::UI::Cell.empty)
 
     # Preceding cell 2 must be cleared to prevent orphan wide left half
@@ -132,10 +132,10 @@ describe Opal::UI::Buffer do
 
     # Frame 1: wide character at col 2
     buf1 = Opal::UI::Buffer.new(10, 1)
-    buf1.put_char(2, 0, '🔍')
+    buf1.put_char(2, 0, '漢')
     dr.render(buf1)
 
-    driver.output.should contain("🔍")
+    driver.output.should contain("漢")
 
     # Frame 2: narrow character at col 2
     buf2 = Opal::UI::Buffer.new(10, 1)
@@ -163,13 +163,13 @@ describe Opal::UI::Buffer do
     driver.output.should contain("\e[J")
   end
 
-  it "diff renderer cleanly erases lines containing emojis when overwritten with empty spaces" do
+  it "diff renderer cleanly erases lines containing wide characters when overwritten with empty spaces" do
     driver = create_mock_driver
     dr = Opal::UI::DiffRenderer.new(driver)
 
-    # Frame 1: Text containing ⚡ (2-width emoji) followed by words and spaces
+    # Frame 1: Text containing wide character (2-width) followed by words and spaces
     buf1 = Opal::UI::Buffer.new(50, 1)
-    buf1.put_string(0, 0, "• ⚡ Flicker-Free Delta Rendering")
+    buf1.put_string(0, 0, "• 【FX】 Flicker-Free Delta Rendering")
     dr.render(buf1)
 
     # Frame 2: Entirely empty buffer

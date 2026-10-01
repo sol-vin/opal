@@ -5,8 +5,13 @@ module Opal
   module Terminal
     # Abstract base interface for terminal input/output drivers.
     abstract class Driver
+      property output : IO
+      property input : IO
       @buffered_events = Deque(KeyEvent | MouseEvent).new
       @input_buffer = Bytes.new(512)
+
+      def initialize(@output : IO = STDOUT, @input : IO = STDIN)
+      end
 
       abstract def size : {Int32, Int32}
       abstract def raw_mode(& : ->)
@@ -20,7 +25,12 @@ module Opal
           return @buffered_events.shift
         end
 
-        bytes_read = STDIN.read(@input_buffer)
+        bytes_read = begin
+          @input.read(@input_buffer)
+        rescue IO::Error
+          0
+        end
+
         return nil if bytes_read <= 0
 
         seq = String.new(@input_buffer[0, bytes_read])

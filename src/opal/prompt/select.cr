@@ -37,7 +37,7 @@ module Opal
             lines.puts "#{q_style.render("?")} #{question}: #{dim_style.render("(Use arrow keys or j/k)")}"
             options.each_with_index do |opt, idx|
               if idx == selected_idx
-                lines.puts "  #{selected_style.render("❯ #{opt}")}"
+                lines.puts "  #{selected_style.render("> #{opt}")}"
               else
                 lines.puts "    #{dim_style.render(opt)}"
               end
@@ -71,7 +71,7 @@ module Opal
         # Overwrite with clean final result
         term.write(Terminal::Screen.move_up(options.size + 1))
         term.write(Terminal::Screen::CLEAR_LINE)
-        term.write("#{check_style.render("✓")} #{question}: #{selected_style.render(selected_val)}\n")
+        term.write("#{check_style.render("[OK]")} #{question}: #{selected_style.render(selected_val)}\n")
         # Clear the old option lines below
         options.size.times do
           term.write(Terminal::Screen::CLEAR_LINE + "\n")

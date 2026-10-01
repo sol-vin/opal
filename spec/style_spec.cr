@@ -66,15 +66,14 @@ describe Opal::VisualWidth do
     Opal::VisualWidth.width("Crystal言語").should eq(11)
   end
 
-  it "measures emojis as 2 columns" do
-    Opal::VisualWidth.width("🎮 Rocket").should eq(9)
-    Opal::VisualWidth.char_width('⚡').should eq(2)        # U+26A1 High Voltage
-    Opal::VisualWidth.char_width('✨').should eq(2)        # U+2728 Sparkles
-    Opal::VisualWidth.char_width('☕').should eq(2)        # U+2615 Hot Beverage
-    Opal::VisualWidth.char_width('\u{26A0}').should eq(2) # U+26A0 Warning
-    Opal::VisualWidth.char_width('🍵').should eq(2)        # U+1F375 Teacup
-    Opal::VisualWidth.char_width('💎').should eq(2)        # U+1F48E Gem
-    Opal::VisualWidth.char_width('✔').should eq(1)        # U+2714 Checkmark (text presentation)
+  it "measures fullwidth and wide characters as 2 columns" do
+    Opal::VisualWidth.width("【A】 Rocket").should eq(12)
+    Opal::VisualWidth.char_width('【').should eq(2) # U+3010 Left Black Lenticular Bracket
+    Opal::VisualWidth.char_width('】').should eq(2) # U+3011 Right Black Lenticular Bracket
+    Opal::VisualWidth.char_width('全').should eq(2) # U+5168 CJK
+    Opal::VisualWidth.char_width('角').should eq(2) # U+89D2 CJK
+    Opal::VisualWidth.char_width('·').should eq(1) # Middle dot
+    Opal::VisualWidth.char_width('►').should eq(1) # Black right-pointing pointer
   end
 
   it "truncates text with ellipsis" do

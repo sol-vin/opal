@@ -38,8 +38,8 @@ module Opal
 
             options.each_with_index do |opt, idx|
               is_checked = selected_set.includes?(idx)
-              box = is_checked ? check_style.render("[✓]") : dim_style.render("[ ]")
-              cursor = (idx == cursor_idx) ? selected_style.render("❯") : " "
+              box = is_checked ? check_style.render("[x]") : dim_style.render("[ ]")
+              cursor = (idx == cursor_idx) ? selected_style.render(">") : " "
 
               line_text = if idx == cursor_idx
                             "  #{cursor} #{box} #{selected_style.render(opt)}"
@@ -97,7 +97,7 @@ module Opal
         # Overwrite with clean final summary
         term.write(Terminal::Screen.move_up(options.size + 1))
         term.write(Terminal::Screen::CLEAR_LINE)
-        term.write("#{check_style.render("✓")} #{question}: #{selected_style.render(final_selected.join(", "))}\n")
+        term.write("#{check_style.render("[OK]")} #{question}: #{selected_style.render(final_selected.join(", "))}\n")
         options.size.times do
           term.write(Terminal::Screen::CLEAR_LINE + "\n")
         end

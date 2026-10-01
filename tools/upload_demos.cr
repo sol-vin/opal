@@ -64,7 +64,7 @@ module Opal
             svg_url = "#{cast_url}.svg"
             cast_id = cast_url.split("/").last
 
-            puts "    ✓ Success: #{cast_url}"
+            puts "    [OK] Success: #{cast_url}"
             UploadResult.new(
               filename: filename,
               title: title,
@@ -82,8 +82,8 @@ module Opal
 
       def self.upload_all
         install_id = get_or_create_install_id
-        puts "🚀 Asciinema Installation ID: #{install_id}"
-        puts "🔗 Account Claim URL: https://asciinema.org/connect/#{install_id}"
+        puts "[RUN] Asciinema Installation ID: #{install_id}"
+        puts "[OSC] Account Claim URL: https://asciinema.org/connect/#{install_id}"
         puts
 
         casts = [
@@ -138,10 +138,10 @@ module Opal
               break
             rescue ex
               if ex.message.to_s.includes?("upload_limit_reached")
-                puts "  ⚠ Install ID hit limit. Generating a fresh install ID..."
+                puts "  [!] Install ID hit limit. Generating a fresh install ID..."
                 install_id = UUID.random.to_s
                 File.write(ID_FILE, install_id)
-                puts "  🔑 New Install ID: #{install_id}"
+                puts "  [*] New Install ID: #{install_id}"
               else
                 raise ex
               end
@@ -171,8 +171,8 @@ module Opal
         }
 
         File.write(MANIFEST_FILE, manifest.to_pretty_json)
-        puts "\n📄 Saved manifest to #{MANIFEST_FILE}"
-        puts "\n🎉 All demos uploaded successfully!"
+        puts "\n[FILE] Saved manifest to #{MANIFEST_FILE}"
+        puts "\n[*] All demos uploaded successfully!"
       end
     end
   end

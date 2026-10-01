@@ -102,7 +102,7 @@ module Opal
         end
 
         if err = @error
-          buffer.put_string(x + 4, y + 1, "⚠ #{err}", fg: Color.red, italic: true)
+          buffer.put_string(x + 4, y + 1, "[!] #{err}", fg: Color.red, italic: true)
           lines += 1
         end
 
@@ -142,7 +142,7 @@ module Opal
         end
 
         if err = @error
-          buffer.put_string(x + 4, y + 1, "⚠ #{err}", fg: Color.red, italic: true)
+          buffer.put_string(x + 4, y + 1, "[!] #{err}", fg: Color.red, italic: true)
           lines += 1
         end
 
@@ -192,7 +192,7 @@ module Opal
         buffer.put_string(val_x, y, choice_display, fg: @focused ? Color.cyan : Color.bright_white, bold: @focused)
 
         if err = @error
-          buffer.put_string(x + 4, y + 1, "⚠ #{err}", fg: Color.red, italic: true)
+          buffer.put_string(x + 4, y + 1, "[!] #{err}", fg: Color.red, italic: true)
           lines += 1
         end
 
@@ -250,7 +250,7 @@ module Opal
           is_checked = @selected.includes?(opt)
           is_sub_focused = @focused && (idx == @sub_cursor)
 
-          chk = is_checked ? "[✔]" : "[ ]"
+          chk = is_checked ? "[x]" : "[ ]"
           item_text = "#{chk} #{opt}  "
 
           fg_color = is_sub_focused ? Color.cyan : (is_checked ? Color.green : Color.bright_black)
@@ -259,7 +259,7 @@ module Opal
         end
 
         if err = @error
-          buffer.put_string(x + 4, y + 1, "⚠ #{err}", fg: Color.red, italic: true)
+          buffer.put_string(x + 4, y + 1, "[!] #{err}", fg: Color.red, italic: true)
           lines += 1
         end
 
@@ -318,7 +318,7 @@ module Opal
         end
 
         if err = @error
-          buffer.put_string(x + 4, y + 1, "⚠ #{err}", fg: Color.red, italic: true)
+          buffer.put_string(x + 4, y + 1, "[!] #{err}", fg: Color.red, italic: true)
           lines += 1
         end
 

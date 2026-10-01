@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💎 Opal
+# [*] Opal
 
 **Next-Generation Terminal User Interface (TUI) & CLI DSL Framework for Crystal**
 
@@ -19,27 +19,27 @@
 
 ---
 
-## 🌟 What is Opal?
+## >> What is Opal?
 
 **Opal** is an all-in-one terminal framework for [Crystal](https://crystal-lang.org) designed to build world-class command-line interfaces, micro-interactive prompts, and full-screen terminal applications.
 
 It merges the best paradigms from modern terminal engineering into a cohesive, idiomatic Crystal DSL:
-- 🍵 **The Elm Architecture (TEA)** — Pure, predictable state management inspired by [Bubble Tea](https://github.com/charmbracelet/bubbletea).
-- 🎨 **Declarative Fluent Styling & Themes** — Lipgloss-inspired composable styling, borders, 24-bit TrueColor, visual string width, and curated themes (Catppuccin, Dracula, TokyoNight, Nord, Gruvbox).
-- ⚡ **Flicker-Free Delta Rendering** — Blessed-inspired double buffering that computes minimal character delta updates for 60fps full-screen performance.
-- 🛠️ **Expressive CLI App DSL** — Clap/Commander-style subcommands, typed flags, choices, global flag propagation, and shell completion (`bash`, `zsh`, `fish`).
-- 📝 **Multi-Field Form & Wizard DSL** — All fields visible simultaneously, tab navigation, live inline validation, and instant submission.
-- 🔍 **Live Fuzzy Search & Filter** — Instant keystroke matching with rune highlighting and split preview pane (`Opal.filter`).
-- 📊 **Rich Data Visualizations** — Unicode block Sparklines, horizontal/vertical BarCharts, percentage Gauges, and hierarchical Trees.
-- 🪟 **Layer Blending, Modals & Toasts** — Buffer `blit`, backdrop dimming, centered confirmation dialogs, and non-blocking toast queues.
-- 📖 **Terminal Markdown Viewer** — Styled headers, blockquotes, lists, and syntax colorized code blocks.
-- 🔮 **Ghost-Text Autocomplete & Input DSL** — Modern fish/zsh-style inline ghost text autocomplete on `Tab`, flexible interactive line editing, and declarative key bindings.
-- 🖱️ **Hit-Test Mouse Routing DSL** — SGR extended mouse tracking with declarative click, drag, and scroll zones.
-- 🔗 **OSC 8 Links & OSC 52 Clipboard** — Native clickable terminal hyperlinks and desktop clipboard copying across SSH and local sessions.
+- [TEA] **The Elm Architecture (TEA)** — Pure, predictable state management inspired by [Bubble Tea](https://github.com/charmbracelet/bubbletea).
+- [UI] **Declarative Fluent Styling & Themes** — Lipgloss-inspired composable styling, borders, 24-bit TrueColor, visual string width, and curated themes (Catppuccin, Dracula, TokyoNight, Nord, Gruvbox).
+- [FX] **Flicker-Free Delta Rendering** — Blessed-inspired double buffering that computes minimal character delta updates for 60fps full-screen performance.
+- [CLI] **Expressive CLI App DSL** — Clap/Commander-style subcommands, typed flags, choices, global flag propagation, and shell completion (`bash`, `zsh`, `fish`).
+- [DOC] **Multi-Field Form & Wizard DSL** — All fields visible simultaneously, tab navigation, live inline validation, and instant submission.
+- [SEARCH] **Live Fuzzy Search & Filter** — Instant keystroke matching with rune highlighting and split preview pane (`Opal.filter`).
+- [VIZ] **Rich Data Visualizations** — Unicode block Sparklines, horizontal/vertical BarCharts, percentage Gauges, and hierarchical Trees.
+- [WIN] **Layer Blending, Modals & Toasts** — Buffer `blit`, backdrop dimming, centered confirmation dialogs, and non-blocking toast queues.
+- [DOC] **Terminal Markdown Viewer** — Styled headers, blockquotes, lists, and syntax colorized code blocks.
+- [AUTO] **Ghost-Text Autocomplete & Input DSL** — Modern fish/zsh-style inline ghost text autocomplete on `Tab`, flexible interactive line editing, and declarative key bindings.
+- [MOUSE] **Hit-Test Mouse Routing DSL** — SGR extended mouse tracking with declarative click, drag, and scroll zones.
+- [OSC] **OSC 8 Links & OSC 52 Clipboard** — Native clickable terminal hyperlinks and desktop clipboard copying across SSH and local sessions.
 
 ---
 
-## 📦 Installation
+## [PKG] Installation
 
 Add Opal to your project's `shard.yml`:
 
@@ -64,7 +64,7 @@ require "opal"
 
 ---
 
-## 📑 Table of Contents
+## [TOC] Table of Contents
 
 - [Live Interactive Showcases](#-live-interactive-showcases)
 - [Quick Start](#-quick-start)
@@ -96,7 +96,7 @@ require "opal"
 
 ---
 
-## 🚀 Quick Start
+## [RUN] Quick Start
 
 ### 1. Build an Interactive Setup Wizard with `Opal.form`
 
@@ -134,7 +134,7 @@ puts "Switched to branch: #{selected}" if selected
 
 ---
 
-## 🎬 Live Interactive Showcases
+## [DEMO] Live Interactive Showcases
 
 Real, live recordings captured directly from Opal running in terminal sessions (click any recording to open in asciinema):
 
@@ -152,7 +152,7 @@ Real, live recordings captured directly from Opal running in terminal sessions (
 
 ---
 
-## 📝 Multi-Field Form & Wizard DSL
+## [DOC] Multi-Field Form & Wizard DSL
 
 [![asciicast](https://asciinema.org/a/AtHfXx9TETU0iynO.svg)](https://asciinema.org/a/AtHfXx9TETU0iynO)
 
@@ -176,7 +176,7 @@ end
 
 ---
 
-## 🔍 Live Fuzzy Search & Filter
+## [SEARCH] Live Fuzzy Search & Filter
 
 [![asciicast](https://asciinema.org/a/CdgldnJvhRGBGEuE.svg)](https://asciinema.org/a/CdgldnJvhRGBGEuE)
 
@@ -196,7 +196,7 @@ choice = Opal.filter(
 
 ---
 
-## 📁 Interactive File Dialog & Explorer
+## [DIR] Interactive File Dialog & Explorer
 
 Browse file systems with folder/file icons, formatted human-readable file sizes, live directory search filtering, and split file preview:
 
@@ -213,7 +213,7 @@ end
 
 ---
 
-## 🎨 TrueColor 24-Bit Color Picker
+## [UI] TrueColor 24-Bit Color Picker
 
 Interactive color palette studio with Red, Green, Blue channel sliders, live TrueColor preview swatches, hex `#RRGGBB` calculations, luminance, and designer preset swatches:
 
@@ -232,7 +232,7 @@ end
 
 ---
 
-## 🧊 2D & 3D Spatial Color Picker
+## [3D] 2D & 3D Spatial Color Picker
 
 Choose colors in continuous 2D and 3D geometric spaces. Features real-time pitch/yaw rotation (`w/a/s/d`), virtual cursor raycasting (`↑/↓/←/→`), depth buffering (Z-buffer), and surface sampling across multiple projection shapes:
 
@@ -256,7 +256,7 @@ end
 
 ---
 
-## ✨ Text Shaders & Terminal FX
+## [FX] Text Shaders & Terminal FX
 
 Manipulate the character buffer like a GPU fragment shader. Opal brings pixel-shader thinking to text terminals with normalized UV coordinates `(u, v) ∈ [0, 1]`, double-buffered ping-pong rendering, composable multi-pass pipelines, and sub-region scoping:
 
@@ -274,7 +274,7 @@ pipeline = Opal.shader_pipeline do |pipe|
   pipe.fragment(label: "tint_and_dissolve") do |ctx|
     if ctx.noise(ctx.u * 10, ctx.v * 10) > 0.6
       ctx.fg = Opal::Color.hex("#89DCEB")
-      ctx.char = '✦'
+      ctx.char = '*'
     end
   end
 
@@ -288,7 +288,7 @@ pipeline.render(buffer, time: 1.5)
 
 ---
 
-## 📊 Data Visualizations
+## [VIZ] Data Visualizations
 
 [![asciicast](https://asciinema.org/a/J87u80gsmyKUwKx9.svg)](https://asciinema.org/a/J87u80gsmyKUwKx9)
 
@@ -316,9 +316,9 @@ Opal.render_ui(width: 70, height: 20) do |ui|
 
     # Hierarchical Tree
     v.tree(title: "Service Graph") do |t|
-      t.node("API Gateway", icon: "🌐") do |gateway|
-        gateway.add("Auth Service", icon: "🔒")
-        gateway.add("Search Node", icon: "🔍")
+      t.node("API Gateway", icon: "[NET]") do |gateway|
+        gateway.add("Auth Service", icon: "[SEC]")
+        gateway.add("Search Node", icon: "[SEARCH]")
       end
     end
   end
@@ -327,7 +327,7 @@ end
 
 ---
 
-## 🪟 Buffer Blitting, Modals & Toasts
+## [WIN] Buffer Blitting, Modals & Toasts
 
 ### Floating Modal Dialog
 Center a dialog box over any screen buffer with automatic background dimming:
@@ -355,7 +355,7 @@ toasts.render_overlay(buffer, position: :top_right)
 
 ---
 
-## 📖 Terminal Markdown Viewer
+## [DOC] Terminal Markdown Viewer
 
 Convert Markdown documents into styled ANSI terminal text:
 
@@ -381,7 +381,7 @@ puts Opal.render_markdown(doc, width: 80)
 
 ---
 
-## 🎨 Theme Engine & Semantic Colors
+## [UI] Theme Engine & Semantic Colors
 
 Opal includes pre-registered designer palettes and semantic color tokens:
 
@@ -399,7 +399,7 @@ style = Opal.style
 
 ---
 
-## 🔍 Command Palette Overlay
+## [SEARCH] Command Palette Overlay
 
 Press `Ctrl+P` or `Ctrl+K` to summon an instant Spotlight action launcher:
 
@@ -411,7 +411,7 @@ palette.add("file:open", "Open file picker", category: "File", shortcut: "ctrl+o
 
 ---
 
-## 🔗 OSC 8 Hyperlinks & OSC 52 Clipboard
+## [OSC] OSC 8 Hyperlinks & OSC 52 Clipboard
 
 ```crystal
 # Clickable hyperlink in modern terminals
@@ -439,7 +439,7 @@ current_c    = Opal::Color.lerp(normal_color, alert_color, 0.75)
 
 ---
 
-## 🛠️ CLI Application DSL
+## [CLI] CLI Application DSL
 
 [![asciicast](https://asciinema.org/a/hZWeL8pGlqZAp65r.svg)](https://asciinema.org/a/hZWeL8pGlqZAp65r)
 
@@ -463,7 +463,7 @@ app.run(ARGV)
 
 ---
 
-## 🎨 Fluent Styling & Layout
+## [UI] Fluent Styling & Layout
 
 Lipgloss-inspired declarative style chain with true visual string width calculation and 24-bit TrueColor:
 
@@ -492,7 +492,7 @@ puts rendered
 
 ---
 
-## 💬 Interactive Prompts
+## [PROMPT] Interactive Prompts
 
 ```crystal
 # Text, Confirm, Select, and Multi-Select
@@ -517,7 +517,7 @@ end
 
 ---
 
-## 🔮 Autocomplete & Ghost Text DSL
+## [AUTO] Autocomplete & Ghost Text DSL
 
 [![asciicast](https://asciinema.org/a/7awRfosHKkYInRIP.svg)](https://asciinema.org/a/7awRfosHKkYInRIP)
 
@@ -538,7 +538,7 @@ input.autocomplete = engine
 
 ---
 
-## 🎮 Interactive Controls & Puppeting Engine
+## [CONTROL] Interactive Controls & Puppeting Engine
 
 > [!NOTE]
 > For in-depth architectural design, sequence diagrams, and lifecycle specifications, see the [Architecture Guide: Controls, Input Hooks & Engine](docs/architecture/input_hooks_and_engine.md).
@@ -620,7 +620,7 @@ end
 
 ---
 
-## 🍵 The Elm Architecture (TEA)
+## [TEA] The Elm Architecture (TEA)
 
 Build reactive terminal applications with pure state transitions:
 
@@ -656,7 +656,7 @@ Opal::Tea::Program.new(CounterModel.new).run
 
 ---
 
-## 🧪 Testing with MockDriver
+## [TEST] Testing with MockDriver
 
 Test full TUI interactions headlessly without opening an actual terminal:
 
@@ -675,7 +675,7 @@ end
 
 ---
 
-## 🎬 Asciicast Terminal Recording (`opal/asciicast`)
+## [DEMO] Asciicast Terminal Recording (`opal/asciicast`)
 
 > [!NOTE]
 > For in-depth architectural design, format specifications, and parser details, see the [Architecture Guide: Asciicast System](docs/architecture/asciicast.md).
@@ -699,7 +699,7 @@ Opal::Asciicast.record("demo.cast", width: 80, height: 20, title: "System Monito
   cast.pause(0.5)
 
   buf = Opal::UI::Buffer.new(78, 16)
-  buf.put_string(2, 2, "🚀 Opal 60fps Double Buffered Output", fg: Opal::Color.cyan, bold: true)
+  buf.put_string(2, 2, "[RUN] Opal 60fps Double Buffered Output", fg: Opal::Color.cyan, bold: true)
   cast.draw_buffer(buf, advance: 0.5)
 end
 ```
@@ -731,7 +731,7 @@ For a complete runnable demonstration, check out [`examples/14_asciicast_recordi
 
 ---
 
-## 📂 Examples
+## [EXAMPLES] Examples
 
 Explore all runnable examples in the [`examples/`](examples/) directory:
 
@@ -760,7 +760,7 @@ crystal run examples/12_3d_color_picker.cr
 
 ---
 
-## 🌐 Cross-Platform Support
+## [NET] Cross-Platform Support
 
 | Platform | Terminal Backend | Colors | Mouse Support |
 | :--- | :--- | :--- | :--- |
@@ -770,6 +770,6 @@ crystal run examples/12_3d_color_picker.cr
 
 ---
 
-## 📄 License
+## [FILE] License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

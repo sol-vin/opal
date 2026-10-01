@@ -1,5 +1,5 @@
 require "string_scanner"
-require "../element"
+require "../control"
 require "../buffer"
 require "../../style/color"
 require "../../style/visual_width"
@@ -8,7 +8,7 @@ module Opal
   module UI
     # Code and disassembly viewing element with line numbers,
     # syntax highlighting, cursor indicator, and vertical scrolling.
-    class CodeView < Element
+    class CodeView < Control
       property code : String
       property language : Symbol # :asm, :c, :crystal, :plain
       property start_line : Int32
@@ -18,6 +18,12 @@ module Opal
       property gutter_fg : Color?
       property cursor_fg : Color?
       property cursor_indicator : String?
+
+      # Cached layout coordinates for mouse interaction
+      @last_x : Int32 = 0
+      @last_y : Int32 = 0
+      @last_w : Int32 = 0
+      @last_h : Int32 = 0
 
       def initialize(
         @code : String = "",
@@ -30,6 +36,7 @@ module Opal
         cursor_fg : Color | Symbol | String | Nil = nil,
         @cursor_indicator : String? = nil,
       )
+        super()
         @gutter_fg = gutter_fg ? Color.from(gutter_fg) : nil
         @cursor_fg = cursor_fg ? Color.from(cursor_fg) : nil
       end
@@ -55,8 +62,63 @@ module Opal
         {Math.min(available_w, total_w), Math.min(available_h, all_lines.size)}
       end
 
+      def handle_key(event : Terminal::KeyEvent) : Bool
+        case event.name
+        when "up", "k"
+          scroll_up(1)
+          true
+        when "down", "j"
+          scroll_down(1)
+          true
+        when "page_up", "pageup"
+          scroll_up(@last_h > 0 ? @last_h : 10)
+          true
+        when "page_down", "pagedown"
+          scroll_down(@last_h > 0 ? @last_h : 10)
+          true
+        when "home"
+          @scroll_offset = 0
+          true
+        when "end"
+          @scroll_offset = Math.max(0, lines.size - 1)
+          true
+        else
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          scroll_up(2)
+          return true
+        when Terminal::MouseButton::WheelDown
+          scroll_down(2)
+          return true
+        end
+
+        if event.button == Terminal::MouseButton::Left && event.action == Terminal::MouseAction::Press
+          if event.x >= @last_x && event.x < @last_x + @last_w &&
+             event.y >= @last_y && event.y < @last_y + @last_h
+            clicked_row = event.y - @last_y
+            line_idx = @scroll_offset + clicked_row
+            if line_idx >= 0 && line_idx < lines.size
+              @highlighted_line = @start_line + line_idx
+              return true
+            end
+          end
+        end
+
+        false
+      end
+
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0
+
+        @last_x = x
+        @last_y = y
+        @last_w = width
+        @last_h = height
 
         th = current_theme
         glyphs = th.glyphs

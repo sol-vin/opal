@@ -38,11 +38,11 @@ module Opal
       def dock(element : Element, edge : DockEdge | Symbol, size : Int32? = nil) : self
         dock_edge = case edge
                     when DockEdge then edge
-                    when :top then DockEdge::Top
-                    when :bottom then DockEdge::Bottom
-                    when :left then DockEdge::Left
-                    when :right then DockEdge::Right
-                    when :center then DockEdge::Center
+                    when :top     then DockEdge::Top
+                    when :bottom  then DockEdge::Bottom
+                    when :left    then DockEdge::Left
+                    when :right   then DockEdge::Right
+                    when :center  then DockEdge::Center
                     else
                       raise ArgumentError.new("Invalid dock edge: #{edge}. Expected :top, :bottom, :left, :right, or :center")
                     end

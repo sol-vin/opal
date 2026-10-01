@@ -65,7 +65,7 @@ module Opal
       def success(msg : String? = nil) : Nil
         stop
         display_msg = msg || @text
-        mark = Style.new.bold.fg(:green).render("✓")
+        mark = Style.new.bold.fg(:green).render("[OK]")
         @driver.write("#{mark} #{display_msg}\n")
         @driver.flush
       end
@@ -73,7 +73,7 @@ module Opal
       def fail(msg : String? = nil) : Nil
         stop
         display_msg = msg || @text
-        mark = Style.new.bold.fg(:red).render("✗")
+        mark = Style.new.bold.fg(:red).render("[X]")
         @driver.write("#{mark} #{display_msg}\n")
         @driver.flush
       end
@@ -81,7 +81,7 @@ module Opal
       def warn(msg : String? = nil) : Nil
         stop
         display_msg = msg || @text
-        mark = Style.new.bold.fg(:yellow).render("!")
+        mark = Style.new.bold.fg(:yellow).render("[!]")
         @driver.write("#{mark} #{display_msg}\n")
         @driver.flush
       end

@@ -1,10 +1,10 @@
-# 🎮 Architecture: Per-Control Input Hooks, Puppeting & UI Engine
+# [CONTROL] Architecture: Per-Control Input Hooks, Puppeting & UI Engine
 
 This document details the architectural design, lifecycle contracts, and usage patterns for Opal's interactive control system (`Control`), per-control input hooks (`InputHookable`), and multi-control focus orchestration (`Engine`).
 
 ---
 
-## 📑 Table of Contents
+## [TOC] Table of Contents
 
 - [Overview & Philosophy](#-overview--philosophy)
 - [Class Hierarchy & Separation of Concerns](#-class-hierarchy--separation-of-concerns)
@@ -21,7 +21,7 @@ This document details the architectural design, lifecycle contracts, and usage p
 
 ---
 
-## 🌟 Overview & Philosophy
+## >> Overview & Philosophy
 
 In terminal applications, UI elements fall into two categories:
 1. **Passive Visual Elements** (`Element`): Pure layout nodes that render state into a `Buffer` given an `(x, y, width, height)` bounding box. Examples include `Box`, `Text`, `Badge`, `Sparkline`, `BarChart`, and `LineGraph`.
@@ -34,7 +34,7 @@ Opal enforces a clean distinction between these two concepts while keeping visua
 
 ---
 
-## 🏛️ Class Hierarchy & Separation of Concerns
+## [ARCH] Class Hierarchy & Separation of Concerns
 
 ```
                      ┌───────────────────────┐
@@ -71,7 +71,7 @@ Opal enforces a clean distinction between these two concepts while keeping visua
 
 ---
 
-## 🔄 Lifecycle Contracts & State Machine
+## [CYCLE] Lifecycle Contracts & State Machine
 
 Every `Control` transitions through distinct input states based on user overrides:
 
@@ -84,7 +84,7 @@ Every `Control` transitions through distinct input states based on user override
 
 ---
 
-## ⚡ Event Dispatch & Fallback Mechanics
+## [FX] Event Dispatch & Fallback Mechanics
 
 Incoming terminal events traverse the following sequence:
 
@@ -134,7 +134,7 @@ sequenceDiagram
 
 ---
 
-## 🤖 Programmatic Puppeting & Automation
+## [BOT] Programmatic Puppeting & Automation
 
 Puppeting allows driving controls entirely from code, automated integration tests, background fibers, or playback logs:
 
@@ -169,7 +169,7 @@ sequenceDiagram
 
 ---
 
-## 💻 Complete Copy-Pasteable Examples
+## [CODE] Complete Copy-Pasteable Examples
 
 ### Example 1: Creating a Custom Interactive Control
 
@@ -419,7 +419,7 @@ end
 
 ---
 
-## 📖 API Reference
+## [DOC] API Reference
 
 ### `Opal::UI::InputHookable`
 

@@ -121,21 +121,25 @@ module Opal
       end
 
       private def render_view : Nil
-        if @diff_render && (dr = @diff_renderer)
-          cols, rows = @driver.size
-          rb = @render_buffer
-          if rb.nil? || rb.width != cols || rb.height != rows
-            rb = UI::Buffer.new(cols, rows)
-            @render_buffer = rb
+        begin
+          if @diff_render && (dr = @diff_renderer)
+            cols, rows = @driver.size
+            rb = @render_buffer
+            if rb.nil? || rb.width != cols || rb.height != rows
+              rb = UI::Buffer.new(cols, rows)
+              @render_buffer = rb
+            else
+              rb.clear
+            end
+            @model.render(rb)
+            dr.render(rb)
           else
-            rb.clear
+            @driver.write(Terminal::Screen::CURSOR_HOME)
+            @driver.write(@model.view)
+            @driver.flush
           end
-          @model.render(rb)
-          dr.render(rb)
-        else
-          @driver.write(Terminal::Screen::CURSOR_HOME)
-          @driver.write(@model.view)
-          @driver.flush
+        rescue IO::Error
+          # Suppress crash if pipe has been closed / broken
         end
       end
     end

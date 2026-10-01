@@ -1,4 +1,4 @@
-require "../element"
+require "../control"
 require "../buffer"
 require "../../style/color"
 require "../../style/border"
@@ -30,13 +30,20 @@ module Opal
     end
 
     # Spotlight / Quick Launcher overlay modal for searchable actions and hotkeys.
-    class CommandPalette < Element
+    class CommandPalette < Control
       getter actions : Array(CommandAction)
       property query : String = ""
       property cursor : Int32 = 0
       property? visible : Bool = true
 
+      # Cached layout coordinates for mouse interaction
+      @last_x : Int32 = 0
+      @last_y : Int32 = 0
+      @last_w : Int32 = 0
+      @last_h : Int32 = 0
+
       def initialize(@actions : Array(CommandAction) = [] of CommandAction)
+        super()
       end
 
       def add(action : CommandAction) : Nil
@@ -106,6 +113,80 @@ module Opal
         {w, h}
       end
 
+      def handle_key(event : Terminal::KeyEvent) : Bool
+        return false unless @visible
+
+        case event.name
+        when "up"
+          cursor_up
+          true
+        when "down"
+          cursor_down
+          true
+        when "page_up", "pageup"
+          4.times { cursor_up }
+          true
+        when "page_down", "pagedown"
+          4.times { cursor_down }
+          true
+        when "enter", "return"
+          execute_selected
+          @visible = false
+          true
+        when "escape"
+          @visible = false
+          true
+        when "backspace"
+          backspace
+          true
+        else
+          if ch = event.char
+            if !ch.control?
+              append_char(ch)
+              return true
+            end
+          end
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        return false unless @visible
+
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          cursor_up
+          return true
+        when Terminal::MouseButton::WheelDown
+          cursor_down
+          return true
+        end
+
+        if event.button == Terminal::MouseButton::Left && event.action == Terminal::MouseAction::Press
+          if event.x >= @last_x && event.x < @last_x + @last_w &&
+             event.y >= @last_y && event.y < @last_y + @last_h
+            # Clicked inside palette card
+            list_h = @last_h - 4
+            row_idx = event.y - (@last_y + 3)
+            if row_idx >= 0 && row_idx < list_h && row_idx < matches.size
+              if @cursor == row_idx
+                execute_selected
+                @visible = false
+              else
+                @cursor = row_idx
+              end
+            end
+            return true
+          else
+            # Clicked outside palette: dismiss
+            @visible = false
+            return true
+          end
+        end
+
+        false
+      end
+
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return unless @visible
         buffer.dim_all
@@ -113,6 +194,11 @@ module Opal
         pal_w, pal_h = preferred_size(width, height)
         pal_x = x + (width - pal_w) // 2
         pal_y = y + Math.max(1, (height - pal_h) // 3)
+
+        @last_x = pal_x
+        @last_y = pal_y
+        @last_w = pal_w
+        @last_h = pal_h
 
         # Draw card in sub-buffer
         card_buf = Buffer.new(pal_w, pal_h)

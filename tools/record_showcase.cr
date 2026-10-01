@@ -58,7 +58,7 @@ module Opal
       end
 
       def run(output_path : String) : Nil
-        puts "🎬 Puppeting Opal 26-Slide TUI Showcase Demo..."
+        puts "[DEMO] Puppeting Opal 32-Slide TUI Showcase Demo..."
 
         # 1. Shell prompt introduction
         @cast.write("\e[?25h\e[1;36msol-vin@terminal\e[0m:\e[1;34m~/opal\e[0m$ ", 0.0)
@@ -422,9 +422,120 @@ module Opal
         next_slide(1.2)
 
         # =====================================================================
-        # Slide 26: Grand Finale & Summary Checklist
+        # Slide 26: Interactive UI Controls (Buttons, Dropdowns, Scrollbars)
         # =====================================================================
-        puts "  → Slide 26: Grand Finale"
+        puts "  → Slide 26: Interactive UI Controls"
+        render_frame(0.3)
+        # Click Primary Button
+        send_key("enter", advance: 0.2)
+        # Tab to Secondary Button
+        send_key("tab", advance: 0.15)
+        send_key("space", advance: 0.2)
+        # Tab to Toggle Button
+        send_key("tab", advance: 0.15)
+        send_key("space", advance: 0.2)
+        # Tab to Dropdown
+        send_key("tab", advance: 0.15)
+        send_key("down", advance: 0.2)
+        send_key("down", advance: 0.2)
+        # Tab to Scrollbar
+        send_key("tab", advance: 0.15)
+        send_key("down", advance: 0.15)
+        send_key("down", advance: 0.15)
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 27: 2D Vector Graphics Primitives
+        # =====================================================================
+        puts "  → Slide 27: 2D Vector Graphics Primitives"
+        render_frame(0.3)
+        3.times { send_tick(advance: 0.15) }
+        # Adjust radius with + and -
+        send_key("+", advance: 0.15)
+        send_key("+", advance: 0.15)
+        3.times { send_tick(advance: 0.15) }
+        send_key("-", advance: 0.15)
+        # Pause animation with space
+        send_key("space", advance: 0.2)
+        send_key("space", advance: 0.2)
+        3.times { send_tick(advance: 0.15) }
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 28: 3D Mesh Viewport & Primitives
+        # =====================================================================
+        puts "  → Slide 28: 3D Mesh Viewport"
+        render_frame(0.3)
+        3.times { send_tick(advance: 0.15) }
+        # Switch shapes: 2 (Sphere), 3 (Cylinder), 4 (Pyramid), 5 (Torus)
+        send_key("2", advance: 0.3)
+        3.times { send_tick(advance: 0.15) }
+        send_key("5", advance: 0.3)
+        3.times { send_tick(advance: 0.15) }
+        # Toggle wireframe mode
+        send_key("space", advance: 0.25)
+        3.times { send_tick(advance: 0.15) }
+        send_key("space", advance: 0.25)
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 29: Windowing & Multi-Layer Compositing
+        # =====================================================================
+        puts "  → Slide 29: Windowing & Compositing"
+        render_frame(0.3)
+        # Simulate dragging the window title bar
+        send_mouse(20, 6, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.1)
+        send_mouse(24, 7, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.1)
+        send_mouse(28, 8, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Motion, advance: 0.1)
+        send_mouse(28, 8, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.15)
+        # Click maximize button
+        send_mouse(28 + 48 - 4, 8, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.2)
+        send_mouse(28 + 48 - 4, 8, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.15)
+        # Click restore
+        send_mouse(WIDTH - 5, 1, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Press, advance: 0.2)
+        send_mouse(WIDTH - 5, 1, Opal::Terminal::MouseButton::Left, Opal::Terminal::MouseAction::Release, advance: 0.15)
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 30: Theme Store & Contrast Studio
+        # =====================================================================
+        puts "  → Slide 30: Theme Store Studio"
+        render_frame(0.3)
+        # Cycle through theme presets: Cyberpunk, Nord, Catppuccin, Monokai, Retro DOS
+        5.times do
+          send_key("space", advance: 0.35)
+        end
+        # Reset with 'r'
+        send_key("r", advance: 0.25)
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 31: Modern Textual Architecture (Switches, Radio, Accordion, Logs)
+        # =====================================================================
+        puts "  → Slide 31: Textual Controls"
+        render_frame(0.3)
+        # Toggle live telemetry switch
+        send_key("space", advance: 0.25)
+        # Tab to GPU accel switch
+        send_key("tab", advance: 0.2)
+        send_key("space", advance: 0.25)
+        # Tab to power profile radio set
+        send_key("tab", advance: 0.2)
+        send_key("1", advance: 0.25)
+        send_key("3", advance: 0.25)
+        # Tab to collapsible accordion
+        send_key("tab", advance: 0.2)
+        send_key("space", advance: 0.3)
+        send_key("space", advance: 0.3)
+        # Push manual telemetry log
+        send_key("l", advance: 0.2)
+        send_key("l", advance: 0.2)
+        next_slide(1.2)
+
+        # =====================================================================
+        # Slide 32: Grand Finale & Summary Checklist
+        # =====================================================================
+        puts "  → Slide 32: Grand Finale"
         render_frame(0.4)
         send_key("pagedown", advance: 0.25)
         send_key("pageup", advance: 0.25)
@@ -440,7 +551,7 @@ module Opal
 
         # Save asciicast
         @cast.save(output_path)
-        puts "✨ Showcase recording saved successfully to #{output_path}!"
+        puts "[OK] Showcase recording saved successfully to #{output_path}!"
       end
     end
   end

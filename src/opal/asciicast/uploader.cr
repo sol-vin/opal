@@ -67,7 +67,7 @@ module Opal
             svg_url = "#{cast_url}.svg"
             cast_id = cast_url.split("/").last
 
-            puts "    ✓ Success: #{cast_url}" if verbose
+            puts "    [OK] Success: #{cast_url}" if verbose
             UploadResult.new(
               filename: filename,
               title: title,

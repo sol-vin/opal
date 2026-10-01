@@ -1,4 +1,4 @@
-require "../element"
+require "../control"
 require "../buffer"
 require "../../style/color"
 require "../../style/visual_width"
@@ -7,7 +7,7 @@ module Opal
   module UI
     # Hexadecimal memory and binary dump component displaying addresses,
     # hex byte pairs with mid-row division, and ASCII text representation.
-    class HexViewer < Element
+    class HexViewer < Control
       property bytes : Slice(UInt8)
       property base_address : UInt64
       property bytes_per_row : Int32
@@ -19,6 +19,12 @@ module Opal
       property ascii_fg : Color
       property selected_fg : Color
       property selected_bg : Color
+
+      # Cached layout coordinates for mouse interaction
+      @last_x : Int32 = 0
+      @last_y : Int32 = 0
+      @last_w : Int32 = 0
+      @last_h : Int32 = 0
 
       def initialize(
         bytes : Bytes | Slice(UInt8) | Array(UInt8),
@@ -33,6 +39,7 @@ module Opal
         selected_fg : Color | Symbol | String = :black,
         selected_bg : Color | Symbol | String = :yellow,
       )
+        super()
         @bytes = if bytes.is_a?(Array(UInt8))
                    Slice.new(bytes.to_unsafe, bytes.size)
                  else
@@ -69,8 +76,128 @@ module Opal
         {Math.min(available_w, total_w), Math.min(available_h, total_rows)}
       end
 
+      def handle_key(event : Terminal::KeyEvent) : Bool
+        case event.name
+        when "up", "k"
+          if sel = @selected_byte
+            @selected_byte = Math.max(0, sel - @bytes_per_row)
+            # Ensure visible
+            row = @selected_byte.not_nil! // @bytes_per_row
+            @scroll_offset = Math.min(@scroll_offset, row)
+          else
+            scroll_up(1)
+          end
+          true
+        when "down", "j"
+          if sel = @selected_byte
+            @selected_byte = Math.min(@bytes.size - 1, sel + @bytes_per_row)
+            # Ensure visible
+            row = @selected_byte.not_nil! // @bytes_per_row
+            if @last_h > 0 && row >= @scroll_offset + @last_h
+              @scroll_offset = row - @last_h + 1
+            end
+          else
+            scroll_down(1)
+          end
+          true
+        when "left", "h"
+          if sel = @selected_byte
+            @selected_byte = Math.max(0, sel - 1)
+          else
+            @selected_byte = @scroll_offset * @bytes_per_row
+          end
+          true
+        when "right", "l"
+          if sel = @selected_byte
+            @selected_byte = Math.min(@bytes.size - 1, sel + 1)
+          else
+            @selected_byte = @scroll_offset * @bytes_per_row
+          end
+          true
+        when "page_up", "pageup"
+          scroll_up(@last_h > 0 ? @last_h : 8)
+          true
+        when "page_down", "pagedown"
+          scroll_down(@last_h > 0 ? @last_h : 8)
+          true
+        when "home"
+          @selected_byte = 0
+          @scroll_offset = 0
+          true
+        when "end"
+          @selected_byte = Math.max(0, @bytes.size - 1)
+          @scroll_offset = Math.max(0, total_rows - (@last_h > 0 ? @last_h : 8))
+          true
+        else
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          scroll_up(2)
+          return true
+        when Terminal::MouseButton::WheelDown
+          scroll_down(2)
+          return true
+        end
+
+        if event.button == Terminal::MouseButton::Left && event.action == Terminal::MouseAction::Press
+          if event.x >= @last_x && event.x < @last_x + @last_w &&
+             event.y >= @last_y && event.y < @last_y + @last_h
+            row_idx = event.y - @last_y
+            row_num = @scroll_offset + row_idx
+            return false if row_num >= total_rows
+
+            rel_x = event.x - @last_x
+            addr_w = 12 # "0x00000000  "
+
+            # Check if in hex area
+            if rel_x >= addr_w
+              hex_offset = rel_x - addr_w
+              # Check byte position in hex columns
+              # Each byte has 3 chars ("XX "), plus mid-row division space
+              col = if hex_offset < (@bytes_per_row // 2) * 3
+                      hex_offset // 3
+                    else
+                      (hex_offset - 1) // 3
+                    end
+
+              if col >= 0 && col < @bytes_per_row
+                idx = row_num * @bytes_per_row + col
+                if idx < @bytes.size
+                  @selected_byte = idx
+                  return true
+                end
+              end
+
+              # Check if in ASCII column area
+              ascii_start = addr_w + (@bytes_per_row * 3) + 2
+              ascii_offset = rel_x - ascii_start
+              if ascii_offset >= 0 && ascii_offset < @bytes_per_row
+                idx = row_num * @bytes_per_row + ascii_offset
+                if idx < @bytes.size
+                  @selected_byte = idx
+                  return true
+                end
+              end
+            end
+
+            return true
+          end
+        end
+
+        false
+      end
+
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0 || @bytes.empty?
+
+        @last_x = x
+        @last_y = y
+        @last_w = width
+        @last_h = height
 
         rows_to_render = Math.min(height, total_rows - @scroll_offset)
 

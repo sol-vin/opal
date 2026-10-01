@@ -5,6 +5,7 @@ require "./terminal/raw_mode"
 require "./terminal/mock"
 require "./terminal/info"
 require "./terminal/osc"
+require "./terminal/ascii"
 {% if flag?(:windows) %}
   require "./terminal/windows"
 {% else %}

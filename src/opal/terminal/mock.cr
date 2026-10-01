@@ -14,7 +14,9 @@ module Opal
       getter? mouse_enabled : Bool = false
 
       def initialize(@width = 80, @height = 24)
-        @output_io = IO::Memory.new
+        io = IO::Memory.new
+        @output_io = io
+        super(io, io)
         @event_queue = [] of (KeyEvent | MouseEvent)
       end
 

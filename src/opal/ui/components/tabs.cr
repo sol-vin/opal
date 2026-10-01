@@ -1,4 +1,4 @@
-require "../element"
+require "../control"
 require "../buffer"
 require "../../style/color"
 require "../../style/visual_width"
@@ -22,7 +22,7 @@ module Opal
     end
 
     # Tabbed navigation header component for multi-view interfaces.
-    class Tabs < Element
+    class Tabs < Control
       property items : Array(TabItem)
       property active_index : Int32 = 0
       property active_fg : Color?
@@ -31,6 +31,9 @@ module Opal
       property inactive_bg : Color?
       property spacing : Int32
       property? pill_style : Bool
+      property on_change : Proc(Int32, TabItem, Nil)? = nil
+
+      @tab_hit_boxes = [] of {Int32, Int32, Int32, Int32, Int32}
 
       def initialize(
         @items : Array(TabItem) = [] of TabItem,
@@ -41,7 +44,9 @@ module Opal
         inactive_bg : Color | Symbol | String | Nil = nil,
         @spacing : Int32 = 2,
         @pill_style : Bool = false,
+        @on_change : Proc(Int32, TabItem, Nil)? = nil,
       )
+        super()
         @active_fg = active_fg ? Color.from(active_fg) : nil
         @active_bg = active_bg ? Color.from(active_bg) : nil
         @inactive_fg = inactive_fg ? Color.from(inactive_fg) : nil
@@ -71,31 +76,76 @@ module Opal
       end
 
       def select(index : Int32) : self
+        old = @active_index
         @active_index = index.clamp(0, Math.max(0, @items.size - 1))
+        if old != @active_index && (item = active_tab)
+          @on_change.try(&.call(@active_index, item))
+        end
         self
       end
 
       def select_id(id : String) : self
         if idx = @items.index { |it| it.id == id }
-          @active_index = idx
+          self.select(idx)
         end
         self
       end
 
       def next_tab : self
         return self if @items.empty?
-        @active_index = (@active_index + 1) % @items.size
+        self.select((@active_index + 1) % @items.size)
         self
       end
 
       def prev_tab : self
         return self if @items.empty?
-        @active_index = (@active_index - 1 + @items.size) % @items.size
+        self.select((@active_index - 1 + @items.size) % @items.size)
         self
       end
 
       def active_tab : TabItem?
         @items[@active_index]?
+      end
+
+      def handle_key(key : Terminal::KeyEvent) : Bool
+        case key.name
+        when "left", "h", "up", "k"
+          prev_tab
+          true
+        when "right", "l", "down", "j"
+          next_tab
+          true
+        else
+          if key.name.size == 1 && (digit = key.name[0].to_i?)
+            if digit >= 1 && digit <= @items.size
+              self.select(digit - 1)
+              return true
+            end
+          end
+          false
+        end
+      end
+
+      def handle_mouse(event : Terminal::MouseEvent) : Bool
+        case event.button
+        when Terminal::MouseButton::WheelUp
+          prev_tab
+          return true
+        when Terminal::MouseButton::WheelDown
+          next_tab
+          return true
+        end
+
+        if event.action == Terminal::MouseAction::Press && event.button == Terminal::MouseButton::Left
+          @tab_hit_boxes.each do |bx, by, bw, bh, idx|
+            if event.x >= bx && event.x < bx + bw && event.y >= by && event.y < by + bh
+              self.select(idx)
+              return true
+            end
+          end
+        end
+
+        false
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
@@ -109,6 +159,7 @@ module Opal
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
         return if width <= 0 || height <= 0 || @items.empty?
+        @tab_hit_boxes.clear
 
         cur_x = x
 
@@ -116,8 +167,10 @@ module Opal
           break if cur_x >= x + width
           is_active = (idx == @active_index)
           item_w = formatted_item_width(item)
+          avail_w = Math.min(item_w, (x + width) - cur_x)
 
-          render_tab(buffer, cur_x, y, item, is_active, Math.min(item_w, (x + width) - cur_x))
+          render_tab(buffer, cur_x, y, item, is_active, avail_w)
+          @tab_hit_boxes << {cur_x, y, avail_w, 1, idx}
           cur_x += item_w + @spacing
         end
       end

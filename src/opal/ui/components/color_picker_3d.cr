@@ -503,7 +503,7 @@ module Opal
         end
 
         # Draw Virtual Cursor Crosshair over the surface
-        cursor_char = '✛'
+        cursor_char = '+'
         buffer.put_char(cur_screen_x, cur_screen_y, cursor_char, fg: Color.bright_white, bg: Color.magenta, bold: true)
 
         # 4. Info Panel on Right Side
