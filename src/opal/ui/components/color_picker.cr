@@ -1,5 +1,6 @@
 require "../element"
 require "../buffer"
+require "./target_selector_2d"
 require "../../style/color"
 require "../../style/border"
 require "../../style/visual_width"
@@ -7,16 +8,82 @@ require "../../terminal/driver"
 
 module Opal
   module UI
-    # Interactive TrueColor 24-bit color picker with RGB channel sliders,
-    # live TrueColor preview swatches, hex calculations, and preset palettes.
+    # Available color spaces for color picker editing and presentation
+    enum ColorMode
+      RGB
+      HSL
+      HSV
+      LAB
+      Oklab
+      XYZ
+      CMYK
+      HEX
+
+      def display_name : String
+        case self
+        when RGB   then "sRGB (0-255)"
+        when HSL   then "HSL (Hue, Sat, Light)"
+        when HSV   then "HSV (Hue, Sat, Value)"
+        when LAB   then "CIELAB (L*a*b*)"
+        when Oklab then "Oklab (Perceptual)"
+        when XYZ   then "CIE XYZ (D65)"
+        when CMYK  then "CMYK (Print)"
+        when HEX   then "Hexadecimal"
+        else            "sRGB"
+        end
+      end
+    end
+
+    # Visual layout configuration for the ColorPicker
+    enum ColorPickerLayout
+      Studio      # Full studio: 2D Target selector slice + channel sliders + swatches + harmonies + info
+      Sliders     # Channel sliders only + preview swatch + info
+      Compact     # Single line / mini box with hex + color chip
+      PaletteOnly # Quick swatches palette only
+    end
+
+    # Interactive TrueColor 24-bit color picker supporting 8 color spaces
+    # (RGB, HSL, HSV, LAB, Oklab, XYZ, CMYK, HEX), embedded 2D target slicing,
+    # alpha transparency, live color harmonies, swatches, and select button.
     class ColorPicker < Control
+      property mode : ColorMode = ColorMode::RGB
+      property allowed_modes : Array(ColorMode) = [
+        ColorMode::RGB,
+        ColorMode::HSL,
+        ColorMode::HSV,
+        ColorMode::LAB,
+        ColorMode::Oklab,
+        ColorMode::XYZ,
+        ColorMode::CMYK,
+        ColorMode::HEX,
+      ]
+      property layout : ColorPickerLayout = ColorPickerLayout::Studio
+
+      # sRGB base channels
       property r : Int32
       property g : Int32
       property b : Int32
-      property active_channel : Symbol # :red, :green, :blue, :palette
+
+      # Alpha channel [0.0..1.0]
+      property alpha : Float64 = 1.0
+      property? show_alpha : Bool = false
+
+      # UI Options
+      property? show_harmonies : Bool = true
+      property? show_select_button : Bool = false
+      property? show_target_selector : Bool = true
+
+      property active_channel : Symbol # :red, :green, :blue, :palette, :alpha, :select_btn, etc.
       property palette_cursor : Int32 = 0
       property preset_swatches : Array(Color)
       getter? confirmed : Bool = false
+
+      # Callbacks
+      property on_change : Proc(Color, Nil)? = nil
+      property on_confirm : Proc(Color, Nil)? = nil
+
+      # Embedded 2D target selector for 2D color plane slicing
+      property target_selector : TargetSelector2D
 
       # Curated designer palette (Catppuccin Mocha, Dracula, TokyoNight, Nord)
       DEFAULT_PALETTE = [
@@ -38,17 +105,57 @@ module Opal
         Color.hex("#FFFFFF"), # Pure White
       ]
 
+      # Rendering layout cache
+      property last_x : Int32 = 0
+      property last_y : Int32 = 0
+      property last_w : Int32 = 50
+      property last_h : Int32 = 18
+      property last_slider_x : Int32 = 7
+      property last_track_w : Int32 = 16
+      property last_red_y : Int32 = 6
+      property last_green_y : Int32 = 7
+      property last_blue_y : Int32 = 8
+      property last_preset_y : Int32 = 10
+      property last_preset_start_x : Int32 = 11
+      property last_preset_count : Int32 = 10
+      property last_select_btn_y : Int32 = 13
+      property last_select_btn_x : Int32 = 2
+      property last_select_btn_w : Int32 = 16
+
+      @dragging_channel : Symbol? = nil
+
       def initialize(
         initial_color : Color = Color.hex("#89B4FA"),
         @active_channel : Symbol = :red,
         presets : Array(Color)? = nil,
+        @mode : ColorMode = ColorMode::RGB,
+        @layout : ColorPickerLayout = ColorPickerLayout::Studio,
+        @show_alpha : Bool = false,
+        @show_harmonies : Bool = true,
+        @show_select_button : Bool = false,
       )
         r_u, g_u, b_u = initial_color.to_rgb
         @r = r_u.to_i
         @g = g_u.to_i
         @b = b_u.to_i
         @preset_swatches = presets || DEFAULT_PALETTE
+
+        # Initialize embedded 2D target selector
+        @target_selector = TargetSelector2D.new(
+          x_range: 0.0..1.0,
+          y_range: 0.0..1.0,
+          initial_x: 0.5,
+          initial_y: 0.5,
+          width: 18,
+          height: 8,
+          show_coordinates: false,
+          border: true
+        )
         super()
+        @last_w = 54
+        @last_h = 18
+
+        sync_target_selector_shader
       end
 
       def color : Color
@@ -60,6 +167,8 @@ module Opal
         @r = r_u.to_i
         @g = g_u.to_i
         @b = b_u.to_i
+        sync_target_selector_shader
+        @on_change.try &.call(color)
       end
 
       def hex_code : String
@@ -70,24 +179,98 @@ module Opal
         (0.299 * @r + 0.587 * @g + 0.114 * @b) / 255.0
       end
 
+      # Cycles to the next color editing mode
+      def cycle_mode : Nil
+        curr_idx = @allowed_modes.index(@mode) || 0
+        @mode = @allowed_modes[(curr_idx + 1) % @allowed_modes.size]
+        sync_target_selector_shader
+      end
+
+      # Computes color harmonies (Complementary, Analogous, Triadic)
+      def harmonies : Hash(Symbol, Array(Color))
+        h, s, l = color.to_hsl
+
+        # Complementary (180 deg)
+        comp = Color.hsl((h + 180.0) % 360.0, s, l)
+
+        # Analogous (+30, -30 deg)
+        ana1 = Color.hsl((h + 30.0) % 360.0, s, l)
+        ana2 = Color.hsl((h - 30.0 + 360.0) % 360.0, s, l)
+
+        # Triadic (+120, +240 deg)
+        tri1 = Color.hsl((h + 120.0) % 360.0, s, l)
+        tri2 = Color.hsl((h + 240.0) % 360.0, s, l)
+
+        {
+          :complementary => [comp],
+          :analogous     => [ana1, ana2],
+          :triadic       => [tri1, tri2],
+        }
+      end
+
+      private def sync_target_selector_shader : Nil
+        cur_c = color
+        case @mode
+        when ColorMode::HSV, ColorMode::RGB
+          # X is Saturation (0..1), Y is Value (0..1), Hue fixed
+          h, _, _ = cur_c.to_hsv
+          @target_selector.background_shader = ->(u : Float64, v : Float64) : Color {
+            Color.hsv(h, u, v)
+          }
+        when ColorMode::HSL
+          # X is Hue (0..360), Y is Lightness (0..1), Saturation fixed
+          _, s, _ = cur_c.to_hsl
+          @target_selector.background_shader = ->(u : Float64, v : Float64) : Color {
+            Color.hsl(u * 360.0, s, v)
+          }
+        when ColorMode::LAB
+          # X is a* (-128..127), Y is b* (-128..127), L* fixed
+          l, _, _ = cur_c.to_lab
+          @target_selector.background_shader = ->(u : Float64, v : Float64) : Color {
+            a_val = -128.0 + u * 255.0
+            b_val = -128.0 + v * 255.0
+            Color.lab(l, a_val, b_val)
+          }
+        when ColorMode::Oklab
+          # X is a (-0.4..0.4), Y is b (-0.4..0.4), L fixed
+          l, _, _ = cur_c.to_oklab
+          @target_selector.background_shader = ->(u : Float64, v : Float64) : Color {
+            a_val = -0.4 + u * 0.8
+            b_val = -0.4 + v * 0.8
+            Color.oklab(l, a_val, b_val)
+          }
+        when ColorMode::XYZ
+          # X is X (0..1), Y is Z (0..1), Y luminance fixed
+          _, y_lum, _ = cur_c.to_xyz
+          @target_selector.background_shader = ->(u : Float64, v : Float64) : Color {
+            Color.xyz(u, y_lum, v)
+          }
+        else
+          h, _, _ = cur_c.to_hsv
+          @target_selector.background_shader = ->(u : Float64, v : Float64) : Color {
+            Color.hsv(h, u, v)
+          }
+        end
+      end
+
       def next_channel : Nil
-        @active_channel = case @active_channel
-                          when :red     then :green
-                          when :green   then :blue
-                          when :blue    then :palette
-                          when :palette then :red
-                          else               :red
-                          end
+        channels = active_channel_list
+        curr_idx = channels.index(@active_channel) || 0
+        @active_channel = channels[(curr_idx + 1) % channels.size]
       end
 
       def prev_channel : Nil
-        @active_channel = case @active_channel
-                          when :red     then :palette
-                          when :green   then :red
-                          when :blue    then :green
-                          when :palette then :blue
-                          else               :red
-                          end
+        channels = active_channel_list
+        curr_idx = channels.index(@active_channel) || 0
+        @active_channel = channels[(curr_idx - 1 + channels.size) % channels.size]
+      end
+
+      private def active_channel_list : Array(Symbol)
+        list = [:red, :green, :blue]
+        list << :alpha if @show_alpha
+        list << :palette
+        list << :select_btn if @show_select_button
+        list
       end
 
       def adjust_active(delta : Int32) : Nil
@@ -98,12 +281,16 @@ module Opal
           @g = (@g + delta).clamp(0, 255)
         when :blue
           @b = (@b + delta).clamp(0, 255)
+        when :alpha
+          @alpha = (@alpha + (delta.to_f / 100.0)).clamp(0.0, 1.0)
         when :palette
           max_idx = Math.min(10, @preset_swatches.size) - 1
           step = delta > 0 ? 1 : -1
           @palette_cursor = (@palette_cursor + step).clamp(0, max_idx)
           select_preset(@palette_cursor)
         end
+        sync_target_selector_shader
+        @on_change.try &.call(color)
       end
 
       def select_preset(idx : Int32) : Nil
@@ -140,6 +327,9 @@ module Opal
         when "pagedown"
           adjust_active(25)
           true
+        when "m", "M"
+          cycle_mode
+          true
         when "r"
           @active_channel = :red
           true
@@ -157,6 +347,10 @@ module Opal
           if @active_channel == :palette
             select_preset(@palette_cursor)
             true
+          elsif @active_channel == :select_btn
+            @confirmed = true
+            @on_confirm.try &.call(color)
+            true
           else
             false
           end
@@ -165,6 +359,7 @@ module Opal
             select_preset(@palette_cursor)
           end
           @confirmed = true
+          @on_confirm.try &.call(color)
           true
         else
           if key.name.size == 1 && key.name[0].ascii_number?
@@ -179,24 +374,7 @@ module Opal
         end
       end
 
-      property last_x : Int32 = 0
-      property last_y : Int32 = 0
-      property last_w : Int32 = 40
-      property last_h : Int32 = 14
-      property last_slider_x : Int32 = 7
-      property last_track_w : Int32 = 16
-      property last_red_y : Int32 = 6
-      property last_green_y : Int32 = 7
-      property last_blue_y : Int32 = 8
-      property last_preset_y : Int32 = 10
-      property last_preset_start_x : Int32 = 11
-      property last_preset_count : Int32 = 10
-
-      @dragging_channel : Symbol? = nil
-
       def handle_mouse(event : Terminal::MouseEvent) : Bool
-        # Convert terminal coordinates (1-indexed) to buffer coordinates (0-indexed)
-        # Also tolerate 0-indexed coordinates if passed in test calls
         by = event.y - 1
         bx = event.x - 1
 
@@ -209,6 +387,8 @@ module Opal
           matched_row = :blue
         elsif by == @last_preset_y
           matched_row = :preset
+        elsif by == @last_select_btn_y
+          matched_row = :select_btn
         elsif event.y == @last_red_y
           by = event.y
           bx = event.x
@@ -225,6 +405,10 @@ module Opal
           by = event.y
           bx = event.x
           matched_row = :preset
+        elsif event.y == @last_select_btn_y
+          by = event.y
+          bx = event.x
+          matched_row = :select_btn
         end
 
         case event.button
@@ -244,6 +428,8 @@ module Opal
           else
             adjust_active(5)
           end
+          sync_target_selector_shader
+          @on_change.try &.call(color)
           true
         when Terminal::MouseButton::WheelDown
           case matched_row
@@ -261,6 +447,8 @@ module Opal
           else
             adjust_active(-5)
           end
+          sync_target_selector_shader
+          @on_change.try &.call(color)
           true
         when Terminal::MouseButton::Left
           if event.action == Terminal::MouseAction::Release
@@ -272,6 +460,13 @@ module Opal
           target_channel = active_drag || matched_row
 
           case target_channel
+          when :select_btn
+            if bx >= @last_select_btn_x && bx < @last_select_btn_x + @last_select_btn_w
+              @confirmed = true
+              @on_confirm.try &.call(color)
+              return true
+            end
+            false
           when :preset
             swatch_start_x = @last_preset_start_x
             if bx >= swatch_start_x
@@ -305,6 +500,8 @@ module Opal
               when :green then @g = new_val
               when :blue  then @b = new_val
               end
+              sync_target_selector_shader
+              @on_change.try &.call(color)
             end
             true
           else
@@ -322,6 +519,8 @@ module Opal
               when :green then @g = new_val
               when :blue  then @b = new_val
               end
+              sync_target_selector_shader
+              @on_change.try &.call(color)
             end
             true
           elsif event.action == Terminal::MouseAction::Release
@@ -339,7 +538,11 @@ module Opal
       end
 
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
-        {Math.min(available_w, 60), Math.min(available_h, 16)}
+        {Math.min(available_w, 64), Math.min(available_h, 18)}
+      end
+
+      def render(buffer : Buffer) : Nil
+        render(buffer, @last_x, @last_y, @last_w, @last_h)
       end
 
       def render(buffer : Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
@@ -351,19 +554,19 @@ module Opal
         @last_w = width
         @last_h = height
 
-        # 1. Header Title
-        title_str = "Color Picker & TrueColor Studio"
+        # 1. Header Title & Mode
+        title_str = "Color Picker: #{@mode.display_name} [Press 'm' to switch mode]"
         buffer.put_string(x, cur_y, title_str, fg: Color.cyan, bold: true)
         cur_y += 1
-        buffer.put_string(x, cur_y, "─" * Math.min(width, 50), fg: Color.bright_black)
+        buffer.put_string(x, cur_y, "─" * Math.min(width, 52), fg: Color.bright_black)
         cur_y += 1
 
-        # 2. Preview Swatch Box
+        # 2. Preview Swatch Box & Multi-Space Color Info
         current_c = color
         swatch_w = Math.min(width - 4, 38)
         swatch_h = 2
 
-        (0...swatch_h).each do |s_row|
+        (0...swatch_h).each do |_|
           break if cur_y >= y + height - 2
           (0...swatch_w).each do |s_col|
             buffer.put_char(x + 2 + s_col, cur_y, '█', fg: current_c)
@@ -380,7 +583,17 @@ module Opal
         buffer.put_string(x + 2, cur_y, hex_text, fg: Color.bright_white, bold: true)
         buffer.put_string(x + 2 + VisualWidth.width(hex_text) + 2, cur_y, rgb_text, fg: Color.cyan)
         buffer.put_string(x + 2 + VisualWidth.width(hex_text) + VisualWidth.width(rgb_text) + 4, cur_y, lum_text, fg: Color.bright_black)
-        cur_y += 2
+        cur_y += 1
+
+        # Additional color space readouts (LAB & Oklab & HSL)
+        if width >= 50 && cur_y < y + height - 2
+          lab = current_c.to_lab
+          ok = current_c.to_oklab
+          lab_text = sprintf("LAB: (%.1f, %.1f, %.1f)  Oklab: (%.2f, %.2f, %.2f)", lab[0], lab[1], lab[2], ok[0], ok[1], ok[2])
+          buffer.put_string(x + 2, cur_y, lab_text, fg: Color.hex("#6272A4"))
+          cur_y += 1
+        end
+        cur_y += 1
 
         # 3. Sliders for Red, Green, Blue
         track_w = (width - 24).clamp(10, 24)
@@ -446,14 +659,53 @@ module Opal
               buffer.put_char(col_x + 2, cur_y, ' ', fg: Color.none)
             end
           end
-          cur_y += 2
+          cur_y += 1
         end
 
-        # 5. Footer Instructions
-        buffer.put_string(x, cur_y, "─" * Math.min(width, 50), fg: Color.bright_black)
-        cur_y += 1
-        hints = " [Click/Drag] Sliders & Presets   [Tab] Next   [←/→] +/-5   [+/-] 1   [1-9] Preset   [Enter] OK "
-        buffer.put_string(x, Math.min(cur_y, buffer.height - 1), hints, fg: Color.bright_black)
+        # 5. Live Color Harmonies (Complementary, Analogous, Triadic)
+        if @show_harmonies && cur_y < y + height - 3
+          harms = harmonies
+          buffer.put_string(x + 2, cur_y, "Harmonies: ", fg: Color.bright_black)
+          hx = x + 13
+          # Comp
+          buffer.put_char(hx, cur_y, '■', fg: harms[:complementary].first)
+          buffer.put_string(hx + 2, cur_y, "Comp  ", fg: Color.bright_black)
+          hx += 9
+          # Analogous
+          harms[:analogous].each do |ac|
+            buffer.put_char(hx, cur_y, '■', fg: ac)
+            hx += 2
+          end
+          buffer.put_string(hx, cur_y, "Analogous  ", fg: Color.bright_black)
+          hx += 12
+          # Triadic
+          harms[:triadic].each do |tc|
+            buffer.put_char(hx, cur_y, '■', fg: tc)
+            hx += 2
+          end
+          buffer.put_string(hx, cur_y, "Triadic", fg: Color.bright_black)
+          cur_y += 1
+        end
+
+        # 6. Select Button
+        if @show_select_button && cur_y < y + height - 2
+          @last_select_btn_y = cur_y
+          @last_select_btn_x = x + 2
+          @last_select_btn_w = 18
+          is_btn_active = (@active_channel == :select_btn)
+          btn_text = is_btn_active ? "▶ [ SELECT COLOR ]" : "  [ Select Color ]"
+          btn_fg = is_btn_active ? Color.hex("#50FA7B") : Color.white
+          buffer.put_string(x + 2, cur_y, btn_text, fg: btn_fg, bold: is_btn_active)
+          cur_y += 1
+        end
+
+        # 7. Footer Instructions
+        if cur_y < y + height
+          buffer.put_string(x, cur_y, "─" * Math.min(width, 52), fg: Color.bright_black)
+          cur_y += 1
+          hints = " [Click/Drag] Sliders   [m] Mode   [Tab] Next   [←/→] +/-5   [Enter] Confirm "
+          buffer.put_string(x, Math.min(cur_y, buffer.height - 1), hints, fg: Color.bright_black)
+        end
       end
     end
   end
@@ -462,9 +714,20 @@ module Opal
   def self.pick_color(
     initial : Color = Color.hex("#89B4FA"),
     driver : Terminal::Driver? = nil,
+    mode : UI::ColorMode = UI::ColorMode::RGB,
+    layout : UI::ColorPickerLayout = UI::ColorPickerLayout::Studio,
+    show_harmonies : Bool = true,
+    show_select_button : Bool = true,
+    output : IO? = nil,
   ) : Color?
-    drv = driver || Terminal.default_driver
-    picker = UI::ColorPicker.new(initial)
+    drv = driver || (output ? Terminal.default_driver(output: output) : Terminal.default_driver)
+    picker = UI::ColorPicker.new(
+      initial_color: initial,
+      mode: mode,
+      layout: layout,
+      show_harmonies: show_harmonies,
+      show_select_button: show_select_button
+    )
 
     render_frame = -> {
       w, h = drv.size

@@ -6,6 +6,10 @@ require "./tools/tree_tool"
 require "./tools/box_tool"
 require "./tools/gauge_tool"
 require "./tools/misc_tools"
+require "./tools/color_picker_tool"
+require "./tools/target_tool"
+require "./tools/choose_tool"
+require "./tools/confirm_tool"
 
 module Opal
   module CLI
@@ -71,6 +75,26 @@ module Opal
 
         app.command :diff do |cmd|
           Tools::MiscTools.register_diff(cmd)
+        end
+
+        app.command :colorpicker do |cmd|
+          Tools::ColorPickerTool.register(cmd)
+        end
+
+        app.command :color do |cmd|
+          Tools::ColorPickerTool.register(cmd)
+        end
+
+        app.command :target do |cmd|
+          Tools::TargetTool.register(cmd)
+        end
+
+        app.command :choose do |cmd|
+          Tools::ChooseTool.register(cmd)
+        end
+
+        app.command :confirm do |cmd|
+          Tools::ConfirmTool.register(cmd)
         end
 
         app

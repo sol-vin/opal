@@ -1,3 +1,4 @@
+require "./style/color_spaces"
 require "./style/color"
 require "./style/visual_width"
 require "./style/border"

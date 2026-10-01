@@ -22,9 +22,344 @@ settings:
       title: "\U0001F6E0️ Chores & Tooling"
       bullet: •
 releases:
-- version: 0.1.55
+- version: 0.1.56
   date: "2026-10-01"
   status: active
+  entries:
+  - type: feat
+    description: initial release of Opal TUI & CLI DSL framework
+    bullet: ✦
+    hash: f3df915
+    author: Ian Rash
+  - type: ci
+    description: enforce LF line endings and scope format check to ubuntu
+    bullet: •
+    hash: f16c5de
+    author: Ian Rash
+  - type: feat
+    description: add 9 major UX innovations (forms, fuzzy search, dataviz, overlays,
+      markdown, themes, command palette, osc, animation)
+    bullet: ✦
+    hash: 2b4a07a
+    author: Ian Rash
+  - type: ci
+    description: add GitHub Actions workflow to build and deploy docs to GitHub Pages
+    bullet: •
+    hash: d3949de
+    author: Ian Rash
+  - type: feat
+    description: add global option ordering, command categorization, typo suggestion,
+      powershell completion, and diff-rendered TEA
+    bullet: ✦
+    badge: '[CLI,TEA]'
+    hash: 64b8da0
+    author: Ian Rash
+  - type: feat
+    description: add raw_args to Context for full token passthrough to subcommand
+      delegates
+    bullet: ✦
+    badge: '[CLI]'
+    hash: 22f797a
+    author: Ian Rash
+  - type: ui
+    description: add render_to_string with ANSI escape support
+    bullet: •
+    badge: '[BUFFER]'
+    hash: 2bdd487
+    author: Ian Rash
+  - type: cli
+    description: add allow_unknown_options and on_help custom handler to Command and
+      App
+    bullet: •
+    hash: f8d8d6e
+    author: Ian Rash
+  - type: cli
+    description: pass Context to Command#on_help handler
+    bullet: •
+    hash: "7722348"
+    author: Ian Rash
+  - type: cli
+    description: call help_handler with nil in help subcommand
+    bullet: •
+    badge: '[APP]'
+    hash: 841abba
+    author: Ian Rash
+  - type: ui
+    description: add Tree#add(label, color, icon) overload returning TreeNode
+    bullet: •
+    badge: '[TREE]'
+    hash: b9a28b4
+    author: Ian Rash
+  - type: feat
+    description: add SplitView, CodeView, Tabs, HexViewer and enhanced Table with
+      cursor and windowed scrolling
+    bullet: ✦
+    badge: '[UI]'
+    hash: ebfde31
+    author: Ian Rash
+  - type: style
+    description: format codebase with crystal tool format
+    bullet: •
+    hash: 8d1e349
+    author: Ian Rash
+  - type: feat
+    description: add live asciinema showcases and automated recorder/uploader toolchain
+    bullet: ✦
+    badge: '[DEMOS]'
+    hash: 11f5f72
+    author: Ian Rash
+  - type: ci
+    description: add apt-get update step before installing crystal on ubuntu runners
+    bullet: •
+    hash: 827cf2e
+    author: Ian Rash
+  - type: fix
+    description: eliminate asciicast screen flickering and preserve 24-bit ANSI colors
+    bullet: ✓
+    badge: '[DEMOS]'
+    hash: f3c2b4a
+    author: Ian Rash
+  - type: feat
+    description: add FileDialog, ColorPicker, ColorPicker3D, and Text Shaders
+    bullet: ✦
+    badge: '[UI]'
+    hash: 54c32ad
+    author: Ian Rash
+  - type: ci
+    description: fix code formatting and add examples 10-12 to compilation checks
+    bullet: •
+    hash: 4361c76
+    author: Ian Rash
+  - type: feat
+    description: record 23-slide showcase asciicast via terminal puppeting and feature
+      in README
+    bullet: ✦
+    badge: '[DEMOS]'
+    hash: 84f9c0b
+    author: Ian Rash
+  - type: fix
+    description: handle wide character cells, eliminate 3d cube gaps, and update showcase
+      cast
+    bullet: ✓
+    badge: '[UI]'
+    hash: 7df7d6a
+    author: Ian Rash
+  - type: fix
+    description: eliminate screen flickering with DiffRenderer and update showcase
+      asciicast
+    bullet: ✓
+    badge: '[TEA]'
+    hash: a27ef41
+    author: Ian Rash
+  - type: feat
+    description: add opaque window backgrounds, image to ascii engine, and demoscene
+      shaders
+    bullet: ✦
+    badge: '[UI]'
+    hash: 2a4ce55
+    author: Ian Rash
+  - type: fix
+    description: resolve Windows PowerShell character leakage on slide transitions
+    bullet: ✓
+    badge: '[UI]'
+    hash: cc3a6c4
+    author: Ian Rash
+  - type: docs
+    description: update showcase asciicast badge to latest recording
+    bullet: "\U0001F4D6"
+    hash: 17fd5a0
+    author: Ian Rash
+  - type: feat
+    description: enable Windows mouse support, optimize buffer memory stability, and
+      enrich showcase demo
+    bullet: ✦
+    badge: '[TERMINAL]'
+    hash: d86900d
+    author: Ian Rash
+  - type: fix
+    description: fix spacebar recognition for Slide 10 donut chart toggle
+    bullet: ✓
+    badge: '[SHOWCASE]'
+    hash: 4459bda
+    author: Ian Rash
+  - type: feat
+    description: implement right-click drag/rotate and left-click raycast color picking
+      in 3D color picker
+    bullet: ✦
+    hash: "5631977"
+    author: Ian Rash
+  - type: feat
+    description: implement mouse clicks and dragging for color choice bars and preset
+      swatches in Slide 7
+    bullet: ✦
+    badge: '[COLOR_PICKER]'
+    hash: 8062e3b
+    author: Ian Rash
+  - type: feat
+    description: implement per-control input hooks, puppeting and UI Engine architecture
+    bullet: ✦
+    badge: '[UI]'
+    hash: fe8b1d1
+    author: Ian Rash
+  - type: feat
+    description: standardize asciicast feature as optional require 'opal/asciicast'
+    bullet: ✦
+    badge: '[ASCIICAST]'
+    hash: 0a1dae3
+    author: Ian Rash
+  - type: style
+    description: format src/opal/asciicast.cr
+    bullet: •
+    hash: aedd598
+    author: Ian Rash
+  - type: feat
+    description: add advanced controls, 2D/3D primitives, multi-layer compositing,
+      theme store & presets, optimize shaders, and purge emojis
+    bullet: ✦
+    badge: '[UI, GRAPHICS, SHADER, STYLE]'
+    hash: aa76242
+    author: Ian Rash
+  - type: feat
+    description: declarative theme DSL, character swaps, pattern borders, and deep
+      overflow hardening
+    bullet: ✦
+    badge: '[THEME]'
+    hash: 44d56a2
+    author: Ian Rash
+  - type: feat
+    description: Python Textual-inspired architecture, performance optimizations,
+      and crash fixes
+    bullet: ✦
+    hash: 81875fa
+    author: Ian Rash
+  - type: fix
+    description: replace remaining emoji icons and headers with ASCII symbols
+    bullet: ✓
+    badge: '[UI]'
+    hash: cb42a19
+    author: Ian Rash
+  - type: feat
+    description: complete emoji purge, CP437 ascii enum, themed file dialogs, comprehensive
+      mouse support, pipe-break protection, and 32-slide showcase cast
+    bullet: ✦
+    hash: 791389c
+    author: Ian Rash
+  - type: feat
+    description: add generic radare2 binary metrics chart component
+    bullet: ✦
+    badge: '[UI]'
+    hash: b6310c8
+    author: Ian Rash
+  - type: feat
+    description: add unix cli utilities, argument DSL, and component print mode
+    bullet: ✦
+    badge: '[CLI]'
+    hash: 4c29e42
+    author: Ian Rash
+  - type: style
+    description: format codebase with crystal tool format
+    bullet: •
+    hash: d952468
+    author: Ian Rash
+  - type: feat
+    description: Add terminal ResizeEvent, poll_event support, and diff_renderer screen
+      clearing on resize
+    bullet: ✦
+    hash: ff11681
+    author: Ian Rash
+  - type: fix
+    description: declare LibC::Pollfd, POLLIN, and poll in PosixDriver for Linux/macOS,
+      and format codebase
+    bullet: ✓
+    badge: '[TERMINAL]'
+    hash: b7192ea
+    author: Ian Rash
+  - type: fix
+    description: use ULong instead of LibC::ULong inside LibC block for Linux poll
+    bullet: ✓
+    badge: '[TERMINAL]'
+    hash: ba2c498
+    author: Ian Rash
+  - type: fix
+    description: use UInt64 for Linux poll nfds parameter
+    bullet: ✓
+    badge: '[TERMINAL]'
+    hash: 799f84a
+    author: Ian Rash
+  - type: fix
+    description: unify PollFD struct and poll signature with LibC::SizeT
+    bullet: ✓
+    badge: '[TERMINAL]'
+    hash: 6c56cd8
+    author: Ian Rash
+  - type: fix
+    description: use primitive types for PollFD and poll in LibC
+    bullet: ✓
+    badge: '[TERMINAL]'
+    hash: 158d027
+    author: Ian Rash
+  - type: fix
+    description: use 1_u64 for poll nfds instead of LibC::SizeT
+    bullet: ✓
+    badge: '[POSIX]'
+    hash: e783f69
+    author: Ian Rash
+  - type: fix
+    description: alias poll function to opal_poll to avoid C binding collisions
+    bullet: ✓
+    badge: '[POSIX]'
+    hash: 71c19dd
+    author: Ian Rash
+  - type: fix
+    description: use Void* for fds pointer in poll signature
+    bullet: ✓
+    badge: '[POSIX]'
+    hash: 7cee091
+    author: Ian Rash
+  - type: feat
+    description: dual-mode DSL blending, asciicast VCR tape deck & playback, 34-slide
+      showcase recording
+    bullet: ✦
+    hash: e04a54d
+    author: Ian Rash
+  - type: feat
+    description: integrate sol-vin/carbon automated versioning, changelog orchestration,
+      and pre-commit hook
+    bullet: ✦
+    hash: 1f4a0b7
+    author: Ian Rash
+  - type: feat
+    description: Scissor/Mask modes, 60Hz game loop & Pong, Gamepad, Mermaid/HTML
+      viewers, 13-slide showcase overhaul with Code/Guide modals
+    bullet: ✦
+    hash: 4afa966
+    author: Ian Rash
+  - type: style
+    description: apply crystal tool format across codebase
+    bullet: •
+    hash: d1bd78b
+    author: Ian Rash
+  - type: docs
+    description: synchronize and detail entries in CHANGELOG.md
+    bullet: "\U0001F4D6"
+    badge: '[CHANGELOG]'
+    hash: 2ef130f
+    author: Ian Rash
+  - type: test
+    description: make AsyncMarkdownViewer resolution wait robust against runner scheduling
+      lag
+    bullet: •
+    hash: 3850be8
+    author: Ian Rash
+  - type: feat
+    description: add VCR screenshot utility, universal clipboard, Ctrl+S hotkey, and
+      expand showcase recording
+    bullet: ✦
+    hash: 2af47a3
+    author: Ian Rash
+- version: 0.1.55
+  date: "2026-10-01"
+  status: released
   entries:
   - type: feat
     description: initial release of Opal TUI & CLI DSL framework

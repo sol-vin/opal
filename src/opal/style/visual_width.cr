@@ -68,6 +68,11 @@ module Opal
       clean.chars.sum { |c| char_width(c) }
     end
 
+    # Alias for width
+    def self.measure(str : String) : Int32
+      width(str)
+    end
+
     # Truncates a string to fit within max_width terminal columns, appending ellipsis if needed.
     def self.truncate(str : String, max_width : Int32, ellipsis : String = "...") : String
       return str if width(str) <= max_width

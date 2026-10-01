@@ -39,27 +39,44 @@ module Opal
 
     # Constructs Color from HSV components: h in [0, 360], s in [0, 1], v in [0, 1]
     def self.hsv(h : Float64, s : Float64, v : Float64) : Color
-      h_norm = (h % 360.0 + 360.0) % 360.0
-      s_norm = s.clamp(0.0, 1.0)
-      v_norm = v.clamp(0.0, 1.0)
-
-      c = v_norm * s_norm
-      x = c * (1.0 - ((h_norm / 60.0) % 2.0 - 1.0).abs)
-      m = v_norm - c
-
-      r_prime, g_prime, b_prime = case (h_norm / 60.0).to_i
-                                  when 0 then {c, x, 0.0}
-                                  when 1 then {x, c, 0.0}
-                                  when 2 then {0.0, c, x}
-                                  when 3 then {0.0, x, c}
-                                  when 4 then {x, 0.0, c}
-                                  else        {c, 0.0, x}
-                                  end
-
-      r = ((r_prime + m) * 255.0).round.to_u8
-      g = ((g_prime + m) * 255.0).round.to_u8
-      b = ((b_prime + m) * 255.0).round.to_u8
+      r, g, b = ColorSpaces.hsv_to_rgb(h, s, v)
       rgb(r, g, b)
+    end
+
+    # Constructs Color from HSL components: h in [0, 360], s in [0, 1], l in [0, 1]
+    def self.hsl(h : Float64, s : Float64, l : Float64) : Color
+      r, g, b = ColorSpaces.hsl_to_rgb(h, s, l)
+      rgb(r, g, b)
+    end
+
+    # Constructs Color from CIELAB components: L* in [0, 100], a* in [-128, 127], b* in [-128, 127]
+    def self.lab(l : Float64, a : Float64, b : Float64) : Color
+      r_u, g_u, b_u = ColorSpaces.lab_to_rgb(l, a, b)
+      rgb(r_u, g_u, b_u)
+    end
+
+    # Constructs Color from CIE XYZ components: X, Y, Z in [0, 1]
+    def self.xyz(x : Float64, y : Float64, z : Float64) : Color
+      r_u, g_u, b_u = ColorSpaces.xyz_to_rgb(x, y, z)
+      rgb(r_u, g_u, b_u)
+    end
+
+    # Constructs Color from Oklab components: L in [0, 1], a in [-0.4, 0.4], b in [-0.4, 0.4]
+    def self.oklab(l : Float64, a : Float64, b : Float64) : Color
+      r_u, g_u, b_u = ColorSpaces.oklab_to_rgb(l, a, b)
+      rgb(r_u, g_u, b_u)
+    end
+
+    # Constructs Color from Oklch components: L in [0, 1], C in [0, 0.4], h in [0, 360]
+    def self.oklch(l : Float64, c : Float64, h : Float64) : Color
+      r_u, g_u, b_u = ColorSpaces.oklch_to_rgb(l, c, h)
+      rgb(r_u, g_u, b_u)
+    end
+
+    # Constructs Color from CMYK components: C, M, Y, K in [0, 1]
+    def self.cmyk(c : Float64, m : Float64, y : Float64, k : Float64) : Color
+      r_u, g_u, b_u = ColorSpaces.cmyk_to_rgb(c, m, y, k)
+      rgb(r_u, g_u, b_u)
     end
 
     # Parses hex string like "#ff79c6", "61AFEF", or "#fff"
@@ -341,6 +358,48 @@ module Opal
     def to_hex : String
       r_u, g_u, b_u = to_rgb
       sprintf("#%02X%02X%02X", r_u, g_u, b_u)
+    end
+
+    # Converts Color to CIELAB components: {L* [0..100], a* [-128..127], b* [-128..127]}
+    def to_lab : {Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_lab(r_u, g_u, b_u)
+    end
+
+    # Converts Color to CIE XYZ components: {X, Y, Z} in [0..1]
+    def to_xyz : {Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_xyz(r_u, g_u, b_u)
+    end
+
+    # Converts Color to Oklab components: {L [0..1], a [-0.4..0.4], b [-0.4..0.4]}
+    def to_oklab : {Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_oklab(r_u, g_u, b_u)
+    end
+
+    # Converts Color to Oklch components: {L [0..1], C [0..0.4], h [0..360]}
+    def to_oklch : {Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_oklch(r_u, g_u, b_u)
+    end
+
+    # Converts Color to CMYK components: {C, M, Y, K} in [0..1]
+    def to_cmyk : {Float64, Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_cmyk(r_u, g_u, b_u)
+    end
+
+    # Converts Color to HSL components: {H [0..360], S [0..1], L [0..1]}
+    def to_hsl : {Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_hsl(r_u, g_u, b_u)
+    end
+
+    # Converts Color to HSV components: {H [0..360], S [0..1], V [0..1]}
+    def to_hsv : {Float64, Float64, Float64}
+      r_u, g_u, b_u = to_rgb
+      ColorSpaces.rgb_to_hsv(r_u, g_u, b_u)
     end
 
     # Calculates WCAG 2.1 relative luminance (0.0 for black to 1.0 for white)

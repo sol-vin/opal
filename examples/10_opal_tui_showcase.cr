@@ -17,7 +17,10 @@ require "../src/opal/asciicast"
 #   - Scissor Clipping & Buffer Region Operations (copy/paste/crop/invert/rotate)
 #   - Real-World App Mockup 1: OpalChat (2-Pane Split with unread badges)
 #   - Real-World App Mockup 2: Playable OpalPong with 60Hz Decoupled Loop
-#   - 3D Color Picker & Palette Studio
+#   - Unified Multi-Space Color Studio & CLI Toolchain (RGB, HSL, LAB, Oklab, XYZ, CMYK)
+#   - 2D Continuous Target Selector with Procedural Shaders & Reticles
+#   - Bézier Curve Editor with Sub-Pixel Braille & Real-Time Easing Track
+#   - 2D Unicode Math Typesetting & Cartesian Function Grapher
 #   - Large Text, Big Digits & Live Clock
 #   - Mermaid Diagram Viewer (Flowchart, Sequence, State, Class)
 #   - TUI HTML Web Browser with History & OSC 8 Hyperlinks
@@ -978,156 +981,600 @@ class OpalPongSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 6: 3D Color Picker & Palette Studio
+# Slide 6: Unified Multi-Space Color Studio & CLI Toolchain
 # =============================================================================
 class ColorPickerStudioSlide < ShowcaseSlide
-  property red : Int32 = 56
-  property green : Int32 = 239
-  property blue : Int32 = 125
-  property active_channel : Int32 = 0 # 0: R, 1: G, 2: B
+  property picker : Opal::UI::ColorPicker
+
+  def initialize
+    @picker = Opal::UI::ColorPicker.new(
+      initial_color: Opal::Color.hex("#38EF7D"),
+      layout: Opal::UI::ColorPickerLayout::Studio,
+      show_alpha: true,
+      show_harmonies: true,
+      show_select_button: true
+    )
+  end
 
   def title : String
-    "3D Color Picker & Palette Studio"
+    "Unified Multi-Space Color Studio & CLI"
   end
 
   def category : String
-    "Controls & Color"
+    "Controls & Color Spaces"
   end
 
   def hints : String
-    "[↑/↓] Select Slider  │  [←/→] Adjust Value  │  [Space] Randomize"
+    "[m] Mode  │  [Tab] Cycle Channel  │  [←/→] Adjust  │  [Click/Drag] Pick  │  [Space/Enter] Confirm"
   end
 
   def source_code : String
     <<-CR
     require "opal"
 
-    # Interactive TrueColor 3D Color Picker & Palette Studio
-    picker = Opal::UI::ColorPicker3D.new(
-      initial_color: Color.hex("#38ef7d"),
-      show_hsl: true,
-      show_swatches: true
+    # 1. Component Usage: 8 Color Spaces, Harmonies, Alpha, 2D Plane
+    picker = Opal::UI::ColorPicker.new(
+      initial_color: Opal::Color.hex("#38EF7D"),
+      mode: Opal::UI::ColorMode::RGB,      # RGB, HSL, HSV, LAB, Oklab, XYZ, CMYK, HEX
+      layout: Opal::UI::ColorPickerLayout::Studio,
+      show_alpha: true,
+      show_harmonies: true,
+      show_select_button: true
     )
 
-    picker.on_change do |color|
-      puts "Selected Color: \#{color.to_hex} (R:\#{color.r}, G:\#{color.g}, B:\#{color.b})"
+    picker.on_change do |c|
+      puts "Selected Color: \#{c.to_hex} (L*a*b*: \#{c.to_lab.map(&.round(1))})"
     end
+
+    # 2. CLI Toolchain (gum / fzf separated I/O paradigm):
+    # Interactive TUI runs on STDERR; clean result emitted strictly to STDOUT!
+    #   $ MY_COLOR=$(opal colorpicker --format hex --mode lab)
+    #   $ echo "Selected: $MY_COLOR"
     CR
   end
 
   def guide_markdown : String
     <<-MD
-    # 24-bit TrueColor Picker & Harmonics
+    # Unified Multi-Space Color Studio & CLI Toolchain
 
-    Opal provides full RGB and HSL mathematical color models for modern terminals:
+    Opal provides comprehensive color science and interactive manipulation across **8 color spaces**:
 
-    ### Capabilities
-    - **Color Harmonies**: Dynamically computes complementary, triadic, and analogous color palettes.
-    - **Direct RGB Manipulation**: Precise sliders for 0-255 channels with immediate hex serialization.
-    - **ANSI Swatch Rendering**: Renders solid color patches using 24-bit ANSI background escapes.
+    ### Supported Color Spaces
+    - **sRGB** (Standard Red, Green, Blue [0-255])
+    - **HSL / HSV** (Cylindrical Hue, Saturation, Lightness / Value)
+    - **CIELAB** ($L^*a^*b^*$ perceptually uniform color space using CIE standard illuminant D65)
+    - **Oklab / Oklch** (Modern perceptual color space optimized for smooth gradients and perceptual lightness)
+    - **CIE XYZ** (Tristimulus reference color space)
+    - **CMYK** (Subtractive 4-channel printing color space [0-100%])
+    - **Hexadecimal** (Web / CSS `#RRGGBB` serialization)
+
+    ### Separated-IO CLI Architecture
+    Following Unix conventions established by tools like `fzf` and `gum`:
+    - The interactive TUI driver renders strictly to **`STDERR`**
+    - The final confirmed selection is output cleanly to **`STDOUT`**
+    - This allows shell automation scripts to cleanly capture output without ANSI escape pollution:
+      ```bash
+      MY_HEX=$(opal colorpicker --format hex)
+      MY_RGB=$(opal colorpicker --format rgb --alpha)
+      ```
     MD
   end
 
   def handle_key(key : Opal::Terminal::KeyEvent) : Bool
-    case key.name
-    when "up", "k"
-      @active_channel = Math.max(0, @active_channel - 1)
-      true
-    when "down", "j"
-      @active_channel = Math.min(2, @active_channel + 1)
-      true
-    when "left", "h"
-      case @active_channel
-      when 0 then @red = Math.max(0, @red - 5)
-      when 1 then @green = Math.max(0, @green - 5)
-      when 2 then @blue = Math.max(0, @blue - 5)
-      end
-      true
-    when "right", "l"
-      case @active_channel
-      when 0 then @red = Math.min(255, @red + 5)
-      when 1 then @green = Math.min(255, @green + 5)
-      when 2 then @blue = Math.min(255, @blue + 5)
-      end
-      true
-    when "space"
-      @red = rand(256)
-      @green = rand(256)
-      @blue = rand(256)
-      true
-    else
-      false
-    end
+    @picker.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @picker.handle_mouse(event)
   end
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
-    current_col = Opal::Color.rgb(@red, @green, @blue)
-    hex_str = sprintf("#%02X%02X%02X", @red, @green, @blue)
+    picker_w = Math.min(54, w - 4)
+    @picker.render(buffer, x + 2, y + 1, picker_w, h - 2)
 
-    # 1. Sliders Box
-    sliders_box = Opal::UI::Box.new(title: "RGB Channels", border: :rounded, border_fg: Opal::Color.bright_cyan)
-    sliders_box.render(buffer, x + 2, y + 1, 44, 11)
+    right_x = x + 2 + picker_w + 2
+    right_w = (x + w) - right_x - 2
+    if right_w >= 26 && h >= 14
+      cur_c = @picker.color
+      hex_code = cur_c.to_hex
 
-    labels = ["Red Channel  ", "Green Channel", "Blue Channel "]
-    vals = [@red, @green, @blue]
-    bar_colors = [Opal::Color.bright_red, Opal::Color.bright_green, Opal::Color.bright_blue]
+      diag_box = Opal::UI::Box.new(title: "Color Science Readout", border: :rounded, border_fg: cur_c)
+      diag_box.render(buffer, right_x, y + 1, right_w, h - 2)
 
-    (0..2).each do |idx|
-      row_y = y + 3 + (idx * 2)
-      selected = (idx == @active_channel)
-      cursor = selected ? "▶ " : "  "
-
-      buffer.put_string(x + 4, row_y, cursor, fg: Opal::Color.bright_yellow, bold: true)
-      buffer.put_string(x + 6, row_y, labels[idx], fg: selected ? Opal::Color.bright_yellow : Opal::Color.bright_white, bold: selected)
-
-      # Slider bar (20 chars)
-      filled = ((vals[idx] / 255.0) * 16.0).round.to_i
-      bar = "█" * filled + "░" * (16 - filled)
-      buffer.put_string(x + 21, row_y, bar, fg: bar_colors[idx])
-      buffer.put_string(x + 39, row_y, sprintf("%3d", vals[idx]), fg: Opal::Color.bright_white)
-    end
-
-    # 2. Big Color Swatch
-    swatch_x = x + 48
-    if swatch_x + 30 < x + w
-      swatch_box = Opal::UI::Box.new(title: "Live Preview", border: :double, border_fg: current_col)
-      swatch_box.render(buffer, swatch_x, y + 1, 32, 11)
-
-      (0...7).each do |sy|
-        buffer.fill(swatch_x + 2, y + 3 + sy, 28, 1, ' ', bg: current_col)
+      patch_w = Math.min(right_w - 4, 28)
+      (0...3).each do |py|
+        buffer.fill(right_x + 2, y + 3 + py, patch_w, 1, ' ', bg: cur_c)
       end
+      buffer.put_string(right_x + 4, y + 4, " #{hex_code} ", fg: Opal::Color.black, bg: Opal::Color.white, bold: true)
 
-      buffer.put_string(swatch_x + 6, y + 6, " #{hex_str} ", fg: Opal::Color.black, bg: Opal::Color.white, bold: true)
-    end
+      row = y + 7
+      buffer.put_string(right_x + 2, row, "PERCEPTUAL COLOR SPACES:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
 
-    # 3. Harmonies Palette
-    harm_y = y + 13
-    if harm_y + 4 < y + h
-      buffer.put_string(x + 2, harm_y, "HARMONIOUS PALETTE SUGGESTIONS:", fg: Opal::Color.bright_white, bold: true)
+      h_val, s_val, l_val = cur_c.to_hsl
+      buffer.put_string(right_x + 2, row, sprintf("HSL:   %3.0f° %3.0f%% %3.0f%%", h_val, s_val * 100, l_val * 100), fg: Opal::Color.bright_yellow)
+      row += 1
 
-      # Complementary
-      comp_col = Opal::Color.rgb(255 - @red, 255 - @green, 255 - @blue)
-      # Analogous 1 & 2
-      ana1 = Opal::Color.rgb((@red + 40) % 256, @green, (@blue + 20) % 256)
-      ana2 = Opal::Color.rgb(@red, (@green + 40) % 256, (@blue + 60) % 256)
+      lab_l, lab_a, lab_b = cur_c.to_lab
+      buffer.put_string(right_x + 2, row, sprintf("LAB:   %4.1f %5.1f %5.1f", lab_l, lab_a, lab_b), fg: Opal::Color.bright_magenta)
+      row += 1
 
-      buffer.fill(x + 4, harm_y + 2, 8, 2, ' ', bg: current_col)
-      buffer.put_string(x + 4, harm_y + 4, "Base", fg: Opal::Color.bright_black)
+      ok_l, ok_a, ok_b = cur_c.to_oklab
+      buffer.put_string(right_x + 2, row, sprintf("Oklab: %4.2f %5.2f %5.2f", ok_l, ok_a, ok_b), fg: Opal::Color.bright_cyan)
+      row += 1
 
-      buffer.fill(x + 16, harm_y + 2, 8, 2, ' ', bg: comp_col)
-      buffer.put_string(x + 16, harm_y + 4, "Complement", fg: Opal::Color.bright_black)
+      xyz_x, xyz_y, xyz_z = cur_c.to_xyz
+      buffer.put_string(right_x + 2, row, sprintf("XYZ:   %4.2f %5.2f %5.2f", xyz_x, xyz_y, xyz_z), fg: Opal::Color.bright_blue)
+      row += 1
 
-      buffer.fill(x + 30, harm_y + 2, 8, 2, ' ', bg: ana1)
-      buffer.put_string(x + 30, harm_y + 4, "Analogous 1", fg: Opal::Color.bright_black)
+      cmyk_c, cmyk_m, cmyk_y, cmyk_k = cur_c.to_cmyk
+      buffer.put_string(right_x + 2, row, sprintf("CMYK:  %3.0f%% %3.0f%% %3.0f%% %3.0f%%", cmyk_c * 100, cmyk_m * 100, cmyk_y * 100, cmyk_k * 100), fg: Opal::Color.bright_green)
+      row += 2
 
-      buffer.fill(x + 44, harm_y + 2, 8, 2, ' ', bg: ana2)
-      buffer.put_string(x + 44, harm_y + 4, "Analogous 2", fg: Opal::Color.bright_black)
+      if row + 3 < y + h - 2
+        buffer.put_string(right_x + 2, row, "CLI COMMAND TOOL:", fg: Opal::Color.bright_cyan, bold: true)
+        row += 1
+        buffer.put_string(right_x + 2, row, "$ opal colorpicker", fg: Opal::Color.white)
+        row += 1
+        buffer.put_string(right_x + 2, row, "STDERR: TUI │ STDOUT: #{hex_code}", fg: Opal::Color.bright_black)
+      end
     end
   end
 end
 
 # =============================================================================
-# Slide 7: Large Text, Big Digits & ASCII Banners
+# Slide 7: 2D Target Style Selector & Procedural Shaders
+# =============================================================================
+class TargetSelectorSlide < ShowcaseSlide
+  property target : Opal::UI::TargetSelector2D
+  property current_shader_idx : Int32 = 0
+  property current_reticle_idx : Int32 = 0
+
+  RETICLES = ['⌖', '┼', '◎', '+', '✦']
+
+  def initialize
+    @target = Opal::UI::TargetSelector2D.new(
+      x_range: -10.0..10.0,
+      y_range: -10.0..10.0,
+      initial_x: 2.5,
+      initial_y: -3.0,
+      reticle_char: '⌖',
+      width: 38,
+      height: 14
+    )
+    apply_shader(0)
+  end
+
+  def apply_shader(idx : Int32) : Nil
+    @current_shader_idx = idx % 3
+    case @current_shader_idx
+    when 0
+      @target.background_shader = ->(u : Float64, v : Float64) : Opal::Color {
+        dx = u - 0.5
+        dy = v - 0.5
+        dist = Math.sqrt(dx * dx + dy * dy) * 2.0
+        hue = ((1.0 - dist.clamp(0.0, 1.0)) * 240.0).clamp(0.0, 360.0)
+        Opal::Color.hsl(hue, 1.0, 0.45)
+      }
+    when 1
+      @target.background_shader = ->(u : Float64, v : Float64) : Opal::Color {
+        v1 = Math.sin(u * 8.0)
+        v2 = Math.sin(v * 8.0)
+        v3 = Math.sin((u + v) * 6.0)
+        c_val = ((v1 + v2 + v3 + 3.0) / 6.0).clamp(0.0, 1.0)
+        Opal::Color.hsl(c_val * 300.0 + 60.0, 0.9, 0.5)
+      }
+    when 2
+      @target.background_shader = ->(u : Float64, v : Float64) : Opal::Color {
+        r = (u * 255.0).round.to_i.clamp(0, 255)
+        g = (v * 255.0).round.to_i.clamp(0, 255)
+        b = 180
+        Opal::Color.rgb(r, g, b)
+      }
+    end
+  end
+
+  def title : String
+    "2D Continuous Target Selector & Shaders"
+  end
+
+  def category : String
+    "Advanced Selectors"
+  end
+
+  def hints : String
+    "[↑/↓/←/→] Pan Reticle  │  [Click/Drag] Aim  │  [1/2/3] Shaders  │  [r] Reticle Glyph"
+  end
+
+  def source_code : String
+    <<-CR
+    require "opal"
+
+    # Continuous 2D Target Style Selector with Custom Physics / UV Domain
+    target = Opal::UI::TargetSelector2D.new(
+      x_range: -10.0..10.0,
+      y_range: -10.0..10.0,
+      initial_x: 2.5,
+      initial_y: -3.0,
+      reticle_char: '⌖'
+    ) do |u, v|
+      # Procedural shader block: normalized u, v in [0.0..1.0] -> Color
+      dx = u - 0.5
+      dy = v - 0.5
+      dist = Math.sqrt(dx * dx + dy * dy) * 2.0
+      Opal::Color.hsl((1.0 - dist.clamp(0.0, 1.0)) * 240.0, 1.0, 0.45)
+    end
+
+    target.on_change do |x, y|
+      puts "Crosshair positioned at X: \#{x.round(2)}, Y: \#{y.round(2)}"
+    end
+
+    # Shell Integration via Opal CLI:
+    #   $ COORD=$(opal target --min -10 --max 10 --reticle "┼")
+    #   STDERR -> Interactive Target Pad
+    #   STDOUT -> "2.50,-3.00"
+    CR
+  end
+
+  def guide_markdown : String
+    <<-MD
+    # 2D Continuous Target Selector (`TargetSelector2D`)
+
+    A continuous 2D Cartesian controller supporting custom coordinate scales, reticle styles, and procedural shaders.
+
+    ### Features
+    - **Continuous Custom Ranges**: Define arbitrary floating-point domains (e.g. `x_range: -10.0..10.0`, audio pan/tilt `0.0..100.0`, velocity vectors).
+    - **Procedural Background Shaders**: Pass a block `(u, v) -> Color` for live heatmaps, plasma ripples, or image textures.
+    - **Custom Reticles**: Supports `⌖`, `┼`, `◎`, `+`, `✦` or arbitrary Unicode glyphs with high-contrast color inversion.
+    - **Mouse & Keyboard Control**: Drag directly with mouse tracking or step with arrow keys (holding Shift for fine stepping).
+    - **CLI Executable**: Run `opal target` in scripts to capture $(x, y)$ coordinates cleanly to `STDOUT`.
+    MD
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "1"
+      apply_shader(0)
+      true
+    when "2"
+      apply_shader(1)
+      true
+    when "3"
+      apply_shader(2)
+      true
+    when "r", "R"
+      @current_reticle_idx = (@current_reticle_idx + 1) % RETICLES.size
+      @target.reticle_char = RETICLES[@current_reticle_idx]
+      true
+    else
+      @target.handle_key(key)
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @target.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    target_w = Math.min(42, w - 4)
+    target_h = Math.min(15, h - 3)
+    @target.render(buffer, x + 2, y + 1, target_w, target_h)
+
+    right_x = x + 2 + target_w + 3
+    right_w = (x + w) - right_x - 2
+    if right_w >= 26 && h >= 14
+      info_box = Opal::UI::Box.new(title: "Target Telemetry", border: :rounded, border_fg: Opal::Color.bright_cyan)
+      info_box.render(buffer, right_x, y + 1, right_w, target_h)
+
+      row = y + 3
+      buffer.put_string(right_x + 2, row, "CARTESIAN COORDINATES:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("  X Axis : %+6.2f", @target.x_val), fg: Opal::Color.bright_green, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("  Y Axis : %+6.2f", @target.y_val), fg: Opal::Color.bright_yellow, bold: true)
+      row += 2
+
+      norm_u = (@target.x_val - @target.x_min) / (@target.x_max - @target.x_min)
+      norm_v = (@target.y_val - @target.y_min) / (@target.y_max - @target.y_min)
+      buffer.put_string(right_x + 2, row, "NORMALIZED [0.0..1.0] UV:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("  U (X)  : %5.3f", norm_u), fg: Opal::Color.bright_cyan)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("  V (Y)  : %5.3f", norm_v), fg: Opal::Color.bright_magenta)
+      row += 2
+
+      shader_names = ["Radial Heatmap", "Plasma Waves", "Spectral UV"]
+      buffer.put_string(right_x + 2, row, "CONFIG & CONTROLS:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, "Shader : #{shader_names[@current_shader_idx]} [1/2/3]", fg: Opal::Color.white)
+      row += 1
+      buffer.put_string(right_x + 2, row, "Reticle: #{@target.reticle_char} [Press 'r']", fg: Opal::Color.white)
+      row += 2
+
+      if row < y + target_h
+        buffer.put_string(right_x + 2, row, "$ opal target --min -10 --max 10", fg: Opal::Color.bright_black)
+      end
+    end
+  end
+end
+
+# =============================================================================
+# Slide 8: Bézier Curve Editor & Easing Engine
+# =============================================================================
+class CurveEditorSlide < ShowcaseSlide
+  property editor : Opal::UI::CurveEditor
+  property active_preset_idx : Int32 = 4
+
+  PRESET_NAMES = ["linear", "ease", "ease_in", "ease_out", "ease_in_out", "ease_in_back", "ease_out_back"]
+
+  def initialize
+    @editor = Opal::UI::CurveEditor.new(
+      p1_x: 0.42,
+      p1_y: 0.0,
+      p2_x: 0.58,
+      p2_y: 1.0,
+      width: 42,
+      height: 15
+    )
+  end
+
+  def title : String
+    "Bézier Curve Editor & Easing Engine"
+  end
+
+  def category : String
+    "Curves & Physics"
+  end
+
+  def hints : String
+    "[Tab] Switch Handle  │  [↑/↓/←/→] Move Handle  │  [1..7] Presets  │  [Space] Reset Track"
+  end
+
+  def source_code : String
+    <<-CR
+    require "opal"
+
+    # Interactive Cubic Bézier Curve Editor with Sub-Pixel Braille
+    editor = Opal::UI::CurveEditor.new(
+      p1_x: 0.42, p1_y: 0.0,
+      p2_x: 0.58, p2_y: 1.0
+    )
+
+    editor.on_change do |x1, y1, x2, y2|
+      puts "CSS Timing: \#{editor.to_css}"
+    end
+
+    # Real-Time Physics Easing Simulation:
+    # Solves y given x in [0.0..1.0] using cubic bisection:
+    easing_val = editor.evaluate_easing(progress) # progress in 0.0..1.0
+    CR
+  end
+
+  def guide_markdown : String
+    <<-MD
+    # Bézier Curve Editor & Physics Easing (`CurveEditor`)
+
+    An interactive editor for cubic Bézier curves $B(t)$ with sub-pixel terminal graphics and real-time animation easing.
+
+    ### Features
+    - **2x4 Sub-pixel Braille**: Curves are rasterized into Unicode Braille (`U+2800..U+28FF`) cells yielding $2\\times 4$ resolution per cell.
+    - **Draggable Control Handles**: Manipulate $P_1(x_1, y_1)$ and $P_2(x_2, y_2)$ using keyboard or mouse drag.
+    - **CSS cubic-bezier Export**: Generates standards-compliant `cubic-bezier(x1, y1, x2, y2)` strings for web animations.
+    - **Real-Time Physics Easing Track**: Displays a live rolling ball simulating the easing curve at 60Hz.
+    MD
+  end
+
+  def tick(dt : Float64 = 0.0166) : Nil
+    @editor.tick_anim(0.016)
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "1", "2", "3", "4", "5", "6", "7"
+      idx = key.name.to_i - 1
+      if idx < PRESET_NAMES.size
+        @active_preset_idx = idx
+        @editor.preset(PRESET_NAMES[idx])
+        return true
+      end
+    when "space"
+      @editor.anim_progress = 0.0
+      return true
+    end
+
+    @editor.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @editor.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    editor_w = Math.min(46, w - 4)
+    editor_h = Math.min(15, h - 3)
+    @editor.render(buffer, x + 2, y + 1, editor_w, editor_h)
+
+    right_x = x + 2 + editor_w + 3
+    right_w = (x + w) - right_x - 2
+    if right_w >= 26 && h >= 14
+      panel = Opal::UI::Box.new(title: "Curve Parameters", border: :rounded, border_fg: Opal::Color.bright_magenta)
+      panel.render(buffer, right_x, y + 1, right_w, editor_h)
+
+      row = y + 3
+      buffer.put_string(right_x + 2, row, "CSS TIMING FUNCTION:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, @editor.to_css, fg: Opal::Color.bright_green, bold: true)
+      row += 2
+
+      buffer.put_string(right_x + 2, row, "CONTROL POINTS:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      p1_active = (@editor.active_handle == 1)
+      p2_active = (@editor.active_handle == 2)
+      p1_cursor = p1_active ? "▶ " : "  "
+      p2_cursor = p2_active ? "▶ " : "  "
+      buffer.put_string(right_x + 2, row, sprintf("%sP1: (%.2f, %.2f)", p1_cursor, @editor.p1_x, @editor.p1_y), fg: Opal::Color.hex("#FF79C6"), bold: p1_active)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("%sP2: (%.2f, %.2f)", p2_cursor, @editor.p2_x, @editor.p2_y), fg: Opal::Color.hex("#8BE9FD"), bold: p2_active)
+      row += 2
+
+      buffer.put_string(right_x + 2, row, "PRESET CURVES [1..7]:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      PRESET_NAMES.each_with_index do |name, p_idx|
+        break if row >= y + editor_h - 1
+        is_sel = (p_idx == @active_preset_idx)
+        p_prefix = is_sel ? "● " : "○ "
+        buffer.put_string(right_x + 2, row, "#{p_prefix}[#{p_idx + 1}] #{name}", fg: is_sel ? Opal::Color.bright_yellow : Opal::Color.bright_black, bold: is_sel)
+        row += 1
+      end
+    end
+  end
+end
+
+# =============================================================================
+# Slide 9: 2D Unicode Math Typesetting & Function Grapher
+# =============================================================================
+class EquationViewerSlide < ShowcaseSlide
+  property viewer : Opal::UI::EquationViewer
+  property active_func_idx : Int32 = 0
+
+  FUNCTIONS = [
+    {"Damped Oscillator", "f(x) = exp(-0.2|x|) · sin(3x)", ->(x : Float64) : Float64 { Math.exp(-0.2 * x.abs) * Math.sin(3.0 * x) }},
+    {"Gaussian Bell Curve", "f(x) = 2.5 · exp(-0.5 · x²)", ->(x : Float64) : Float64 { 2.5 * Math.exp(-0.5 * x * x) }},
+    {"Normalized Sinc", "f(x) = sin(πx) / (πx)", ->(x : Float64) : Float64 { x.abs < 1e-4 ? 2.5 : 2.5 * Math.sin(Math::PI * x) / (Math::PI * x) }},
+    {"Cubic Polynomial", "f(x) = 0.1 · x³ - 0.5 · x", ->(x : Float64) : Float64 { 0.1 * x * x * x - 0.5 * x }},
+  ]
+
+  def initialize
+    fn_name, fn_title, fn_proc = FUNCTIONS[0]
+    @viewer = Opal::UI::EquationViewer.new(
+      function_title: fn_title,
+      x_min: -5.0,
+      x_max: 5.0,
+      y_min: -3.0,
+      y_max: 3.0,
+      width: 46,
+      height: 15,
+      &fn_proc
+    )
+
+    @viewer.add_fraction("d", "dx")
+    @viewer.add_integral("0", "x", "f(t) dt")
+    @viewer.add_text(" = f(x)")
+  end
+
+  def select_function(idx : Int32) : Nil
+    @active_func_idx = idx % FUNCTIONS.size
+    fn_name, fn_title, fn_proc = FUNCTIONS[@active_func_idx]
+    @viewer.function_title = fn_title
+    @viewer.function = fn_proc
+  end
+
+  def title : String
+    "2D Unicode Math Typesetting & Function Grapher"
+  end
+
+  def category : String
+    "Math & Graphing"
+  end
+
+  def hints : String
+    "[1..4] Select Curve  │  [+/-] Zoom  │  [↑/↓/←/→] Pan Viewport  │  [0] Reset View"
+  end
+
+  def source_code : String
+    <<-CR
+    require "opal"
+
+    # 1. 2D Unicode Mathematical Typesetting: Fractions, Integrals, Radicals
+    viewer = Opal::UI::EquationViewer.new(
+      function_title: "f(x) = exp(-0.2|x|) * sin(3x)",
+      x_min: -5.0, x_max: 5.0,
+      y_min: -3.0, y_max: 3.0
+    ) { |x| Math.exp(-0.2 * x.abs) * Math.sin(3.0 * x) }
+
+    # Add 2D fraction and integral elements
+    viewer.add_fraction("d", "dx")
+    viewer.add_integral("0", "x", "f(t) dt")
+    viewer.add_text(" = f(x)")
+
+    # 2. Interactive Navigation
+    viewer.zoom(0.8)       # Zoom in
+    viewer.pan(0.1, 0.0)   # Pan along X
+    CR
+  end
+
+  def guide_markdown : String
+    <<-MD
+    # 2D Math Typesetting & Cartesian Function Grapher (`EquationViewer`)
+
+    Renders rigorous mathematical notation and interactive 2D graphs in terminal windows.
+
+    ### Features
+    - **2D Unicode Typesetting**:
+      - Real vertical fractions with centered numerator, denominator, and horizontal vinculum bar (`─`).
+      - Definite integrals with upper and lower limits: $\\int_{a}^{b} f(x)\\,dx$.
+      - Unicode superscripts and subscripts ($x^2, y_0, a_i$) and radicals ($\\\\sqrt{x}$).
+    - **Cartesian Function Grapher**:
+      - Real-time sub-pixel Braille plotting with coordinate axes and origin markers (`┼`).
+      - Interactive zooming with `+` / `-` and panning with arrow keys.
+    MD
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    case key.name
+    when "1", "2", "3", "4"
+      select_function(key.name.to_i - 1)
+      return true
+    end
+
+    @viewer.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @viewer.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    viewer_w = Math.min(48, w - 4)
+    viewer_h = Math.min(15, h - 3)
+    @viewer.render(buffer, x + 2, y + 1, viewer_w, viewer_h)
+
+    right_x = x + 2 + viewer_w + 3
+    right_w = (x + w) - right_x - 2
+    if right_w >= 26 && h >= 14
+      panel = Opal::UI::Box.new(title: "Formulas & Controls", border: :rounded, border_fg: Opal::Color.bright_yellow)
+      panel.render(buffer, right_x, y + 1, right_w, viewer_h)
+
+      row = y + 3
+      buffer.put_string(right_x + 2, row, "SELECT FUNCTION [1..4]:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      FUNCTIONS.each_with_index do |f_info, f_idx|
+        break if row >= y + viewer_h - 1
+        is_sel = (f_idx == @active_func_idx)
+        p_prefix = is_sel ? "▶ " : "  "
+        buffer.put_string(right_x + 2, row, "#{p_prefix}[#{f_idx + 1}] #{f_info[0]}", fg: is_sel ? Opal::Color.bright_cyan : Opal::Color.white, bold: is_sel)
+        row += 1
+      end
+      row += 1
+
+      buffer.put_string(right_x + 2, row, "VIEWPORT DOMAIN:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("  X: [%.1f .. %.1f]", @viewer.x_min, @viewer.x_max), fg: Opal::Color.bright_green)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("  Y: [%.1f .. %.1f]", @viewer.y_min, @viewer.y_max), fg: Opal::Color.bright_magenta)
+      row += 2
+
+      buffer.put_string(right_x + 2, row, "FAMOUS IDENTITIES:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, "  e^(iπ) + 1 = 0", fg: Opal::Color.hex("#F1FA8C"))
+      row += 1
+      buffer.put_string(right_x + 2, row, "  √(x² + y²) = r", fg: Opal::Color.hex("#8BE9FD"))
+    end
+  end
+end
+
+# =============================================================================
+# Slide 10: Large Text, Big Digits & ASCII Banners
 # =============================================================================
 class BigTextSlide < ShowcaseSlide
   property time_str : String = ""
@@ -1198,7 +1645,7 @@ class BigTextSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 8: Mermaid Diagram Viewer
+# Slide 11: Mermaid Diagram Viewer
 # =============================================================================
 class MermaidViewerSlide < ShowcaseSlide
   property active_tab : Int32 = 0
@@ -1358,7 +1805,7 @@ class MermaidViewerSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 9: TUI HTML Web Browser
+# Slide 12: TUI HTML Web Browser
 # =============================================================================
 class HtmlBrowserSlide < ShowcaseSlide
   property browser : Opal::UI::HTMLBrowser
@@ -1429,7 +1876,7 @@ class HtmlBrowserSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 10: Dropdown Styles & Fractional Meters
+# Slide 13: Dropdown Styles & Fractional Meters
 # =============================================================================
 class DropdownMetersSlide < ShowcaseSlide
   property active_dropdown : Int32 = 0
@@ -1563,7 +2010,7 @@ class DropdownMetersSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 11: Multi-Shader Compositing Pipeline
+# Slide 14: Multi-Shader Compositing Pipeline
 # =============================================================================
 class MultiShaderSlide < ShowcaseSlide
   property? matrix_active : Bool = true
@@ -1667,7 +2114,7 @@ class MultiShaderSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 12: Tweens & Easing Visualizer
+# Slide 15: Tweens & Easing Visualizer
 # =============================================================================
 class TweensSlide < ShowcaseSlide
   property active_curve_idx : Int32 = 0
@@ -1789,7 +2236,7 @@ class TweensSlide < ShowcaseSlide
 end
 
 # =============================================================================
-# Slide 13: Gamepad Focus Navigation & Virtual Cursor
+# Slide 16: Gamepad Focus Navigation & Virtual Cursor
 # =============================================================================
 class GamepadNavSlide < ShowcaseSlide
   property focused_control : Int32 = 0
@@ -1975,6 +2422,9 @@ class ShowcaseAppModel
       OpalChatSlide.new,
       OpalPongSlide.new,
       ColorPickerStudioSlide.new,
+      TargetSelectorSlide.new,
+      CurveEditorSlide.new,
+      EquationViewerSlide.new,
       BigTextSlide.new,
       MermaidViewerSlide.new,
       HtmlBrowserSlide.new,

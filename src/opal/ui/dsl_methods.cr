@@ -22,6 +22,9 @@ require "./components/hex_viewer"
 require "./components/file_dialog"
 require "./components/color_picker"
 require "./components/color_picker_3d"
+require "./components/target_selector_2d"
+require "./components/curve_editor"
+require "./components/equation_viewer"
 require "./components/button"
 require "./components/dropdown"
 require "./components/scrollbar"
@@ -499,11 +502,21 @@ module Opal
         initial_color : Color = Color.hex("#89B4FA"),
         active_channel : Symbol = :red,
         presets : Array(Color)? = nil,
+        mode : ColorMode = ColorMode::RGB,
+        layout : ColorPickerLayout = ColorPickerLayout::Studio,
+        show_alpha : Bool = false,
+        show_harmonies : Bool = true,
+        show_select_button : Bool = false,
       ) : ColorPicker
         el = ColorPicker.new(
           initial_color: initial_color,
           active_channel: active_channel,
-          presets: presets
+          presets: presets,
+          mode: mode,
+          layout: layout,
+          show_alpha: show_alpha,
+          show_harmonies: show_harmonies,
+          show_select_button: show_select_button
         )
         add_element(el)
         el
@@ -524,6 +537,126 @@ module Opal
           auto_rotate: auto_rotate,
           initial_color: initial_color,
           size: size
+        )
+        add_element(el)
+        el
+      end
+
+      def target_selector_2d(
+        x_range : Range(Float64, Float64) = 0.0..1.0,
+        y_range : Range(Float64, Float64) = 0.0..1.0,
+        initial_x : Float64? = nil,
+        initial_y : Float64? = nil,
+        reticle_char : Char = '⌖',
+        show_coordinates : Bool = true,
+        border : Bool = true,
+        width : Int32? = 24,
+        height : Int32? = 10,
+        &block : Float64, Float64 -> Color
+      ) : TargetSelector2D
+        el = TargetSelector2D.new(
+          x_range: x_range,
+          y_range: y_range,
+          initial_x: initial_x,
+          initial_y: initial_y,
+          reticle_char: reticle_char,
+          show_coordinates: show_coordinates,
+          border: border,
+          width: width,
+          height: height,
+          &block
+        )
+        add_element(el)
+        el
+      end
+
+      def target_selector_2d(
+        x_range : Range(Float64, Float64) = 0.0..1.0,
+        y_range : Range(Float64, Float64) = 0.0..1.0,
+        initial_x : Float64? = nil,
+        initial_y : Float64? = nil,
+        reticle_char : Char = '⌖',
+        show_coordinates : Bool = true,
+        border : Bool = true,
+        width : Int32? = 24,
+        height : Int32? = 10,
+      ) : TargetSelector2D
+        el = TargetSelector2D.new(
+          x_range: x_range,
+          y_range: y_range,
+          initial_x: initial_x,
+          initial_y: initial_y,
+          reticle_char: reticle_char,
+          show_coordinates: show_coordinates,
+          border: border,
+          width: width,
+          height: height
+        )
+        add_element(el)
+        el
+      end
+
+      def curve_editor(
+        p1_x : Float64 = 0.42,
+        p1_y : Float64 = 0.0,
+        p2_x : Float64 = 0.58,
+        p2_y : Float64 = 1.0,
+        width : Int32 = 36,
+        height : Int32 = 16,
+      ) : CurveEditor
+        el = CurveEditor.new(
+          p1_x: p1_x,
+          p1_y: p1_y,
+          p2_x: p2_x,
+          p2_y: p2_y,
+          width: width,
+          height: height
+        )
+        add_element(el)
+        el
+      end
+
+      def equation_viewer(
+        function_title : String = "f(x) = sin(x)",
+        x_min : Float64 = -5.0,
+        x_max : Float64 = 5.0,
+        y_min : Float64 = -3.0,
+        y_max : Float64 = 3.0,
+        width : Int32 = 42,
+        height : Int32 = 16,
+        &block : Float64 -> Float64
+      ) : EquationViewer
+        el = EquationViewer.new(
+          function_title: function_title,
+          x_min: x_min,
+          x_max: x_max,
+          y_min: y_min,
+          y_max: y_max,
+          width: width,
+          height: height,
+          &block
+        )
+        add_element(el)
+        el
+      end
+
+      def equation_viewer(
+        function_title : String = "f(x) = sin(x)",
+        x_min : Float64 = -5.0,
+        x_max : Float64 = 5.0,
+        y_min : Float64 = -3.0,
+        y_max : Float64 = 3.0,
+        width : Int32 = 42,
+        height : Int32 = 16,
+      ) : EquationViewer
+        el = EquationViewer.new(
+          function_title: function_title,
+          x_min: x_min,
+          x_max: x_max,
+          y_min: y_min,
+          y_max: y_max,
+          width: width,
+          height: height
         )
         add_element(el)
         el
