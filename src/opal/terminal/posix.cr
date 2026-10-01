@@ -18,13 +18,13 @@ module Opal
           end
 
           struct PollFD
-            fd : LibC::Int
-            events : LibC::Short
-            revents : LibC::Short
+            fd : Int32
+            events : Int16
+            revents : Int16
           end
 
           fun ioctl(fd : Int32, request : UInt64, arg : Winsize*) : Int32
-          fun poll(fds : PollFD*, nfds : LibC::SizeT, timeout : LibC::Int) : LibC::Int
+          fun poll(fds : PollFD*, nfds : UInt64, timeout : Int32) : Int32
         end
       {% end %}
 
