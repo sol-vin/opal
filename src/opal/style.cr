@@ -9,6 +9,8 @@ require "./style/layout"
 require "./style/theme"
 require "./style/theme_store"
 require "./style/animation"
+require "./style/palette_formats"
+require "./style/palette_model"
 
 module Opal
   # Convenience helper to create a new Style instance

@@ -21,6 +21,8 @@ require "../src/opal/asciicast"
 #   - 2D Continuous Target Selector with Procedural Shaders & Reticles
 #   - Bézier Curve Editor with Sub-Pixel Braille & Real-Time Easing Track
 #   - 2D Unicode Math Typesetting & Cartesian Function Grapher
+#   - Configurable 2D Character Grid with 10 Presets & Major Subdivisions
+#   - Interactive Color Palette Studio & Exporter (Named & Indexed Modes, GPL, PAL, HEX, JSON, CSS)
 #   - Large Text, Big Digits & Live Clock
 #   - Mermaid Diagram Viewer (Flowchart, Sequence, State, Class)
 #   - TUI HTML Web Browser with History & OSC 8 Hyperlinks
@@ -1574,6 +1576,271 @@ class EquationViewerSlide < ShowcaseSlide
 end
 
 # =============================================================================
+# Slide: Configurable 2D Character Grid
+# =============================================================================
+class CharacterGridSlide < ShowcaseSlide
+  property grid : Opal::UI::CharacterGrid
+
+  def initialize
+    @grid = Opal::UI::CharacterGrid.new(
+      interval_x: 8,
+      interval_y: 4,
+      style: :solid,
+      major_interval_x: 24,
+      major_interval_y: 12,
+      show_coordinates: true,
+      title: "CAD Character Grid"
+    )
+  end
+
+  def title : String
+    "Configurable 2D Character Grid"
+  end
+
+  def category : String
+    "Graphics & Layout"
+  end
+
+  def hints : String
+    "[s] Cycle Style (10 Presets) │ [c] Cycle Theme │ [+/-] Zoom Spacing │ [↑/↓/←/→] Pan │ [0] Reset"
+  end
+
+  def source_code : String
+    <<-CR
+    require "opal"
+
+    # Fully configurable character grid with 10 built-in styles:
+    # (:solid, :heavy, :double, :dashed, :dotted, :dots, :crosses, :ascii, :blocks, :math_quad)
+    grid = Opal::UI::CharacterGrid.new(
+      interval_x: 8,
+      interval_y: 4,
+      style: :solid,
+      major_interval_x: 24,
+      major_interval_y: 12,
+      show_coordinates: true,
+      title: "CAD Grid"
+    )
+
+    # Interactive panning, interval scaling, and live style cycling:
+    grid.pan(dx, dy)
+    grid.cycle_style
+    grid.cycle_colors
+    CR
+  end
+
+  def guide_markdown : String
+    <<-MD
+    # Configurable Character Grid (`CharacterGrid`)
+
+    A high-performance terminal grid rasterizer supporting:
+    - **10 Visual Style Presets**: Solid, Heavy, Double, Dashed, Dotted, Dots-only, Crosses, ASCII, Blocks, MathQuad.
+    - **Subdivision Spacing**: Configurable `interval_x` and `interval_y` with major/minor subdivisions.
+    - **Coordinate Rulers**: Top and left marginal coordinate ticks.
+    - **Mouse & Keyboard Navigation**: Pan with arrow keys or mouse drag, scale intervals with `+` and `-`.
+    MD
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    @grid.handle_key(key)
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @grid.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    grid_w = Math.min(54, w - 28)
+    grid_h = Math.min(18, h - 2)
+    @grid.render(buffer, x + 1, y, grid_w, grid_h)
+
+    # Right pane with style list and controls
+    right_x = x + grid_w + 3
+    right_w = w - grid_w - 4
+    if right_w > 14
+      Opal::Graphics::Primitives2D.draw_rect(buffer, right_x, y, right_w, grid_h, border: :rounded, fg: Opal::Color.hex("#6272A4"))
+      buffer.put_string(right_x + 2, y, " STYLES & CONTROLS ", fg: Opal::Color.bright_white, bold: true)
+
+      row = y + 1
+      buffer.put_string(right_x + 2, row, "Active Preset:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 4, row, @grid.current_style.to_s.upcase, fg: Opal::Color.bright_green, bold: true)
+      row += 2
+
+      buffer.put_string(right_x + 2, row, "AVAILABLE STYLES [s]:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      Opal::Graphics::GridStylePreset.values.each do |preset|
+        break if row >= y + grid_h - 4
+        is_cur = (preset == @grid.current_style)
+        marker = is_cur ? "▶ " : "  "
+        col = is_cur ? Opal::Color.bright_cyan : Opal::Color.hex("#6272A4")
+        buffer.put_string(right_x + 2, row, "#{marker}#{preset.to_s.downcase}", fg: col, bold: is_cur)
+        row += 1
+      end
+
+      row = y + grid_h - 3
+      buffer.put_string(right_x + 2, row, sprintf("Spacing: %dx%d", @grid.interval_x, @grid.interval_y), fg: Opal::Color.bright_yellow)
+      row += 1
+      buffer.put_string(right_x + 2, row, sprintf("Pan: x:%+d, y:%+d", @grid.offset_x, @grid.offset_y), fg: Opal::Color.bright_magenta)
+    end
+  end
+end
+
+# =============================================================================
+# Slide: Color Palette Studio & Exporter
+# =============================================================================
+class PaletteStudioSlide < ShowcaseSlide
+  property palette : Opal::UI::Palette
+  property active_tab : Symbol = :indexed
+
+  def initialize
+    @palette = Opal::UI::Palette.indexed(
+      [
+        Opal::Color.hex("#F38BA8"),
+        Opal::Color.hex("#FAB387"),
+        Opal::Color.hex("#F9E2AF"),
+        Opal::Color.hex("#A6E3A1"),
+        Opal::Color.hex("#94E2D5"),
+        Opal::Color.hex("#89B4FA"),
+        Opal::Color.hex("#CBA6F7"),
+        Opal::Color.hex("#BD93F9"),
+        Opal::Color.hex("#50FA7B"),
+        Opal::Color.hex("#FF79C6"),
+        Opal::Color.hex("#88C0D0"),
+        Opal::Color.hex("#81A1C1"),
+      ],
+      min_colors: 4,
+      max_colors: 24,
+      title: "Design System Palette"
+    )
+  end
+
+  def title : String
+    "Color Palette Studio & Exporter"
+  end
+
+  def category : String
+    "Design & Styling"
+  end
+
+  def hints : String
+    "[Enter/e] Edit Color │ [[]/[]] Swap │ [m] Switch Mode (Named/Indexed) │ [a] Add │ [x] Del │ [c] Copy Hex"
+  end
+
+  def source_code : String
+    <<-CR
+    require "opal"
+
+    # 1. Indexed Palette (with size bounds & reordering)
+    indexed_pal = Opal::UI::Palette.indexed(
+      colors,
+      min_colors: 4,
+      max_colors: 16
+    )
+
+    # 2. Named Palette (token dictionary)
+    named_pal = Opal::UI::Palette.named({
+      "primary"    => Opal::Color.hex("#38EF7D"),
+      "secondary"  => Opal::Color.hex("#11998E"),
+      "accent"     => Opal::Color.hex("#BD93F9"),
+      "background" => Opal::Color.hex("#1E1E2E"),
+    })
+
+    # Reorder with [ and ], edit via embedded ColorPicker on Enter!
+    # Export to GPL, PAL, HEX, JSON, or CSS variables:
+    css_vars = pal.model.export(:css)
+    CR
+  end
+
+  def guide_markdown : String
+    <<-MD
+    # Palette Studio & CLI (`opal palette`)
+
+    Manage color palettes with full keyboard/mouse navigation:
+    - **Two Operating Modes**:
+      - `Indexed`: Ordered color swatches with reordering via `[` and `]`, min/max constraints.
+      - `Named`: Token mapping with inline renaming (`[r]`).
+    - **Embedded ColorPicker**: Pressing `[Enter]` opens full color editing in any color space (RGB, HSL, LAB, Oklab).
+    - **Multi-Format Export**: One-touch conversion to `.gpl`, `.pal`, `.hex`, `.json`, and `.css`.
+    - **CLI Integration**: Run `opal palette` or `opal pal` directly in shell scripts.
+    MD
+  end
+
+  def handle_key(key : Opal::Terminal::KeyEvent) : Bool
+    if !@palette.editing_color? && !@palette.renaming?
+      case key.name
+      when "m", "M"
+        switch_mode
+        return true
+      end
+    end
+
+    @palette.handle_key(key)
+  end
+
+  def switch_mode : Nil
+    if @active_tab == :indexed
+      @active_tab = :named
+      @palette = Opal::UI::Palette.named({
+        "primary"   => Opal::Color.hex("#38EF7D"),
+        "secondary" => Opal::Color.hex("#11998E"),
+        "accent"    => Opal::Color.hex("#BD93F9"),
+        "surface"   => Opal::Color.hex("#1E1E2E"),
+        "text_main" => Opal::Color.hex("#CDD6F4"),
+        "danger"    => Opal::Color.hex("#F38BA8"),
+      }, title: "Named Tokens Palette")
+    else
+      @active_tab = :indexed
+      @palette = Opal::UI::Palette.indexed([
+        Opal::Color.hex("#F38BA8"),
+        Opal::Color.hex("#FAB387"),
+        Opal::Color.hex("#F9E2AF"),
+        Opal::Color.hex("#A6E3A1"),
+        Opal::Color.hex("#89B4FA"),
+        Opal::Color.hex("#CBA6F7"),
+        Opal::Color.hex("#BD93F9"),
+        Opal::Color.hex("#50FA7B"),
+      ], min_colors: 4, max_colors: 24, title: "Design System Palette")
+    end
+  end
+
+  def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
+    @palette.handle_mouse(event)
+  end
+
+  def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, w : Int32, h : Int32) : Nil
+    pal_w = Math.min(52, w - 28)
+    pal_h = Math.min(18, h - 2)
+    @palette.render(buffer, x + 1, y, pal_w, pal_h)
+
+    # Right pane with format export preview
+    right_x = x + pal_w + 3
+    right_w = w - pal_w - 4
+    if right_w > 16
+      Opal::Graphics::Primitives2D.draw_rect(buffer, right_x, y, right_w, pal_h, border: :rounded, fg: Opal::Color.hex("#6272A4"))
+      buffer.put_string(right_x + 2, y, " EXPORT & FORMATS ", fg: Opal::Color.bright_white, bold: true)
+
+      row = y + 1
+      buffer.put_string(right_x + 2, row, "MODE: #{@palette.model.mode.to_s.upcase} [m: toggle]", fg: Opal::Color.bright_cyan, bold: true)
+      row += 2
+
+      buffer.put_string(right_x + 2, row, "CLI COMMAND:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      buffer.put_string(right_x + 2, row, "$ opal palette -f gpl", fg: Opal::Color.bright_green)
+      row += 2
+
+      buffer.put_string(right_x + 2, row, "CSS EXPORT PREVIEW:", fg: Opal::Color.bright_white, bold: true)
+      row += 1
+      css_lines = @palette.model.to_css.lines
+      css_lines[0, Math.min(8, pal_h - 10)].each do |line|
+        truncated = line.size > right_w - 4 ? line[0...right_w - 5] + "…" : line
+        buffer.put_string(right_x + 2, row, truncated, fg: Opal::Color.hex("#F1FA8C"))
+        row += 1
+      end
+    end
+  end
+end
+
+# =============================================================================
 # Slide 10: Large Text, Big Digits & ASCII Banners
 # =============================================================================
 class BigTextSlide < ShowcaseSlide
@@ -2425,6 +2692,8 @@ class ShowcaseAppModel
       TargetSelectorSlide.new,
       CurveEditorSlide.new,
       EquationViewerSlide.new,
+      CharacterGridSlide.new,
+      PaletteStudioSlide.new,
       BigTextSlide.new,
       MermaidViewerSlide.new,
       HtmlBrowserSlide.new,

@@ -22,9 +22,11 @@ require "./components/hex_viewer"
 require "./components/file_dialog"
 require "./components/color_picker"
 require "./components/color_picker_3d"
+require "./components/palette"
 require "./components/target_selector_2d"
 require "./components/curve_editor"
 require "./components/equation_viewer"
+require "./components/character_grid"
 require "./components/button"
 require "./components/dropdown"
 require "./components/scrollbar"
@@ -542,6 +544,72 @@ module Opal
         el
       end
 
+      def palette(
+        model : PaletteModel,
+        picker_mode : ColorMode = ColorMode::RGB,
+        picker_layout : ColorPickerLayout = ColorPickerLayout::Sliders,
+        title : String = "Color Palette",
+        width : Int32? = 54,
+        height : Int32? = 16,
+      ) : Palette
+        el = Palette.new(
+          model: model,
+          picker_mode: picker_mode,
+          picker_layout: picker_layout,
+          title: title,
+          width: width,
+          height: height
+        )
+        add_element(el)
+        el
+      end
+
+      def palette(
+        colors : Array(Color),
+        min_colors : Int32? = nil,
+        max_colors : Int32? = nil,
+        allow_add : Bool = true,
+        allow_remove : Bool = true,
+        allow_reorder : Bool = true,
+        picker_mode : ColorMode = ColorMode::RGB,
+        picker_layout : ColorPickerLayout = ColorPickerLayout::Sliders,
+        title : String = "Indexed Palette",
+        width : Int32? = 54,
+        height : Int32? = 16,
+      ) : Palette
+        model = PaletteModel.new(
+          mode: PaletteMode::Indexed,
+          indexed_colors: colors,
+          min_colors: min_colors,
+          max_colors: max_colors,
+          allow_add: allow_add,
+          allow_remove: allow_remove,
+          allow_reorder: allow_reorder
+        )
+        palette(model, picker_mode: picker_mode, picker_layout: picker_layout, title: title, width: width, height: height)
+      end
+
+      def palette(
+        entries : Hash(String, Color),
+        allow_add : Bool = true,
+        allow_rename : Bool = true,
+        allow_remove : Bool = true,
+        picker_mode : ColorMode = ColorMode::RGB,
+        picker_layout : ColorPickerLayout = ColorPickerLayout::Sliders,
+        title : String = "Named Palette",
+        width : Int32? = 54,
+        height : Int32? = 16,
+      ) : Palette
+        model = PaletteModel.new(
+          mode: PaletteMode::Named,
+          named_entries: entries,
+          allow_add: allow_add,
+          allow_rename: allow_rename,
+          allow_remove: allow_remove
+        )
+        palette(model, picker_mode: picker_mode, picker_layout: picker_layout, title: title, width: width, height: height)
+      end
+
       def target_selector_2d(
         x_range : Range(Float64, Float64) = 0.0..1.0,
         y_range : Range(Float64, Float64) = 0.0..1.0,
@@ -655,6 +723,54 @@ module Opal
           x_max: x_max,
           y_min: y_min,
           y_max: y_max,
+          width: width,
+          height: height
+        )
+        add_element(el)
+        el
+      end
+
+      def character_grid(
+        interval_x : Int32 = 8,
+        interval_y : Int32 = 4,
+        offset_x : Int32 = 0,
+        offset_y : Int32 = 0,
+        style : Symbol | Graphics::GridStylePreset | Graphics::GridGlyphs = :solid,
+        fg : Color = Color.hex("#6272A4"),
+        bg : Color = Color.none,
+        intersection_fg : Color? = Color.hex("#8BE9FD"),
+        major_interval_x : Int32? = nil,
+        major_interval_y : Int32? = nil,
+        major_fg : Color? = Color.hex("#BD93F9"),
+        show_horizontal : Bool = true,
+        show_vertical : Bool = true,
+        show_coordinates : Bool = false,
+        show_border : Bool = true,
+        border_color : Color = Color.hex("#6272A4"),
+        border_style : Symbol = :rounded,
+        title : String? = "Character Grid",
+        width : Int32? = 30,
+        height : Int32? = 12,
+      ) : CharacterGrid
+        el = CharacterGrid.new(
+          interval_x: interval_x,
+          interval_y: interval_y,
+          offset_x: offset_x,
+          offset_y: offset_y,
+          style: style,
+          fg: fg,
+          bg: bg,
+          intersection_fg: intersection_fg,
+          major_interval_x: major_interval_x,
+          major_interval_y: major_interval_y,
+          major_fg: major_fg,
+          show_horizontal: show_horizontal,
+          show_vertical: show_vertical,
+          show_coordinates: show_coordinates,
+          show_border: show_border,
+          border_color: border_color,
+          border_style: border_style,
+          title: title,
           width: width,
           height: height
         )

@@ -2,13 +2,15 @@ require "./spec_helper"
 require "../src/opal/cli/main"
 
 describe "Opal CLI Output & Picker Tools" do
-  it "registers colorpicker, target, choose, and confirm commands in main app" do
+  it "registers colorpicker, target, choose, confirm, palette, and pal commands in main app" do
     app = Opal::CLI::Main.create_app
     app.commands.has_key?("colorpicker").should be_true
     app.commands.has_key?("color").should be_true
     app.commands.has_key?("target").should be_true
     app.commands.has_key?("choose").should be_true
     app.commands.has_key?("confirm").should be_true
+    app.commands.has_key?("palette").should be_true
+    app.commands.has_key?("pal").should be_true
   end
 
   it "formats colors across all supported format strings" do
@@ -43,5 +45,7 @@ describe "Opal CLI Output & Picker Tools" do
     app.commands["target"].summary.not_nil!.should contain("interactive 2D coordinate selector")
     app.commands["choose"].summary.not_nil!.should contain("list of choices")
     app.commands["confirm"].summary.not_nil!.should contain("confirmation prompt")
+    app.commands["palette"].summary.not_nil!.should contain("color palette studio")
+    app.commands["pal"].summary.not_nil!.should contain("color palette studio")
   end
 end

@@ -22,9 +22,25 @@ settings:
       title: "\U0001F6E0️ Chores & Tooling"
       bullet: •
 releases:
-- version: 0.1.58
+- version: 0.1.59
   date: "2026-10-01"
   status: active
+  entries:
+  - type: docs
+    description: eliminate cross-release duplicate entries in changelog.yml and CHANGELOG.md
+    bullet: "\U0001F4D6"
+    badge: '[CHANGELOG]'
+    hash: 481fd9b
+    author: Ian Rash
+  - type: feat
+    description: add configurable character grid, palette control, and opal palette
+      CLI
+    bullet: ✦
+    hash: 0b83599
+    author: Ian Rash
+- version: 0.1.58
+  date: "2026-10-01"
+  status: released
   entries:
   - type: docs
     description: eliminate cross-release duplicate entries in changelog.yml and CHANGELOG.md

@@ -1,4 +1,12 @@
 # OPAL CHANGELOG
+## [0.1.59] - 2026-10-01
+### ✨ Features & Improvements
+- ✦ add configurable character grid, palette control, and opal palette CLI (`0b83599`)
+
+### 📚 Documentation
+- 📖 **[CHANGELOG]** eliminate cross-release duplicate entries in changelog.yml and CHANGELOG.md (`481fd9b`)
+
+---
 ## [0.1.58] - 2026-10-01
 ### 📚 Documentation
 - 📖 **[CHANGELOG]** eliminate cross-release duplicate entries in changelog.yml and CHANGELOG.md (`6fe8d88`)

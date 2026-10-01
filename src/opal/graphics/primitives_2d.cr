@@ -1,6 +1,7 @@
 require "../ui/buffer"
 require "../style/color"
 require "../style/border"
+require "./grid_style"
 
 module Opal
   module Graphics
@@ -409,6 +410,116 @@ module Opal
         if title
           buffer.put_string(x + 2, y, " #{title} ", fg: border_fg, bold: true)
         end
+      end
+
+      # Draws a 2D regular character grid inside the specified rectangle.
+      def self.draw_grid(
+        buffer : UI::Buffer,
+        x : Int32,
+        y : Int32,
+        width : Int32,
+        height : Int32,
+        interval_x : Int32 = 8,
+        interval_y : Int32 = 4,
+        offset_x : Int32 = 0,
+        offset_y : Int32 = 0,
+        style : Symbol | GridStylePreset | GridGlyphs = :solid,
+        fg : Color = Color.none,
+        bg : Color = Color.none,
+        intersection_fg : Color? = nil,
+        major_interval_x : Int32? = nil,
+        major_interval_y : Int32? = nil,
+        major_fg : Color? = nil,
+        show_horizontal : Bool = true,
+        show_vertical : Bool = true,
+      ) : Nil
+        return if width <= 0 || height <= 0
+
+        glyphs = case style
+                 when GridGlyphs
+                   style
+                 when GridStylePreset
+                   GridGlyphs.preset(style)
+                 when Symbol
+                   GridGlyphs.preset(style)
+                 else
+                   GridGlyphs.solid
+                 end
+
+        effective_ix = Math.max(1, interval_x)
+        effective_iy = Math.max(1, interval_y)
+
+        0.upto(height - 1) do |row|
+          world_y = row - offset_y
+          is_h = show_horizontal && ((world_y % effective_iy) == 0)
+          is_major_h = is_h && major_interval_y && (major_interval_y.not_nil! > 0) && ((world_y % major_interval_y.not_nil!) == 0)
+
+          0.upto(width - 1) do |col|
+            world_x = col - offset_x
+            is_v = show_vertical && ((world_x % effective_ix) == 0)
+            is_major_v = is_v && major_interval_x && (major_interval_x.not_nil! > 0) && ((world_x % major_interval_x.not_nil!) == 0)
+
+            if is_v && is_h
+              cell_fg = if (is_major_v || is_major_h) && major_fg
+                          major_fg
+                        elsif intersection_fg
+                          intersection_fg
+                        else
+                          fg
+                        end
+              buffer.put_char(x + col, y + row, glyphs.intersection, fg: cell_fg, bg: bg)
+            elsif is_v
+              cell_fg = (is_major_v && major_fg) ? major_fg : fg
+              buffer.put_char(x + col, y + row, glyphs.vertical, fg: cell_fg, bg: bg)
+            elsif is_h
+              cell_fg = (is_major_h && major_fg) ? major_fg : fg
+              buffer.put_char(x + col, y + row, glyphs.horizontal, fg: cell_fg, bg: bg)
+            else
+              if glyphs.empty != ' ' || bg.type != Color::Type::None
+                buffer.put_char(x + col, y + row, glyphs.empty, fg: fg, bg: bg)
+              end
+            end
+          end
+        end
+      end
+
+      # Alias for draw_grid
+      def self.grid(
+        buffer : UI::Buffer,
+        x : Int32,
+        y : Int32,
+        width : Int32,
+        height : Int32,
+        interval_x : Int32 = 8,
+        interval_y : Int32 = 4,
+        offset_x : Int32 = 0,
+        offset_y : Int32 = 0,
+        style : Symbol | GridStylePreset | GridGlyphs = :solid,
+        fg : Color = Color.none,
+        bg : Color = Color.none,
+        intersection_fg : Color? = nil,
+        major_interval_x : Int32? = nil,
+        major_interval_y : Int32? = nil,
+        major_fg : Color? = nil,
+        show_horizontal : Bool = true,
+        show_vertical : Bool = true,
+      ) : Nil
+        draw_grid(
+          buffer, x, y, width, height,
+          interval_x: interval_x,
+          interval_y: interval_y,
+          offset_x: offset_x,
+          offset_y: offset_y,
+          style: style,
+          fg: fg,
+          bg: bg,
+          intersection_fg: intersection_fg,
+          major_interval_x: major_interval_x,
+          major_interval_y: major_interval_y,
+          major_fg: major_fg,
+          show_horizontal: show_horizontal,
+          show_vertical: show_vertical
+        )
       end
     end
   end
