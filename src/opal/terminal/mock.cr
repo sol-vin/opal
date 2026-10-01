@@ -42,11 +42,11 @@ module Opal
         @output_io.flush
       end
 
-    def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
-      @event_queue.shift?
-    end
+      def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
+        @event_queue.shift?
+      end
 
-    def read_event : KeyEvent | MouseEvent | ResizeEvent | Nil
+      def read_event : KeyEvent | MouseEvent | ResizeEvent | Nil
         @event_queue.shift?
       end
 
@@ -80,15 +80,15 @@ module Opal
         super
       end
 
-    # Injects a window resize event
-    def inject_resize(width : Int32, height : Int32) : self
-      @width = width
-      @height = height
-      @event_queue << ResizeEvent.new(width, height)
-      self
-    end
+      # Injects a window resize event
+      def inject_resize(width : Int32, height : Int32) : self
+        @width = width
+        @height = height
+        @event_queue << ResizeEvent.new(width, height)
+        self
+      end
 
-    # Injects a key event into the mock input stream
+      # Injects a key event into the mock input stream
       def inject_key(name : String, char : Char? = nil, ctrl : Bool = false, alt : Bool = false, shift : Bool = false) : self
         @event_queue << KeyEvent.new(name, char, ctrl: ctrl, alt: alt, shift: shift)
         self

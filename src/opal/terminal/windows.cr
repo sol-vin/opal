@@ -41,32 +41,32 @@ module Opal
       @original_console_mode : UInt32? = nil
 
       def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
-      unless @buffered_events.empty?
-        return @buffered_events.shift
-      end
+        unless @buffered_events.empty?
+          return @buffered_events.shift
+        end
 
-      if resize_ev = check_resize
-        return resize_ev
-      end
+        if resize_ev = check_resize
+          return resize_ev
+        end
 
-      {% if flag?(:windows) %}
-        handle = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
-        if LibC.GetNumberOfConsoleInputEvents(handle, out num_events) != 0
-          if num_events == 0
-            if timeout_ms > 0
-              wait_res = LibC.WaitForSingleObject(handle, timeout_ms.to_u32)
-              return check_resize if wait_res != 0_u32
-            else
-              return nil
+        {% if flag?(:windows) %}
+          handle = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+          if LibC.GetNumberOfConsoleInputEvents(handle, out num_events) != 0
+            if num_events == 0
+              if timeout_ms > 0
+                wait_res = LibC.WaitForSingleObject(handle, timeout_ms.to_u32)
+                return check_resize if wait_res != 0_u32
+              else
+                return nil
+              end
             end
           end
-        end
-      {% end %}
+        {% end %}
 
-      read_event
-    end
+        read_event
+      end
 
-    def size : {Int32, Int32}
+      def size : {Int32, Int32}
         {% if flag?(:windows) %}
           handle = LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE)
           if LibC.GetConsoleScreenBufferInfo(handle, out info) != 0

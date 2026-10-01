@@ -50,11 +50,11 @@ module Opal
         # In-memory buffer flush (no-op)
       end
 
-    def poll_event(timeout_ms : Int32 = 0) : Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent | Nil
-      @event_queue.shift?
-    end
+      def poll_event(timeout_ms : Int32 = 0) : Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent | Nil
+        @event_queue.shift?
+      end
 
-    # Reads the next simulated or injected input event
+      # Reads the next simulated or injected input event
       def read_event : Terminal::KeyEvent | Terminal::MouseEvent | Terminal::ResizeEvent | Nil
         @event_queue.shift?
       end

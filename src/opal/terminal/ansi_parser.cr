@@ -98,22 +98,22 @@ module Opal
       end
     end
 
-  # Represents a terminal window resize event with updated dimensions.
-  struct ResizeEvent
-    getter width : Int32
-    getter height : Int32
+    # Represents a terminal window resize event with updated dimensions.
+    struct ResizeEvent
+      getter width : Int32
+      getter height : Int32
 
-    def initialize(@width : Int32, @height : Int32)
+      def initialize(@width : Int32, @height : Int32)
+      end
+
+      def to_s(io : IO) : Nil
+        io << "Resize(#{width}x#{height})"
+      end
     end
 
-    def to_s(io : IO) : Nil
-      io << "Resize(#{width}x#{height})"
-    end
-  end
+    alias Event = KeyEvent | MouseEvent | ResizeEvent
 
-  alias Event = KeyEvent | MouseEvent | ResizeEvent
-
-  alias ANSIParser = AnsiParser
+    alias ANSIParser = AnsiParser
 
     # Decoder that turns raw byte chunks and ANSI escape sequences into structured events.
     class AnsiParser

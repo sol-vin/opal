@@ -8,6 +8,7 @@ module Opal
       {% unless flag?(:windows) %}
         lib LibC
           TIOCGWINSZ = 0x5413_u64 # Standard Linux TIOCGWINSZ, Darwin uses 0x40087468_u64
+          POLLIN     = 0x0001_i16
 
           struct Winsize
             ws_row : UInt16
@@ -16,33 +17,48 @@ module Opal
             ws_ypixel : UInt16
           end
 
+          struct Pollfd
+            fd : Int32
+            events : Int16
+            revents : Int16
+          end
+
           fun ioctl(fd : Int32, request : UInt64, arg : Winsize*) : Int32
+          {% if flag?(:darwin) %}
+            fun poll(fds : Pollfd*, nfds : UInt32, timeout : Int32) : Int32
+          {% else %}
+            fun poll(fds : Pollfd*, nfds : LibC::ULong, timeout : Int32) : Int32
+          {% end %}
         end
       {% end %}
 
       def poll_event(timeout_ms : Int32 = 0) : KeyEvent | MouseEvent | ResizeEvent | Nil
-      unless @buffered_events.empty?
-        return @buffered_events.shift
-      end
-
-      if resize_ev = check_resize
-        return resize_ev
-      end
-
-      {% unless flag?(:windows) %}
-        pfd = LibC::Pollfd.new(fd: 0, events: LibC::POLLIN, revents: 0)
-        ret = LibC.poll(pointerof(pfd), 1_u64, timeout_ms)
-        if ret > 0 && (pfd.revents & LibC::POLLIN != 0)
-          return read_event
-        else
-          return check_resize
+        unless @buffered_events.empty?
+          return @buffered_events.shift
         end
-      {% end %}
 
-      nil
-    end
+        if resize_ev = check_resize
+          return resize_ev
+        end
 
-    def size : {Int32, Int32}
+        {% unless flag?(:windows) %}
+          pfd = LibC::Pollfd.new(fd: 0, events: LibC::POLLIN, revents: 0_i16)
+          {% if flag?(:darwin) %}
+            ret = LibC.poll(pointerof(pfd), 1_u32, timeout_ms)
+          {% else %}
+            ret = LibC.poll(pointerof(pfd), 1_u64, timeout_ms)
+          {% end %}
+          if ret > 0 && (pfd.revents & LibC::POLLIN != 0)
+            return read_event
+          else
+            return check_resize
+          end
+        {% end %}
+
+        nil
+      end
+
+      def size : {Int32, Int32}
         {% unless flag?(:windows) %}
           ws = LibC::Winsize.new
           # Try STDOUT fd = 1
