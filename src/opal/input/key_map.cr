@@ -17,6 +17,12 @@ module Opal
         self
       end
 
+      # Registers an action for an array of key descriptors
+      def on(keys : Array(String), &block : Terminal::KeyEvent -> Nil) : self
+        @bindings << {keys.dup, block}
+        self
+      end
+
       # Convenience overload when block takes 0 parameters
       def on(*keys : String, &block : -> Nil) : self
         action = ->(_ev : Terminal::KeyEvent) { block.call; nil }

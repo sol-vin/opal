@@ -244,5 +244,13 @@ describe "Opal CLI Utilities & InputReader" do
       status = app.run(["code", "puts 'hello'", "-l", "crystal"])
       status.should eq(0)
     end
+
+    it "executes opal remap in print mode with JSON and Lapis formats" do
+      status_json = app.run(["remap", "--print", "-f", "json"])
+      status_json.should eq(0)
+
+      status_lapis = app.run(["remap", "--print", "-f", "lapis", "-g", "dualshock"])
+      status_lapis.should eq(0)
+    end
   end
 end
