@@ -22,9 +22,19 @@ settings:
       title: "\U0001F6E0️ Chores & Tooling"
       bullet: •
 releases:
+- version: 0.1.60
+  date: "2026-10-13"
+  status: active
+  entries:
+  - type: feat
+    description: add configurable character grid, palette control, and opal palette
+      CLI
+    bullet: ✦
+    hash: 977a1c3
+    author: Ian Rash
 - version: 0.1.59
   date: "2026-10-01"
-  status: active
+  status: released
   entries:
   - type: docs
     description: eliminate cross-release duplicate entries in changelog.yml and CHANGELOG.md

@@ -12,6 +12,7 @@ require "./opal/shader"
 require "./opal/animation/animator"
 require "./opal/async/worker"
 require "./opal/clipboard"
+require "./opal/testing"
 
 # Opal: Next-generation TUI and CLI DSL framework for Crystal.
 # Unifies The Elm Architecture (Bubbletea), Declarative Layout (Ink),

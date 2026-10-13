@@ -1,4 +1,9 @@
 # OPAL CHANGELOG
+## [0.1.60] - 2026-10-13
+### ✨ Features & Improvements
+- ✦ add configurable character grid, palette control, and opal palette CLI (`977a1c3`)
+
+---
 ## [0.1.59] - 2026-10-01
 ### ✨ Features & Improvements
 - ✦ add configurable character grid, palette control, and opal palette CLI (`0b83599`)

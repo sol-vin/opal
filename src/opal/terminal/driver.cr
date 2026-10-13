@@ -20,6 +20,11 @@ module Opal
       abstract def write(str : String) : Nil
       abstract def flush : Nil
 
+      # Flushes any queued input events and purges platform input buffers
+      def flush_input : Nil
+        @buffered_events.clear
+      end
+
       # Checks if the terminal window size has changed since last check.
       def check_resize : ResizeEvent?
         curr = size
