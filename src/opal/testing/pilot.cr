@@ -100,7 +100,6 @@ module Opal
         self
       end
 
-
       # Simulates mouse scroll wheel movements.
       def scroll_up(x : Int32 = 0, y : Int32 = 0) : self
         ev = Terminal::MouseEvent.new(x, y, Terminal::MouseButton::WheelUp, Terminal::MouseAction::Press)
@@ -142,7 +141,6 @@ module Opal
       ) : self
         start = Time.instant
         while (Time.instant - start) < timeout
-
           return self if block.call
           sleep interval
           Fiber.yield

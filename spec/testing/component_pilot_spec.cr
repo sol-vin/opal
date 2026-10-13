@@ -146,7 +146,6 @@ describe "Textual-Inspired Component Testing via Pilot" do
 
       collapsible.toggle
       collapsible.collapsed?.should be_true
-
     end
   end
 end

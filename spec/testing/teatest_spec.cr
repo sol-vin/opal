@@ -3,10 +3,10 @@ require "../spec_helper"
 # Model for sequential execution test
 class SequenceMsg < Opal::TEA::Msg
   getter step : Int32
+
   def initialize(@step : Int32)
   end
 end
-
 
 class SequenceModel
   include Opal::TEA::Model
@@ -73,7 +73,6 @@ end
 # Model that raises an exception for panic recovery testing
 class ExplodeMsg < Opal::TEA::Msg
 end
-
 
 class PanicModel
   include Opal::TEA::Model
@@ -174,7 +173,6 @@ describe "Bubbletea Parity Test Suite (Teatest)" do
 
       tp.wait_for(timeout: 1.second) { |text| text.includes?("Steps: 10,20,30") }
       tp.wait_finished(timeout: 1.second)
-
     end
 
     it "times out cleanly when program does not terminate" do

@@ -14,7 +14,6 @@ class MockTestControl < Opal::UI::Control
     true
   end
 
-
   def handle_mouse(event : Opal::Terminal::MouseEvent) : Bool
     @received_mouse << event
     if event.action.press? && event.button.left?
@@ -29,9 +28,7 @@ class MockTestControl < Opal::UI::Control
 
   def render(buffer : Opal::UI::Buffer, x : Int32, y : Int32, width : Int32, height : Int32) : Nil
   end
-
 end
-
 
 describe Opal::Testing::Pilot do
   describe "Keystroke puppeting" do

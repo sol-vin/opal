@@ -324,15 +324,15 @@ module Opal
 
         def self.normalize_key_code(raw : String) : String
           case raw.downcase.strip
-          when "esc"                  then "escape"
-          when "return", "\r", "\n"   then "enter"
-          when " "                    then "space"
-          when "pageup", "pgup"       then "page_up"
-          when "pagedown", "pgdn"     then "page_down"
-          when "del"                  then "delete"
-          when "ins"                  then "insert"
-          when "bs"                   then "backspace"
-          else                             raw.downcase.strip
+          when "esc"                then "escape"
+          when "return", "\r", "\n" then "enter"
+          when " "                  then "space"
+          when "pageup", "pgup"     then "page_up"
+          when "pagedown", "pgdn"   then "page_down"
+          when "del"                then "delete"
+          when "ins"                then "insert"
+          when "bs"                 then "backspace"
+          else                           raw.downcase.strip
           end
         end
 
@@ -506,10 +506,10 @@ module Opal
         def self.parse_policy(value : ConflictPolicy | Symbol | String) : ConflictPolicy
           return value if value.is_a?(ConflictPolicy)
           case value.to_s.downcase.strip
-          when "swap"              then Swap
-          when "replace", "steal"  then Replace
-          when "block", "reject"   then Block
-          else                          Allow
+          when "swap"             then Swap
+          when "replace", "steal" then Replace
+          when "block", "reject"  then Block
+          else                         Allow
           end
         end
       end

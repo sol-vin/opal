@@ -33,7 +33,6 @@ module Opal
         lines
       end
 
-
       # Asserts that the 2D buffer's rendered character grid matches the expected lines.
       # Upon mismatch, constructs a formatted, readable visual diff highlighting line numbers and discrepancies.
       def assert_buffer_lines(
@@ -59,7 +58,6 @@ module Opal
             mismatches << row_idx
           end
         end
-
 
         return if mismatches.empty?
 

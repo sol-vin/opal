@@ -95,7 +95,6 @@ module Opal
       ) : self
         start = Time.instant
         while (Time.instant - start) < timeout
-
           return self if block.call(output)
           sleep interval
           Fiber.yield
