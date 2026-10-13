@@ -26,6 +26,31 @@ require "./raw_mode"
     fun GetConsoleScreenBufferInfo(hConsoleOutput : HANDLE, lpConsoleScreenBufferInfo : CONSOLE_SCREEN_BUFFER_INFO*) : Int32
     fun GetNumberOfConsoleInputEvents(hConsoleInput : HANDLE, lpcNumberOfEvents : UInt32*) : Int32
     fun WaitForSingleObject(hHandle : HANDLE, dwMilliseconds : UInt32) : UInt32
+
+    KEY_EVENT                = 0x0001_u16
+    MOUSE_EVENT              = 0x0002_u16
+    WINDOW_BUFFER_SIZE_EVENT = 0x0004_u16
+    MENU_EVENT               = 0x0008_u16
+    FOCUS_EVENT              = 0x0010_u16
+
+    struct KEY_EVENT_RECORD
+      bKeyDown : Int32
+      wRepeatCount : UInt16
+      wVirtualKeyCode : UInt16
+      wVirtualScanCode : UInt16
+      uChar : UInt16
+      dwControlKeyState : UInt32
+    end
+
+    struct INPUT_RECORD
+      eventType : UInt16
+      padding : UInt16
+      keyEvent : KEY_EVENT_RECORD
+    end
+
+    fun FlushConsoleInputBuffer(hConsoleInput : HANDLE) : Int32
+    fun PeekConsoleInputW(hConsoleInput : HANDLE, lpBuffer : INPUT_RECORD*, nLength : UInt32, lpNumberOfEventsRead : UInt32*) : Int32
+    fun ReadConsoleInputW(hConsoleInput : HANDLE, lpBuffer : INPUT_RECORD*, nLength : UInt32, lpNumberOfEventsRead : UInt32*) : Int32
   end
 {% end %}
 
@@ -51,8 +76,49 @@ module Opal
 
         {% if flag?(:windows) %}
           handle = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
-          if LibC.GetNumberOfConsoleInputEvents(handle, out num_events) != 0
-            if num_events == 0
+
+          # Drain non-keydown console input events (KEY_UP, FOCUS, MENU, WINDOW_BUFFER_SIZE)
+          # so that ReadFile does not block when only non-character events are queued.
+          loop do
+            if LibC.GetNumberOfConsoleInputEvents(handle, out num_events) == 0 || num_events == 0
+              break
+            end
+
+            rec = uninitialized LibC::INPUT_RECORD
+            if LibC.PeekConsoleInputW(handle, pointerof(rec), 1_u32, out read_count) == 0 || read_count == 0
+              break
+            end
+
+            if rec.eventType == LibC::KEY_EVENT
+              if rec.keyEvent.bKeyDown != 0
+                # Real keydown event, stop draining and proceed to read
+                break
+              else
+                # Discard KEY_UP event
+                LibC.ReadConsoleInputW(handle, pointerof(rec), 1_u32, out _)
+              end
+            elsif rec.eventType == LibC::WINDOW_BUFFER_SIZE_EVENT
+              LibC.ReadConsoleInputW(handle, pointerof(rec), 1_u32, out _)
+              if resize_ev = check_resize
+                return resize_ev
+              end
+            elsif rec.eventType == LibC::FOCUS_EVENT || rec.eventType == LibC::MENU_EVENT
+              # Discard focus/menu events
+              LibC.ReadConsoleInputW(handle, pointerof(rec), 1_u32, out _)
+            elsif rec.eventType == LibC::MOUSE_EVENT
+              if @original_console_mode # mouse is enabled
+                break
+              else
+                # Discard mouse events if mouse not enabled
+                LibC.ReadConsoleInputW(handle, pointerof(rec), 1_u32, out _)
+              end
+            else
+              break
+            end
+          end
+
+          if LibC.GetNumberOfConsoleInputEvents(handle, out remaining_events) != 0
+            if remaining_events == 0
               if timeout_ms > 0
                 wait_res = LibC.WaitForSingleObject(handle, timeout_ms.to_u32)
                 return check_resize if wait_res != 0_u32
@@ -64,6 +130,14 @@ module Opal
         {% end %}
 
         read_event
+      end
+
+      def flush_input : Nil
+        super
+        {% if flag?(:windows) %}
+          handle = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+          LibC.FlushConsoleInputBuffer(handle)
+        {% end %}
       end
 
       def size : {Int32, Int32}
@@ -86,7 +160,9 @@ module Opal
       end
 
       def raw_mode(&)
+        flush_input
         RawMode.run do
+          flush_input
           yield
         end
       end

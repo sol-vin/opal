@@ -6,10 +6,15 @@ module Opal
     class Cmd
       getter? quit : Bool = false
       getter? redraw : Bool = false
+      getter? sequence : Bool = false
       getter actions : Array(-> Msg?)
 
-      def initialize(actions : Array(-> Msg?) = [] of (-> Msg?), @quit : Bool = false, @redraw : Bool = false)
-        @actions = actions
+      def initialize(
+        @actions : Array(-> Msg?) = [] of (-> Msg?),
+        @quit : Bool = false,
+        @redraw : Bool = false,
+        @sequence : Bool = false,
+      )
       end
 
       # Empty command doing nothing
@@ -51,8 +56,35 @@ module Opal
         batch(cmds.to_a)
       end
 
+      # Combines multiple commands into a sequential command executed in strict order
+      def self.sequence(cmds : Array(Cmd)) : Cmd
+        actions = [] of (-> Msg?)
+        quit_requested = false
+        redraw_requested = false
+
+        cmds.each do |c|
+          actions.concat(c.actions)
+          quit_requested = true if c.quit?
+          redraw_requested = true if c.redraw?
+        end
+
+        new(actions, quit: quit_requested, redraw: redraw_requested, sequence: true)
+      end
+
+      def self.sequence(*cmds : Cmd) : Cmd
+        sequence(cmds.to_a)
+      end
+
       # Produces a command that waits *interval* and then emits the message returned by *block*
       def self.tick(interval : Time::Span, &block : Time -> Msg) : Cmd
+        perform do
+          sleep interval
+          block.call(Time.local)
+        end
+      end
+
+      # Produces a command that emits a message on an interval matching Bubbletea's Every
+      def self.every(interval : Time::Span, &block : Time -> Msg) : Cmd
         perform do
           sleep interval
           block.call(Time.local)
@@ -61,3 +93,4 @@ module Opal
     end
   end
 end
+

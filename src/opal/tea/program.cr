@@ -14,8 +14,11 @@ module Opal
       property? alt_screen : Bool
       property? mouse_enabled : Bool
       property? diff_render : Bool
+      getter? running : Bool = false
+      getter error : Exception? = nil
       @diff_renderer : UI::DiffRenderer? = nil
       @render_buffer : UI::Buffer? = nil
+      @msg_channel : Channel(Msg)? = nil
 
       def initialize(
         @model : Model,
@@ -28,10 +31,24 @@ module Opal
         @diff_renderer = UI::DiffRenderer.new(@driver) if @diff_render
       end
 
+      # Dispatches a message directly into the active application event loop.
+      def send(msg : Msg) : Nil
+        if ch = @msg_channel
+          ch.send(msg)
+        end
+      end
+
+      # Programmatically requests the active application loop to terminate.
+      def quit : Nil
+        send(QuitMsg.new)
+      end
+
       # Runs the interactive application loop and returns the final Model state upon exit.
       def run : Model
         msg_channel = Channel(Msg).new(128)
-        running = true
+        @msg_channel = msg_channel
+        @running = true
+        @error = nil
 
         @driver.raw_mode do
           begin
@@ -51,7 +68,7 @@ module Opal
 
             # Background input reader fiber
             spawn do
-              while running
+              while @running
                 event = @driver.poll_event(50)
                 if event
                   msg = case event
@@ -72,10 +89,10 @@ module Opal
             end
 
             # Main event loop
-            while running
+            while @running
               msg = msg_channel.receive
               if msg.is_a?(QuitMsg)
-                running = false
+                @running = false
                 break
               end
 
@@ -89,14 +106,18 @@ module Opal
               render_view
 
               if cmd.quit?
-                running = false
+                @running = false
                 break
               end
 
               dispatch_cmd(cmd, msg_channel)
             end
+          rescue ex : Exception
+            @error = ex
+            raise ex
           ensure
-            running = false
+            @running = false
+            @msg_channel = nil
             @driver.show_cursor
             @driver.disable_mouse if @mouse_enabled
             @driver.exit_alternate_screen if @alt_screen
@@ -108,8 +129,20 @@ module Opal
       end
 
       private def dispatch_cmd(cmd : Cmd, channel : Channel(Msg)) : Nil
-        if cmd.quit?
+        if cmd.quit? && cmd.actions.empty?
           spawn { channel.send(QuitMsg.new) }
+          return
+        end
+
+        if cmd.sequence?
+          spawn do
+            cmd.actions.each do |action|
+              if result_msg = action.call
+                channel.send(result_msg)
+              end
+            end
+            channel.send(QuitMsg.new) if cmd.quit?
+          end
           return
         end
 
@@ -119,6 +152,10 @@ module Opal
               channel.send(result_msg)
             end
           end
+        end
+
+        if cmd.quit?
+          spawn { channel.send(QuitMsg.new) }
         end
       end
 
