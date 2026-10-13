@@ -49,6 +49,7 @@ require "./components/scissor"
 require "./components/mask"
 require "./components/group"
 require "./components/meter"
+require "./components/input_remapper"
 require "../style/animation"
 require "./layouts/dock"
 require "./layouts/grid"
@@ -1348,6 +1349,92 @@ module Opal
         mv = AsyncMarkdownViewer.new(label, width: width, scrollable: scrollable, auto_scroll: auto_scroll, scroll_speed: scroll_speed, &block)
         add_element(mv)
         mv
+      end
+
+      # Interactive Input Remapper component configured with an existing InputRemapModel
+      def input_remapper(
+        model : Input::Core::InputRemapModel,
+        title : String = "Input Remapping",
+        show_border : Bool = true,
+        show_categories : Bool = true,
+        show_deadzone : Bool = true,
+        border : Symbol | Border = :rounded,
+        width : Int32? = 68,
+        height : Int32? = 18,
+      ) : InputRemapper
+        el = InputRemapper.new(
+          model: model,
+          title: title,
+          show_border: show_border,
+          show_categories: show_categories,
+          show_deadzone: show_deadzone,
+          border_style: border,
+          width: width,
+          height: height
+        )
+        add_element(el)
+        el
+      end
+
+      # Interactive Input Remapper component configured via declarative DSL block
+      def input_remapper(
+        title : String = "Input Remapping",
+        conflict_policy : Input::Core::ConflictPolicy | Symbol | String = :allow,
+        gamepad_style : Input::Core::GamepadStyle | Symbol | String = :dualshock,
+        max_slots : Int32 = 2,
+        show_border : Bool = true,
+        show_categories : Bool = true,
+        show_deadzone : Bool = true,
+        border : Symbol | Border = :rounded,
+        width : Int32? = 68,
+        height : Int32? = 18,
+        &
+      ) : InputRemapper
+        el = InputRemapper.new(
+          title: title,
+          conflict_policy: conflict_policy,
+          gamepad_style: gamepad_style,
+          max_slots: max_slots,
+          show_border: show_border,
+          show_categories: show_categories,
+          show_deadzone: show_deadzone,
+          width: width,
+          height: height
+        ) do |b|
+          with b yield b
+        end
+        el.border_style = border
+        add_element(el)
+        el
+      end
+
+      # Interactive Input Remapper component with default profile
+      def input_remapper(
+        title : String = "Input Remapping",
+        conflict_policy : Input::Core::ConflictPolicy | Symbol | String = :allow,
+        gamepad_style : Input::Core::GamepadStyle | Symbol | String = :dualshock,
+        max_slots : Int32 = 2,
+        show_border : Bool = true,
+        show_categories : Bool = true,
+        show_deadzone : Bool = true,
+        border : Symbol | Border = :rounded,
+        width : Int32? = 68,
+        height : Int32? = 18,
+      ) : InputRemapper
+        mdl = Input::Core::InputRemapModel.default_profile(title)
+        mdl.conflict_policy = Input::Core::ConflictPolicy.parse_policy(conflict_policy)
+        mdl.gamepad_style = Input::Core::GamepadStyle.parse_style(gamepad_style)
+        mdl.max_slots = Math.max(1, max_slots)
+        input_remapper(
+          model: mdl,
+          title: title,
+          show_border: show_border,
+          show_categories: show_categories,
+          show_deadzone: show_deadzone,
+          border: border,
+          width: width,
+          height: height
+        )
       end
     end
   end

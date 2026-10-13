@@ -11,6 +11,7 @@ require "./tools/target_tool"
 require "./tools/choose_tool"
 require "./tools/confirm_tool"
 require "./tools/palette_tool"
+require "./tools/remap_tool"
 
 module Opal
   module CLI
@@ -104,6 +105,14 @@ module Opal
 
         app.command :pal do |cmd|
           Tools::PaletteTool.register(cmd)
+        end
+
+        app.command :remap do |cmd|
+          Tools::RemapTool.register(cmd)
+        end
+
+        app.command :keymap do |cmd|
+          Tools::RemapTool.register(cmd)
         end
 
         app
