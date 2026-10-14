@@ -22,9 +22,20 @@ settings:
       title: "\U0001F6E0️ Chores & Tooling"
       bullet: •
 releases:
+- version: 0.1.66
+  date: "2026-10-14"
+  status: active
+  entries:
+  - type: feat
+    description: add declarative OSC-8 link(url, label) and split-pane builder helpers
+      (WO-048)
+    bullet: ✦
+    badge: '[UI]'
+    hash: 21080ed
+    author: Ian Rash
 - version: 0.1.65
   date: "2026-10-13"
-  status: active
+  status: released
   entries:
   - type: feat
     description: initial release of Opal TUI & CLI DSL framework

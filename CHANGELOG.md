@@ -1,4 +1,9 @@
 # OPAL CHANGELOG
+## [0.1.66] - 2026-10-14
+### ✨ Features & Improvements
+- ✦ **[UI]** add declarative OSC-8 link(url, label) and split-pane builder helpers (WO-048) (`21080ed`)
+
+---
 ## [0.1.65] - 2026-10-13
 ### ✨ Features & Improvements
 - ✦ initial release of Opal TUI & CLI DSL framework (`f3df915`)
