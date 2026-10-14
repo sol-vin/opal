@@ -191,5 +191,168 @@ describe Opal::Core::SplitLayout do
       split.handle_key(Opal::Terminal::KeyEvent.new("right", ctrl: true)).should be_true
       split.ratios[1].should be > initial_ratios[1]
     end
+
+    it "supports comprehensive keyboard navigation shortcuts, pane jumping, zoom, equalize, and orientation flip (WO-059)" do
+      split = Opal.split_pane(direction: :horizontal) do
+        pane(title: "Queue", id: "queue", flex: 1.0, border: :rounded) { text "Q" }
+        pane(title: "Telemetry", id: "telemetry", flex: 2.0, border: :rounded) { text "T" }
+        pane(title: "Logs", id: "logs", flex: 1.0, border: :rounded) { text "L" }
+        bind_key "alt+n", :focus_next
+      end
+
+      split.focused_id.should eq("queue")
+      split.shortcut_hints.size.should be >= 6
+
+      # Alt+Right / Alt+L and Alt+Left / Alt+H directional navigation
+      split.handle_key(Opal::Terminal::KeyEvent.new("right", alt: true)).should be_true
+      split.focused_id.should eq("telemetry")
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("l", char: 'l', alt: true)).should be_true
+      split.focused_id.should eq("logs")
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("h", char: 'h', alt: true)).should be_true
+      split.focused_id.should eq("telemetry")
+
+      # F6 / Shift+F6 accessible pane cycling
+      split.handle_key(Opal::Terminal::KeyEvent.new("f6")).should be_true
+      split.focused_id.should eq("logs")
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("f6", shift: true)).should be_true
+      split.focused_id.should eq("telemetry")
+
+      # Direct pane number shortcuts Alt+1..9 and Alt+Home / Alt+End
+      split.handle_key(Opal::Terminal::KeyEvent.new("1", char: '1', alt: true)).should be_true
+      split.focused_id.should eq("queue")
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("3", char: '3', alt: true)).should be_true
+      split.focused_id.should eq("logs")
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("home", alt: true)).should be_true
+      split.focused_id.should eq("queue")
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("end", alt: true)).should be_true
+      split.focused_id.should eq("logs")
+
+      # Custom bound shortcut (Alt+N)
+      split.handle_key(Opal::Terminal::KeyEvent.new("n", char: 'n', alt: true)).should be_true
+      split.focused_id.should eq("queue")
+
+      # Equalize ratios (Alt+=) and Reset ratios (Ctrl+0)
+      split.handle_key(Opal::Terminal::KeyEvent.new("=", char: '=', alt: true)).should be_true
+      split.ratios[0].should be_close(1.0 / 3.0, 0.001)
+      split.ratios[1].should be_close(1.0 / 3.0, 0.001)
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("0", char: '0', ctrl: true)).should be_true
+      split.ratios[0].should be_close(0.25, 0.001)
+      split.ratios[1].should be_close(0.50, 0.001)
+
+      # Zoom / Maximize toggle (Alt+Z)
+      split.zoomed?.should be_false
+      split.handle_key(Opal::Terminal::KeyEvent.new("z", char: 'z', alt: true)).should be_true
+      split.zoomed?.should be_true
+      split.solve_extents(80).should eq([80, 0, 0])
+
+      split.handle_key(Opal::Terminal::KeyEvent.new("z", char: 'z', alt: true)).should be_true
+      split.zoomed?.should be_false
+
+      # Orientation flip (Alt+O)
+      split.direction.should eq(Opal::UI::SplitDirection::Horizontal)
+      split.separator.should eq('│')
+      split.handle_key(Opal::Terminal::KeyEvent.new("o", char: 'o', alt: true)).should be_true
+      split.direction.should eq(Opal::UI::SplitDirection::Vertical)
+      split.separator.should eq('─')
+    end
+
+    it "renders high-contrast Lipgloss border focus indicators and restores unfocused borders cleanly (WO-059)" do
+      split = Opal.split_pane(direction: :horizontal, ratio: 0.5) do
+        pane(title: "Left Pane", id: "left", border: :rounded) { text "Left Content" }
+        pane(title: "Right Pane", id: "right", border: :rounded) { text "Right Content" }
+        high_contrast_focus(
+          enabled: true,
+          focus_border: :thick,
+          unfocused_border: :rounded,
+          focus_fg: "#00FFFF",
+          unfocused_fg: "#6C7086",
+          title_prefix: "◆ "
+        )
+      end
+
+      split.high_contrast_focus?.should be_true
+      split.focus_contrast_ratio.should be >= 7.0
+
+      buf = Opal::UI::Buffer.new(41, 6)
+      split.render(buf, 0, 0, 41, 6)
+
+      # Pane 0 (at x=0) is focused -> uses thick Lipgloss border '┏' and high-contrast fg
+      buf.get(0, 0).char.should eq('┏')
+      buf.get(0, 0).fg.should eq(split.effective_focus_border_fg)
+      # Pane 1 (at x=21) is unfocused -> uses rounded Lipgloss border '╭' and unfocused fg
+      buf.get(21, 0).char.should eq('╭')
+      buf.get(21, 0).fg.should eq(split.effective_unfocused_border_fg)
+
+      rendered_first = buf.render_to_string(with_ansi: false)
+      rendered_first.should contain("◆ Left Pane")
+      rendered_first.should_not contain("◆ Right Pane")
+
+      # Advance focus to Right Pane and re-render: Left Pane must revert to '╭' while Right Pane becomes '┏'
+      split.focus_next
+      buf2 = Opal::UI::Buffer.new(41, 6)
+      split.render(buf2, 0, 0, 41, 6)
+
+      buf2.get(0, 0).char.should eq('╭')
+      buf2.get(0, 0).fg.should eq(split.effective_unfocused_border_fg)
+      buf2.get(21, 0).char.should eq('┏')
+      buf2.get(21, 0).fg.should eq(split.effective_focus_border_fg)
+
+      rendered_second = buf2.render_to_string(with_ansi: false)
+      rendered_second.should_not contain("◆ Left Pane")
+      rendered_second.should contain("◆ Right Pane")
+
+      # Verify Lipgloss Opal::Style presets work directly with focus_style / unfocused_style
+      focus_st = Opal::Style.high_contrast_focus(border_style: :double, fg: "#FFFF00")
+      unfocus_st = Opal::Style.unfocused_pane(border_style: :single, fg: "#6C7086")
+      split.focus_style = focus_st
+      split.unfocused_style = unfocus_st
+
+      buf3 = Opal::UI::Buffer.new(41, 6)
+      split.render(buf3, 0, 0, 41, 6)
+      buf3.get(0, 0).char.should eq('┌')
+      buf3.get(21, 0).char.should eq('╔')
+    end
+
+    it "emits and renders screen-reader-friendly status line announcements across navigation and resize actions (WO-059)" do
+      announcements = [] of String
+
+      split = Opal.split_pane(direction: :horizontal) do
+        pane(title: "Job Queue", id: "jobs", flex: 1.0, border: :rounded) { text "video_01.mp4" }
+        pane(title: "FFmpeg Telemetry", id: "telemetry", flex: 1.0, border: :rounded) { text "60.0 fps" }
+        status_line(enabled: true, shortcuts: true)
+        on_announce { |msg| announcements << msg }
+      end
+
+      split.show_status_line?.should be_true
+      split.status_announcement.should contain("Focused pane 1 of 2: Job Queue (50% width, horizontal split)")
+      split.status_line.should contain("Focused pane 1 of 2: Job Queue")
+      split.status_line.should contain("Shortcuts:")
+
+      # Tab to second pane
+      split.handle_key(Opal::Terminal::KeyEvent.new("tab")).should be_true
+      split.status_announcement.should contain("Focused pane 2 of 2: FFmpeg Telemetry (50% width, horizontal split)")
+      announcements.last.should contain("FFmpeg Telemetry")
+
+      # Resize focused pane with Ctrl+Right
+      split.handle_key(Opal::Terminal::KeyEvent.new("right", ctrl: true)).should be_true
+      split.status_announcement.should contain("Resized pane 2 of 2: FFmpeg Telemetry to 55% width")
+
+      # On-demand screen-reader status announcement via Alt+?
+      split.handle_key(Opal::Terminal::KeyEvent.new("?", char: '?', alt: true, shift: true)).should be_true
+      split.status_announcement.should contain("Focused pane 2 of 2: FFmpeg Telemetry (55% width, horizontal split)")
+
+      # Render with status line enabled and verify bottom row contains announcement text
+      buf = Opal::UI::Buffer.new(100, 8)
+      split.render(buf, 0, 0, 100, 8)
+      lines = buf.render_to_string(with_ansi: false).chomp.split('\n')
+      lines.last.should contain("Focused pane 2 of 2: FFmpeg Telemetry (55% width, horizontal split)")
+    end
   end
 end
