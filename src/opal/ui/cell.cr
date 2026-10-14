@@ -13,6 +13,7 @@ module Opal
       property? underline : Bool
       property? reverse : Bool
       property? continuation : Bool
+      property hyperlink : String?
 
       def initialize(
         @char : Char = ' ',
@@ -24,6 +25,7 @@ module Opal
         @underline : Bool = false,
         @reverse : Bool = false,
         @continuation : Bool = false,
+        @hyperlink : String? = nil,
       )
       end
 
@@ -31,8 +33,8 @@ module Opal
         new(' ', Color.none, Color.none)
       end
 
-      def self.continuation : Cell
-        new('\0', Color.none, Color.none, continuation: true)
+      def self.continuation(hyperlink : String? = nil) : Cell
+        new('\0', Color.none, Color.none, continuation: true, hyperlink: hyperlink)
       end
 
       def ==(other : Cell) : Bool
@@ -44,7 +46,8 @@ module Opal
           @italic == other.italic? &&
           @underline == other.underline? &&
           @reverse == other.reverse? &&
-          @continuation == other.continuation?
+          @continuation == other.continuation? &&
+          @hyperlink == other.hyperlink
       end
     end
   end

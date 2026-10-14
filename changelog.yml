@@ -409,6 +409,11 @@ releases:
     bullet: •
     hash: 92d1216
     author: Ian Rash
+  - type: style
+    description: format Crystal sources and sync Carbon metadata
+    bullet: •
+    hash: d6937ed
+    author: Ian Rash
 - version: 0.1.64
   date: "2026-10-13"
   status: released

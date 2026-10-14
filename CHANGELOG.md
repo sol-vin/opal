@@ -71,6 +71,7 @@
 - • Merge pull request #1 from sol-vin/feat/tea-testing-harness-and-windows-driver (`42d9033`)
 - • Merge pull request #2 from sol-vin/feat/input-remapper (`3278419`)
 - • format Crystal sources and sync Carbon metadata (`92d1216`)
+- • format Crystal sources and sync Carbon metadata (`d6937ed`)
 
 ---
 ## [0.1.64] - 2026-10-13

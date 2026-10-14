@@ -50,6 +50,7 @@ require "./components/mask"
 require "./components/group"
 require "./components/meter"
 require "./components/input_remapper"
+require "./components/link"
 require "../style/animation"
 require "./layouts/dock"
 require "./layouts/grid"
@@ -94,6 +95,112 @@ module Opal
         el = Text.new(content, fg: fg, bg: bg, bold: bold, dim: dim, italic: italic, underline: underline)
         add_element(el)
         el
+      end
+
+      # Declarative OSC 8 terminal hyperlink element `link(url, label)`
+      def link(
+        url : String,
+        label : String? = nil,
+        id : String? = nil,
+        fg : Color | Symbol | String = :cyan,
+        bg : Color | Symbol | String = Color.none,
+        bold : Bool = false,
+        dim : Bool = false,
+        italic : Bool = false,
+        underline : Bool = true,
+        icon : String? = nil,
+      ) : Link
+        el = Link.new(
+          url: url,
+          label: label,
+          id: id,
+          fg: fg,
+          bg: bg,
+          bold: bold,
+          dim: dim,
+          italic: italic,
+          underline: underline,
+          icon: icon
+        )
+        add_element(el)
+        el
+      end
+
+      # Declarative GitHub OSC 8 hyperlink element (`:rfc`, `:discussion`, `:issue`, `:pr`)
+      def github_link(
+        repo : String,
+        kind : Symbol | String,
+        number : Int32 | String,
+        label : String? = nil,
+        id : String? = nil,
+        fg : Color | Symbol | String = :cyan,
+        bg : Color | Symbol | String = Color.none,
+        bold : Bool = false,
+        dim : Bool = false,
+        italic : Bool = false,
+        underline : Bool = true,
+        icon : String? = nil,
+      ) : Link
+        el = Link.github(
+          repo: repo,
+          kind: kind,
+          number: number,
+          label: label,
+          id: id,
+          fg: fg,
+          bg: bg,
+          bold: bold,
+          dim: dim,
+          italic: italic,
+          underline: underline,
+          icon: icon
+        )
+        add_element(el)
+        el
+      end
+
+      def rfc_link(
+        repo : String,
+        number : Int32 | String,
+        label : String? = nil,
+        fg : Color | Symbol | String = :cyan,
+        bold : Bool = false,
+        underline : Bool = true,
+      ) : Link
+        github_link(repo, :rfc, number, label: label, fg: fg, bold: bold, underline: underline)
+      end
+
+      def discussion_link(
+        repo : String,
+        number : Int32 | String,
+        label : String? = nil,
+        fg : Color | Symbol | String = :cyan,
+        bold : Bool = false,
+        underline : Bool = true,
+      ) : Link
+        github_link(repo, :discussion, number, label: label, fg: fg, bold: bold, underline: underline)
+      end
+
+      def issue_link(
+        repo : String,
+        number : Int32 | String,
+        label : String? = nil,
+        fg : Color | Symbol | String = :cyan,
+        bold : Bool = false,
+        underline : Bool = true,
+      ) : Link
+        github_link(repo, :issue, number, label: label, fg: fg, bold: bold, underline: underline)
+      end
+
+      def pr_link(
+        repo : String,
+        number : Int32 | String,
+        label : String? = nil,
+        fg : Color | Symbol | String = :cyan,
+        bold : Bool = false,
+        underline : Bool = true,
+      ) : Link
+        github_link(repo, :pr, number, label: label, fg: fg, bold: bold, underline: underline)
       end
 
       def badge(
@@ -362,10 +469,12 @@ module Opal
       end
 
       def split_view(
-        direction : SplitDirection = SplitDirection::Horizontal,
+        direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
         ratio : Float64? = 0.5,
         first_size : Int32? = nil,
         second_size : Int32? = nil,
+        min_first_size : Int32? = nil,
+        max_first_size : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
         focused_pane : Symbol = :first,
@@ -377,17 +486,98 @@ module Opal
         el = SplitView.new(
           first: sb.first,
           second: sb.second,
+          direction: sb.direction_override || direction,
+          ratio: sb.ratio_override || ratio,
+          first_size: sb.first_size_override || first_size,
+          second_size: sb.second_size_override || second_size,
+          min_first_size: sb.min_first_size_override || min_first_size,
+          max_first_size: sb.max_first_size_override || max_first_size,
+          separator: sb.separator_override || separator,
+          separator_fg: sb.separator_fg_override || separator_fg,
+          focused_pane: sb.focused_pane_override || focused_pane,
+          show_separator: sb.show_separator_override.nil? ? show_separator : sb.show_separator_override.not_nil!
+        )
+        add_element(el)
+        el
+      end
+
+      def split_pane(
+        direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
+        ratio : Float64? = 0.5,
+        first_size : Int32? = nil,
+        second_size : Int32? = nil,
+        min_first_size : Int32? = nil,
+        max_first_size : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &
+      ) : SplitView
+        split_view(
           direction: direction,
           ratio: ratio,
           first_size: first_size,
           second_size: second_size,
+          min_first_size: min_first_size,
+          max_first_size: max_first_size,
           separator: separator,
           separator_fg: separator_fg,
           focused_pane: focused_pane,
           show_separator: show_separator
-        )
-        add_element(el)
-        el
+        ) { |sb| with sb yield sb }
+      end
+
+      def hsplit(
+        ratio : Float64? = 0.5,
+        first_width : Int32? = nil,
+        second_width : Int32? = nil,
+        min_first_width : Int32? = nil,
+        max_first_width : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &
+      ) : SplitView
+        split_view(
+          direction: SplitDirection::Horizontal,
+          ratio: ratio,
+          first_size: first_width,
+          second_size: second_width,
+          min_first_size: min_first_width,
+          max_first_size: max_first_width,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator
+        ) { |sb| with sb yield sb }
+      end
+
+      def vsplit(
+        ratio : Float64? = 0.5,
+        first_height : Int32? = nil,
+        second_height : Int32? = nil,
+        min_first_height : Int32? = nil,
+        max_first_height : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &
+      ) : SplitView
+        split_view(
+          direction: SplitDirection::Vertical,
+          ratio: ratio,
+          first_size: first_height,
+          second_size: second_height,
+          min_first_size: min_first_height,
+          max_first_size: max_first_height,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator
+        ) { |sb| with sb yield sb }
       end
 
       def code_view(

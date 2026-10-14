@@ -41,6 +41,7 @@ module Opal
         last_dim = false
         last_italic = false
         last_underline = false
+        last_hyperlink : String? = nil
         cursor_x = -1
         cursor_y = -1
 
@@ -57,6 +58,10 @@ module Opal
 
             # Position cursor if not already at cell
             if cursor_x != x || cursor_y != y
+              if last_hyperlink
+                io << "\e]8;;\e\\"
+                last_hyperlink = nil
+              end
               io << "\e["
               (y + 1).to_s(io)
               io << ';'
@@ -64,6 +69,12 @@ module Opal
               io << 'H'
               cursor_x = x
               cursor_y = y
+            end
+
+            # Close previous hyperlink before SGR reset if hyperlink changed
+            if last_hyperlink && curr_cell.hyperlink != last_hyperlink
+              io << "\e]8;;\e\\"
+              last_hyperlink = nil
             end
 
             # Update styling if changed
@@ -89,6 +100,15 @@ module Opal
               last_bg.write_bg_escape(io)
             end
 
+            if curr_cell.hyperlink != last_hyperlink
+              if h = curr_cell.hyperlink
+                io << "\e]8;;" << h << "\e\\"
+              else
+                io << "\e]8;;\e\\"
+              end
+              last_hyperlink = curr_cell.hyperlink
+            end
+
             # Write character
             io << curr_cell.char
             cw = VisualWidth.char_width(curr_cell.char)
@@ -98,6 +118,7 @@ module Opal
 
         # Reset terminal format if any changes were written
         if io.bytesize > 0
+          io << "\e]8;;\e\\" if last_hyperlink
           io << "\e[0m"
           @driver.write(io.to_s)
           @driver.flush
@@ -118,10 +139,16 @@ module Opal
           last_bg = Color.none
           last_bold = false
           last_dim = false
+          last_hyperlink : String? = nil
 
           (0...buffer.width).each do |x|
             cell = buffer.get(x, y)
             next if cell.continuation?
+
+            if last_hyperlink && cell.hyperlink != last_hyperlink
+              io << "\e]8;;\e\\"
+              last_hyperlink = nil
+            end
 
             if cell.bold? != last_bold || cell.dim? != last_dim || cell.fg != last_fg || cell.bg != last_bg
               io << "\e[0m"
@@ -134,8 +161,19 @@ module Opal
               last_fg = cell.fg
               last_bg = cell.bg
             end
+
+            if cell.hyperlink != last_hyperlink
+              if h = cell.hyperlink
+                io << "\e]8;;" << h << "\e\\"
+              else
+                io << "\e]8;;\e\\"
+              end
+              last_hyperlink = cell.hyperlink
+            end
+
             io << cell.char
           end
+          io << "\e]8;;\e\\" if last_hyperlink
           io << "\e[0m\e[K"
         end
 
