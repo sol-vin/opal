@@ -7,6 +7,16 @@ module Opal
     enum SplitDirection
       Horizontal
       Vertical
+
+      def self.from(val : SplitDirection | Symbol | String) : SplitDirection
+        return val if val.is_a?(SplitDirection)
+        case val.to_s.downcase
+        when "vertical", "vert", "v", "col", "column"
+          Vertical
+        else
+          Horizontal
+        end
+      end
     end
 
     # Multi-pane split view container supporting horizontal (side-by-side)
@@ -18,6 +28,8 @@ module Opal
       property ratio : Float64?
       property first_size : Int32?
       property second_size : Int32?
+      property min_first_size : Int32?
+      property max_first_size : Int32?
       property separator : Char
       property separator_fg : Color
       property focused_pane : Symbol
@@ -26,17 +38,21 @@ module Opal
       def initialize(
         @first : Element? = nil,
         @second : Element? = nil,
-        @direction : SplitDirection = SplitDirection::Horizontal,
+        direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
         @ratio : Float64? = 0.5,
         @first_size : Int32? = nil,
         @second_size : Int32? = nil,
+        @min_first_size : Int32? = nil,
+        @max_first_size : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
-        @focused_pane : Symbol = :first,
+        focused_pane : Symbol = :first,
         @show_separator : Bool = true,
       )
+        @direction = SplitDirection.from(direction)
         @separator = separator || (@direction == SplitDirection::Horizontal ? '│' : '─')
         @separator_fg = Color.from(separator_fg)
+        @focused_pane = normalize_focus(focused_pane)
       end
 
       def self.horizontal(
@@ -45,6 +61,8 @@ module Opal
         ratio : Float64? = 0.5,
         first_width : Int32? = nil,
         second_width : Int32? = nil,
+        min_first_width : Int32? = nil,
+        max_first_width : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
         focused_pane : Symbol = :first,
@@ -57,6 +75,8 @@ module Opal
           ratio: ratio,
           first_size: first_width,
           second_size: second_width,
+          min_first_size: min_first_width,
+          max_first_size: max_first_width,
           separator: separator,
           separator_fg: separator_fg,
           focused_pane: focused_pane,
@@ -70,6 +90,8 @@ module Opal
         ratio : Float64? = 0.5,
         first_height : Int32? = nil,
         second_height : Int32? = nil,
+        min_first_height : Int32? = nil,
+        max_first_height : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
         focused_pane : Symbol = :first,
@@ -82,6 +104,8 @@ module Opal
           ratio: ratio,
           first_size: first_height,
           second_size: second_height,
+          min_first_size: min_first_height,
+          max_first_size: max_first_height,
           separator: separator,
           separator_fg: separator_fg,
           focused_pane: focused_pane,
@@ -89,23 +113,85 @@ module Opal
         )
       end
 
+      # Toggles active focus between `:first` and `:second` pane.
+      def toggle_focus : Symbol
+        @focused_pane = (@focused_pane == :first ? :second : :first)
+      end
+
+      def focus_first : Nil
+        @focused_pane = :first
+      end
+
+      def focus_second : Nil
+        @focused_pane = :second
+      end
+
+      # Adjusts split ratio by `delta`, clamped within `[min_ratio, max_ratio]`.
+      def adjust_ratio(delta : Float64, min_ratio : Float64 = 0.1, max_ratio : Float64 = 0.9) : Float64
+        current = @ratio || 0.5
+        updated = (current + delta).clamp(min_ratio, max_ratio)
+        @ratio = updated
+        updated
+      end
+
+      private def normalize_focus(pane : Symbol) : Symbol
+        case pane
+        when :second, :right, :bottom
+          :second
+        else
+          :first
+        end
+      end
+
+      private def resolve_first_extent(avail : Int32) : Int32
+        raw = if fs = @first_size
+                fs.clamp(0, avail)
+              elsif ss = @second_size
+                avail - ss.clamp(0, avail)
+              else
+                r = (@ratio || 0.5).clamp(0.0, 1.0)
+                (avail * r).round.to_i.clamp(0, avail)
+              end
+        if min_s = @min_first_size
+          raw = Math.max(raw, min_s.clamp(0, avail))
+        end
+        if max_s = @max_first_size
+          raw = Math.min(raw, max_s.clamp(0, avail))
+        end
+        raw.clamp(0, avail)
+      end
+
       def preferred_size(available_w : Int32, available_h : Int32) : {Int32, Int32}
         if @direction == SplitDirection::Horizontal
           sep_w = @show_separator ? 1 : 0
           avail = Math.max(0, available_w - sep_w)
-          w1 = (avail * (@ratio || 0.5)).round.to_i
+          w1 = resolve_first_extent(avail)
           w2 = avail - w1
           s1_w, s1_h = @first.try(&.preferred_size(w1, available_h)) || {0, 0}
           s2_w, s2_h = @second.try(&.preferred_size(w2, available_h)) || {0, 0}
-          {Math.min(available_w, s1_w + s2_w + sep_w), Math.max(s1_h, s2_h)}
+          needed_w = s1_w + s2_w
+          if @first_size.nil? && @second_size.nil?
+            r = (@ratio || 0.5).clamp(0.05, 0.95)
+            by_first = (s1_w / r).ceil.to_i
+            by_second = (s2_w / (1.0 - r)).ceil.to_i
+            needed_w = Math.max(needed_w, Math.max(by_first, by_second))
+          end
+          {Math.min(available_w, needed_w + sep_w), Math.max(s1_h, s2_h)}
         else
           sep_h = @show_separator ? 1 : 0
           avail = Math.max(0, available_h - sep_h)
-          h1 = (avail * (@ratio || 0.5)).round.to_i
+          h1 = resolve_first_extent(avail)
           h2 = avail - h1
           s1_w, s1_h = @first.try(&.preferred_size(available_w, h1)) || {0, 0}
           s2_w, s2_h = @second.try(&.preferred_size(available_w, h2)) || {0, 0}
-          {Math.max(s1_w, s2_w), Math.min(available_h, s1_h + s2_h + sep_h)}
+          needed_h = s1_h + s2_h
+          if @first_size.nil? && @second_size.nil?
+            r = (@ratio || 0.5).clamp(0.05, 0.95)
+            by_first = (s1_h / r).ceil.to_i
+            by_second = (s2_h / (1.0 - r)).ceil.to_i
+            needed_h = Math.max(needed_h, Math.max(by_first, by_second))
+          end
+          {Math.max(s1_w, s2_w), Math.min(available_h, needed_h + sep_h)}
         end
       end
 
@@ -123,14 +209,7 @@ module Opal
         sep_w = @show_separator ? 1 : 0
         avail_w = Math.max(0, width - sep_w)
 
-        w1 = if fs = @first_size
-               fs.clamp(0, avail_w)
-             elsif ss = @second_size
-               avail_w - ss.clamp(0, avail_w)
-             else
-               r = (@ratio || 0.5).clamp(0.0, 1.0)
-               (avail_w * r).round.to_i.clamp(0, avail_w)
-             end
+        w1 = resolve_first_extent(avail_w)
         w2 = avail_w - w1
 
         # Render first pane
@@ -161,14 +240,7 @@ module Opal
         sep_h = @show_separator ? 1 : 0
         avail_h = Math.max(0, height - sep_h)
 
-        h1 = if fs = @first_size
-               fs.clamp(0, avail_h)
-             elsif ss = @second_size
-               avail_h - ss.clamp(0, avail_h)
-             else
-               r = (@ratio || 0.5).clamp(0.0, 1.0)
-               (avail_h * r).round.to_i.clamp(0, avail_h)
-             end
+        h1 = resolve_first_extent(avail_h)
         h2 = avail_h - h1
 
         # Render first pane

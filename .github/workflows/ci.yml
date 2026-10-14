@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master, main ]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test (${{ matrix.os }})
@@ -30,9 +34,17 @@ jobs:
         with:
           crystal: latest
 
+      - name: Cache Shards
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: ${{ runner.os }}-shards-${{ hashFiles('**/shard.lock', '**/shard.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-shards-
+
       - name: Check code formatting
         if: matrix.os == 'ubuntu-latest'
-        run: crystal tool format --check
+        run: crystal tool format --check src spec
 
       - name: Run Test Suite (Unix)
         if: runner.os != 'Windows'

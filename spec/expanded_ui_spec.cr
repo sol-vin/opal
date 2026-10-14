@@ -170,5 +170,63 @@ describe "Opal Expanded UI Components" do
       rendered.should contain("[ 1: A ]")
       rendered.should contain("mov eax, 1")
     end
+
+    it "renders declarative link(url, label) and GitHub link helpers in UI DSL" do
+      ansi = Opal.render_ui_ansi(width: 60, height: 6) do
+        vstack do
+          link "https://github.com/sol-vin/opal", "Opal Repository"
+          rfc_link "solvin-ai-org", 119, "RFC #119: Control Panel"
+          issue_link "opal", 122
+          pr_link "opal", 48
+        end
+      end
+
+      ansi.should contain("\e]8;;https://github.com/sol-vin/opal\e\\Opal Repository\e]8;;\e\\")
+      ansi.should contain("\e]8;;https://github.com/sol-vin/solvin-ai-org/discussions/119\e\\RFC #119: Control Panel\e]8;;\e\\")
+      ansi.should contain("\e]8;;https://github.com/sol-vin/opal/issues/122\e\\Issue #122\e]8;;\e\\")
+      ansi.should contain("\e]8;;https://github.com/sol-vin/opal/pull/48\e\\PR #48\e]8;;\e\\")
+    end
+
+    it "supports declarative split_pane, hsplit, vsplit, left/right, top/bottom, and bordered pane builders" do
+      rendered = Opal.render_ui(width: 60, height: 8) do
+        hsplit(ratio: 0.5, separator: '│') do
+          left do
+            box(title: "Work Orders") do
+              link "https://github.com/sol-vin/solvin-ai-org/issues/122", "WO-048"
+            end
+          end
+          right do
+            vsplit(ratio: 0.5, separator: '─') do
+              top do
+                text "AGY Thought Chain"
+              end
+              bottom do
+                text "Active Watchdog: 60s"
+              end
+            end
+          end
+        end
+      end
+
+      rendered.should contain("Work Orders")
+      rendered.should contain("WO-048")
+      rendered.should contain("AGY Thought Chain")
+      rendered.should contain("Active Watchdog: 60s")
+
+      # Sequential pane(...) builder with automatic Box wrapping and focus/ratio helpers
+      split = Opal::UI.split_pane(direction: :horizontal, ratio: 0.4) do
+        pane(title: "Left Pane", border: :rounded) do
+          text "Pane 1"
+        end
+        pane(title: "Right Pane", border: :rounded) do
+          text "Pane 2"
+        end
+        focus :second
+      end
+
+      split.focused_pane.should eq(:second)
+      split.toggle_focus.should eq(:first)
+      split.adjust_ratio(0.1).should be_close(0.5, 0.001)
+    end
   end
 end

@@ -30,10 +30,20 @@ module Opal
       end
     end
 
-    # Builder for split view children
+    # Builder for split view children and declarative split-pane configuration
     class SplitBuilder
-      getter first : Element?
-      getter second : Element?
+      property first : Element?
+      property second : Element?
+      property direction_override : SplitDirection? = nil
+      property ratio_override : Float64? = nil
+      property first_size_override : Int32? = nil
+      property second_size_override : Int32? = nil
+      property min_first_size_override : Int32? = nil
+      property max_first_size_override : Int32? = nil
+      property separator_override : Char? = nil
+      property separator_fg_override : Color? = nil
+      property focused_pane_override : Symbol? = nil
+      property show_separator_override : Bool? = nil
 
       def first(&) : Nil
         b = Builder.new
@@ -53,6 +63,224 @@ module Opal
 
       def second(element : Element) : Nil
         @second = element
+      end
+
+      # Horizontal split aliases
+      def left(&) : Nil
+        first { |b| with b yield b }
+      end
+
+      def left(element : Element) : Nil
+        first(element)
+      end
+
+      def right(&) : Nil
+        second { |b| with b yield b }
+      end
+
+      def right(element : Element) : Nil
+        second(element)
+      end
+
+      # Vertical split aliases
+      def top(&) : Nil
+        first { |b| with b yield b }
+      end
+
+      def top(element : Element) : Nil
+        first(element)
+      end
+
+      def bottom(&) : Nil
+        second { |b| with b yield b }
+      end
+
+      def bottom(element : Element) : Nil
+        second(element)
+      end
+
+      # Sequential pane builder: populates `first` then `second`, optionally wrapping in a bordered Box.
+      def pane(
+        title : String? = nil,
+        border : Symbol | Border | Nil = nil,
+        border_fg : Color | Symbol | String = Color.none,
+        title_fg : Color | Symbol | String = :cyan,
+        padding : Int32 = 0,
+        bg : Color | Symbol | String = Color.none,
+        &
+      ) : Element?
+        b = Builder.new
+        with b yield b
+        el = if title || border
+               Box.new(
+                 child: b.root,
+                 border: border || :rounded,
+                 border_fg: border_fg,
+                 padding: padding,
+                 title: title,
+                 title_fg: title_fg,
+                 bg: bg
+               )
+             else
+               b.root
+             end
+        if @first.nil?
+          @first = el
+        else
+          @second = el
+        end
+        el
+      end
+
+      def pane(element : Element) : Element
+        if @first.nil?
+          @first = element
+        else
+          @second = element
+        end
+        element
+      end
+
+      def direction(dir : SplitDirection | Symbol | String) : self
+        @direction_override = SplitDirection.from(dir)
+        self
+      end
+
+      def horizontal : self
+        @direction_override = SplitDirection::Horizontal
+        self
+      end
+
+      def vertical : self
+        @direction_override = SplitDirection::Vertical
+        self
+      end
+
+      def ratio(val : Float64) : self
+        @ratio_override = val
+        self
+      end
+
+      def first_size(sz : Int32) : self
+        @first_size_override = sz
+        self
+      end
+
+      def second_size(sz : Int32) : self
+        @second_size_override = sz
+        self
+      end
+
+      def min_first_size(sz : Int32) : self
+        @min_first_size_override = sz
+        self
+      end
+
+      def max_first_size(sz : Int32) : self
+        @max_first_size_override = sz
+        self
+      end
+
+      def separator(ch : Char, fg : Color | Symbol | String = Color.none) : self
+        @separator_override = ch
+        @separator_fg_override = Color.from(fg)
+        @show_separator_override = true
+        self
+      end
+
+      def hide_separator : self
+        @show_separator_override = false
+        self
+      end
+
+      def focus(pane : Symbol) : self
+        @focused_pane_override = pane
+        self
+      end
+    end
+
+    class SplitView < Element
+      def self.new(
+        direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
+        ratio : Float64? = 0.5,
+        first_size : Int32? = nil,
+        second_size : Int32? = nil,
+        min_first_size : Int32? = nil,
+        max_first_size : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &
+      ) : SplitView
+        sb = SplitBuilder.new
+        with sb yield sb
+        new(
+          first: sb.first,
+          second: sb.second,
+          direction: sb.direction_override || direction,
+          ratio: sb.ratio_override || ratio,
+          first_size: sb.first_size_override || first_size,
+          second_size: sb.second_size_override || second_size,
+          min_first_size: sb.min_first_size_override || min_first_size,
+          max_first_size: sb.max_first_size_override || max_first_size,
+          separator: sb.separator_override || separator,
+          separator_fg: sb.separator_fg_override || separator_fg,
+          focused_pane: sb.focused_pane_override || focused_pane,
+          show_separator: sb.show_separator_override.nil? ? show_separator : sb.show_separator_override.not_nil!
+        )
+      end
+
+      def self.horizontal(
+        ratio : Float64? = 0.5,
+        first_width : Int32? = nil,
+        second_width : Int32? = nil,
+        min_first_width : Int32? = nil,
+        max_first_width : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &
+      ) : SplitView
+        new(
+          direction: SplitDirection::Horizontal,
+          ratio: ratio,
+          first_size: first_width,
+          second_size: second_width,
+          min_first_size: min_first_width,
+          max_first_size: max_first_width,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator
+        ) { |sb| with sb yield sb }
+      end
+
+      def self.vertical(
+        ratio : Float64? = 0.5,
+        first_height : Int32? = nil,
+        second_height : Int32? = nil,
+        min_first_height : Int32? = nil,
+        max_first_height : Int32? = nil,
+        separator : Char? = nil,
+        separator_fg : Color | Symbol | String = Color.none,
+        focused_pane : Symbol = :first,
+        show_separator : Bool = true,
+        &
+      ) : SplitView
+        new(
+          direction: SplitDirection::Vertical,
+          ratio: ratio,
+          first_size: first_height,
+          second_size: second_height,
+          min_first_size: min_first_height,
+          max_first_size: max_first_height,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator
+        ) { |sb| with sb yield sb }
       end
     end
 
@@ -151,7 +379,7 @@ module Opal
     end
 
     # Builds and renders an element tree to a string buffer.
-    def self.render(width : Int32 = 80, height : Int32 = 24, &) : String
+    def self.render(width : Int32 = 80, height : Int32 = 24, with_ansi : Bool = false, &) : String
       builder = Builder.new
       with builder yield builder
 
@@ -160,7 +388,12 @@ module Opal
       w, h = root.preferred_size(width, height)
       buffer = Buffer.new(Math.max(1, w), Math.max(1, h))
       root.render(buffer, 0, 0, buffer.width, buffer.height)
-      buffer.to_s
+      with_ansi ? buffer.render_to_string(with_ansi: true) : buffer.to_s
+    end
+
+    # Builds and renders an element tree to an ANSI string (including colors and OSC 8 hyperlinks).
+    def self.render_ansi(width : Int32 = 80, height : Int32 = 24, &) : String
+      render(width, height, with_ansi: true) { |b| with b yield b }
     end
 
     # Builds an element tree from a block.
@@ -168,6 +401,74 @@ module Opal
       builder = Builder.new
       with builder yield builder
       builder.root || Text.new("")
+    end
+
+    # Creates and returns a SplitView configured via DSL block
+    def self.split_pane(
+      direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
+      ratio : Float64? = 0.5,
+      first_size : Int32? = nil,
+      second_size : Int32? = nil,
+      min_first_size : Int32? = nil,
+      max_first_size : Int32? = nil,
+      separator : Char? = nil,
+      separator_fg : Color | Symbol | String = Color.none,
+      focused_pane : Symbol = :first,
+      show_separator : Bool = true,
+      &
+    ) : SplitView
+      SplitView.new(
+        direction: direction,
+        ratio: ratio,
+        first_size: first_size,
+        second_size: second_size,
+        min_first_size: min_first_size,
+        max_first_size: max_first_size,
+        separator: separator,
+        separator_fg: separator_fg,
+        focused_pane: focused_pane,
+        show_separator: show_separator
+      ) { |sb| with sb yield sb }
+    end
+
+    # Creates and returns a horizontal SplitView configured via DSL block
+    def self.hsplit(
+      ratio : Float64? = 0.5,
+      first_width : Int32? = nil,
+      second_width : Int32? = nil,
+      separator : Char? = nil,
+      separator_fg : Color | Symbol | String = Color.none,
+      show_separator : Bool = true,
+      &
+    ) : SplitView
+      SplitView.horizontal(
+        ratio: ratio,
+        first_width: first_width,
+        second_width: second_width,
+        separator: separator,
+        separator_fg: separator_fg,
+        show_separator: show_separator
+      ) { |sb| with sb yield sb }
+    end
+
+    # Creates and returns a vertical SplitView configured via DSL block
+    def self.vsplit(
+      ratio : Float64? = 0.5,
+      first_height : Int32? = nil,
+      second_height : Int32? = nil,
+      separator : Char? = nil,
+      separator_fg : Color | Symbol | String = Color.none,
+      show_separator : Bool = true,
+      &
+    ) : SplitView
+      SplitView.vertical(
+        ratio: ratio,
+        first_height: first_height,
+        second_height: second_height,
+        separator: separator,
+        separator_fg: separator_fg,
+        show_separator: show_separator
+      ) { |sb| with sb yield sb }
     end
 
     # Creates and returns a DockContainer configured via DSL block

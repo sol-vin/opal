@@ -3,6 +3,7 @@ require "./cell"
 require "./rect"
 require "./mask"
 require "../style/visual_width"
+require "../terminal/osc"
 
 module Opal
   module UI
@@ -123,12 +124,13 @@ module Opal
             char: dither,
             fg: cell.fg.type == Color::Type::None ? Color.ansi(90) : cell.fg,
             bg: cell.bg,
-            dim: true
+            dim: true,
+            hyperlink: cell.hyperlink
           )
         elsif weight < 0.35
-          Cell.new(char: '░', fg: cell.fg, bg: cell.bg, dim: true)
+          Cell.new(char: '░', fg: cell.fg, bg: cell.bg, dim: true, hyperlink: cell.hyperlink)
         elsif weight < 0.70
-          Cell.new(char: '▒', fg: cell.fg, bg: cell.bg, dim: true)
+          Cell.new(char: '▒', fg: cell.fg, bg: cell.bg, dim: true, hyperlink: cell.hyperlink)
         else
           Cell.new(
             char: cell.char,
@@ -138,7 +140,8 @@ module Opal
             dim: true,
             italic: cell.italic?,
             underline: cell.underline?,
-            reverse: cell.reverse?
+            reverse: cell.reverse?,
+            hyperlink: cell.hyperlink
           )
         end
       end
@@ -155,6 +158,7 @@ module Opal
         underline : Bool = false,
         reverse : Bool = false,
         keep_bg : Bool = false,
+        hyperlink : String? = nil,
       ) : Nil
         return unless in_clip?(x, y)
 
@@ -193,12 +197,13 @@ module Opal
           italic: italic,
           underline: underline,
           reverse: reverse,
-          continuation: false
+          continuation: false,
+          hyperlink: hyperlink
         )
         set(x, y, cell)
 
         if cw == 2 && x + 1 < @width
-          set(x + 1, y, Cell.continuation)
+          set(x + 1, y, Cell.continuation(hyperlink))
         end
       end
 
@@ -215,11 +220,25 @@ module Opal
         reverse : Bool = false,
         max_width : Int32? = nil,
         keep_bg : Bool = false,
+        hyperlink : String? = nil,
       ) : Int32
         return 0 if y < 0 || y >= @height
         if cr = @clip_rect
           return 0 if y < cr.y || y >= cr.bottom
         end
+
+        if hyperlink.nil? && text.includes?("\e]8;")
+          return put_string_with_osc8(
+            x, y, text,
+            fg: fg, bg: bg,
+            bold: bold, dim: dim,
+            italic: italic, underline: underline,
+            reverse: reverse,
+            max_width: max_width,
+            keep_bg: keep_bg
+          )
+        end
+
         cur_x = x
         clean_text = VisualWidth.strip_ansi(text)
 
@@ -242,13 +261,118 @@ module Opal
               bold: bold, dim: dim,
               italic: italic, underline: underline,
               reverse: reverse,
-              keep_bg: keep_bg
+              keep_bg: keep_bg,
+              hyperlink: hyperlink
             )
           end
           cur_x += cw
         end
 
         Math.max(0, cur_x - x)
+      end
+
+      private def put_string_with_osc8(
+        x : Int32,
+        y : Int32,
+        text : String,
+        fg : Color = Color.none,
+        bg : Color = Color.none,
+        bold : Bool = false,
+        dim : Bool = false,
+        italic : Bool = false,
+        underline : Bool = false,
+        reverse : Bool = false,
+        max_width : Int32? = nil,
+        keep_bg : Bool = false,
+      ) : Int32
+        cur_x = x
+        pos = 0
+        len = text.bytesize
+        active_url : String? = nil
+
+        while pos < len
+          if text.byte_at(pos) == 0x1b_u8 && pos + 1 < len
+            next_byte = text.byte_at(pos + 1)
+            rest = text.byte_slice(pos)
+            if next_byte == ']'.ord.to_u8 && rest.starts_with?("\e]8;")
+              if m = rest.match(/\A\e\]8;[^;]*;([^\a\e]*)(?:\a|\e\\)/)
+                url_part = m[1]
+                active_url = url_part.empty? ? nil : url_part
+                pos += m[0].bytesize
+                next
+              end
+            elsif next_byte == '['.ord.to_u8
+              if m = rest.match(/\A\e\[[0-9;?]*[a-zA-Z]/)
+                pos += m[0].bytesize
+                next
+              end
+            elsif next_byte == ']'.ord.to_u8
+              if m = rest.match(/\A\e\].*?(?:\a|\e\\)/)
+                pos += m[0].bytesize
+                next
+              end
+            end
+          end
+
+          reader = Char::Reader.new(text, pos)
+          ch = reader.current_char
+          pos += ch.bytesize
+
+          cw = VisualWidth.char_width(ch)
+          next if cw <= 0
+
+          break if cur_x >= @width
+          if cr = @clip_rect
+            break if cur_x + cw > cr.right
+          end
+          if mw = max_width
+            break if (cur_x - x) + cw > mw
+          end
+
+          if cur_x >= 0 && (cr.nil? || cur_x >= cr.not_nil!.x)
+            put_char(
+              cur_x, y, ch,
+              fg: fg, bg: bg,
+              bold: bold, dim: dim,
+              italic: italic, underline: underline,
+              reverse: reverse,
+              keep_bg: keep_bg,
+              hyperlink: active_url
+            )
+          end
+          cur_x += cw
+        end
+
+        Math.max(0, cur_x - x)
+      end
+
+      # Writes an OSC 8 clickable hyperlink into the buffer cells at `(x, y)`.
+      def put_link(
+        x : Int32,
+        y : Int32,
+        url : String,
+        label : String? = nil,
+        fg : Color = Color.cyan,
+        bg : Color = Color.none,
+        bold : Bool = false,
+        dim : Bool = false,
+        italic : Bool = false,
+        underline : Bool = true,
+        reverse : Bool = false,
+        max_width : Int32? = nil,
+        keep_bg : Bool = false,
+      ) : Int32
+        target_url, target_label = Terminal::OSC.resolve_link_args(url, label)
+        put_string(
+          x, y, target_label,
+          fg: fg, bg: bg,
+          bold: bold, dim: dim,
+          italic: italic, underline: underline,
+          reverse: reverse,
+          max_width: max_width,
+          keep_bg: keep_bg,
+          hyperlink: target_url
+        )
       end
 
       # Writes string and pads remaining columns up to `width` with spaces, ensuring clean erasure
@@ -716,7 +840,8 @@ module Opal
               italic: cell.italic?,
               underline: cell.underline?,
               reverse: cell.reverse?,
-              continuation: cell.continuation?
+              continuation: cell.continuation?,
+              hyperlink: cell.hyperlink
             ))
           end
         end
@@ -737,6 +862,7 @@ module Opal
             last_dim = false
             last_italic = false
             last_underline = false
+            last_hyperlink : String? = nil
 
             row_content = String.build do |row_io|
               (0...@width).each do |x|
@@ -744,6 +870,11 @@ module Opal
                 next if cell.continuation?
 
                 if with_ansi
+                  if last_hyperlink && cell.hyperlink != last_hyperlink
+                    row_io << "\e]8;;\e\\"
+                    last_hyperlink = nil
+                  end
+
                   if cell.bold? != last_bold ||
                      cell.dim? != last_dim ||
                      cell.italic? != last_italic ||
@@ -767,10 +898,22 @@ module Opal
                     row_io << last_fg.fg_escape
                     row_io << last_bg.bg_escape
                   end
+
+                  if cell.hyperlink != last_hyperlink
+                    if h = cell.hyperlink
+                      row_io << "\e]8;;" << h << "\e\\"
+                    else
+                      row_io << "\e]8;;\e\\"
+                    end
+                    last_hyperlink = cell.hyperlink
+                  end
                 end
                 row_io << cell.char
               end
-              row_io << "\e[0m" if with_ansi
+              if with_ansi
+                row_io << "\e]8;;\e\\" if last_hyperlink
+                row_io << "\e[0m"
+              end
             end
             io.puts row_content.rstrip
           end

@@ -59,6 +59,7 @@ require "./ui/components/placeholder"
 require "./ui/components/content_switcher"
 require "./ui/components/binary_metrics"
 require "./ui/components/input_remapper"
+require "./ui/components/link"
 require "./ui/layouts/dock"
 require "./ui/layouts/grid"
 require "./ui/screen"
@@ -68,7 +69,12 @@ require "./ui/dsl"
 
 module Opal
   # Convenience shortcut to render a declarative UI tree
-  def self.render_ui(width : Int32 = 80, height : Int32 = 24, &) : String
-    UI.render(width, height) { |b| with b yield b }
+  def self.render_ui(width : Int32 = 80, height : Int32 = 24, with_ansi : Bool = false, &) : String
+    UI.render(width, height, with_ansi: with_ansi) { |b| with b yield b }
+  end
+
+  # Convenience shortcut to render a declarative UI tree with ANSI colors and OSC 8 hyperlinks
+  def self.render_ui_ansi(width : Int32 = 80, height : Int32 = 24, &) : String
+    UI.render_ansi(width, height) { |b| with b yield b }
   end
 end

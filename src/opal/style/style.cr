@@ -1,6 +1,7 @@
 require "./color"
 require "./border"
 require "./visual_width"
+require "../terminal/osc"
 
 module Opal
   # Fluent declarative styling engine inspired by Charm's Lipgloss.
@@ -14,6 +15,8 @@ module Opal
     property? blink : Bool = false
     property? reverse : Bool = false
     property? strikethrough : Bool = false
+    property hyperlink : String? = nil
+    property hyperlink_id : String? = nil
 
     property border : Border = Border.none
     property border_foreground : Color = Color.none
@@ -92,6 +95,16 @@ module Opal
     def strikethrough(val : Bool = true) : self
       @strikethrough = val
       self
+    end
+
+    def hyperlink(url : String?, id : String? = nil) : self
+      @hyperlink = url
+      @hyperlink_id = id
+      self
+    end
+
+    def link(url : String?, id : String? = nil) : self
+      hyperlink(url, id)
     end
 
     def border(style : Symbol | Border, fg : Color | Symbol | String = Color.none, bg : Color | Symbol | String = Color.none) : self
@@ -234,9 +247,13 @@ module Opal
       prefix << @background.bg_escape
 
       p_str = prefix.to_s
-      return text if p_str.empty?
+      styled = p_str.empty? ? text : (p_str + text + "\e[0m")
 
-      p_str + text + "\e[0m"
+      if url = @hyperlink
+        Terminal::OSC.hyperlink(styled, url, @hyperlink_id)
+      else
+        styled
+      end
     end
 
     private def border_style(glyph : String) : String
