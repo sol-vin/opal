@@ -22,9 +22,20 @@ settings:
       title: "\U0001F6E0️ Chores & Tooling"
       bullet: •
 releases:
-- version: 0.1.66
+- version: 0.1.67
   date: "2026-10-14"
   status: active
+  entries:
+  - type: feat
+    description: implement Two-Tier Opal::Core::SplitLayout constraint solver and
+      Opal.split_pane DSL (WO-058)
+    bullet: ✦
+    badge: '[UI]'
+    hash: 0876235
+    author: Ian Rash
+- version: 0.1.66
+  date: "2026-10-14"
+  status: released
   entries:
   - type: feat
     description: add declarative OSC-8 link(url, label) and split-pane builder helpers

@@ -1,4 +1,9 @@
 # OPAL CHANGELOG
+## [0.1.67] - 2026-10-14
+### ✨ Features & Improvements
+- ✦ **[UI]** implement Two-Tier Opal::Core::SplitLayout constraint solver and Opal.split_pane DSL (WO-058) (`0876235`)
+
+---
 ## [0.1.66] - 2026-10-14
 ### ✨ Features & Improvements
 - ✦ **[UI]** add declarative OSC-8 link(url, label) and split-pane builder helpers (WO-048) (`21080ed`)

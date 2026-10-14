@@ -145,8 +145,240 @@ module Opal
       end
     end
 
+    # Semantic keyboard navigation and layout actions for SplitLayout / SplitPane.
+    enum SplitAction
+      FocusNext
+      FocusPrev
+      FocusFirst
+      FocusLast
+      FocusLeft
+      FocusRight
+      FocusUp
+      FocusDown
+      FocusPane1
+      FocusPane2
+      FocusPane3
+      FocusPane4
+      FocusPane5
+      FocusPane6
+      FocusPane7
+      FocusPane8
+      FocusPane9
+      StepGrow
+      StepShrink
+      ResetRatios
+      EqualizeRatios
+      ToggleOrientation
+      ToggleCollapse
+      ToggleZoom
+      AnnounceStatus
+
+      def self.from(val : SplitAction | Symbol | String) : SplitAction
+        return val if val.is_a?(SplitAction)
+        case val.to_s.downcase.strip.gsub('-', '_')
+        when "focus_next", "next", "next_pane"                then FocusNext
+        when "focus_prev", "prev", "prev_pane", "previous"    then FocusPrev
+        when "focus_first", "first", "first_pane"             then FocusFirst
+        when "focus_last", "last", "last_pane"                then FocusLast
+        when "focus_left", "left"                             then FocusLeft
+        when "focus_right", "right"                           then FocusRight
+        when "focus_up", "up"                                 then FocusUp
+        when "focus_down", "down"                             then FocusDown
+        when "focus_pane_1", "pane_1", "1"                    then FocusPane1
+        when "focus_pane_2", "pane_2", "2"                    then FocusPane2
+        when "focus_pane_3", "pane_3", "3"                    then FocusPane3
+        when "focus_pane_4", "pane_4", "4"                    then FocusPane4
+        when "focus_pane_5", "pane_5", "5"                    then FocusPane5
+        when "focus_pane_6", "pane_6", "6"                    then FocusPane6
+        when "focus_pane_7", "pane_7", "7"                    then FocusPane7
+        when "focus_pane_8", "pane_8", "8"                    then FocusPane8
+        when "focus_pane_9", "pane_9", "9"                    then FocusPane9
+        when "step_grow", "grow", "expand"                    then StepGrow
+        when "step_shrink", "shrink"                          then StepShrink
+        when "reset_ratios", "reset"                          then ResetRatios
+        when "equalize_ratios", "equalize", "balance"         then EqualizeRatios
+        when "toggle_orientation", "orientation", "direction" then ToggleOrientation
+        when "toggle_collapse", "collapse"                    then ToggleCollapse
+        when "toggle_zoom", "zoom", "maximize"                then ToggleZoom
+        else
+          AnnounceStatus
+        end
+      end
+
+      # Returns 0-based pane index for FocusPane1..FocusPane9, or nil.
+      def target_pane_index : Int32?
+        case self
+        when .focus_pane1? then 0
+        when .focus_pane2? then 1
+        when .focus_pane3? then 2
+        when .focus_pane4? then 3
+        when .focus_pane5? then 4
+        when .focus_pane6? then 5
+        when .focus_pane7? then 6
+        when .focus_pane8? then 7
+        when .focus_pane9? then 8
+        else                    nil
+        end
+      end
+    end
+
+    # Configurable keyboard shortcut registry for accessible SplitLayout / SplitPane navigation.
+    struct SplitKeymap
+      getter bindings : Hash(String, SplitAction)
+
+      def initialize(bindings : Hash(String, SplitAction)? = nil)
+        if custom = bindings
+          @bindings = custom.dup
+        else
+          @bindings = SplitKeymap.default_bindings
+        end
+      end
+
+      def self.default_bindings : Hash(String, SplitAction)
+        {
+          "tab"        => SplitAction::FocusNext,
+          "shift+tab"  => SplitAction::FocusPrev,
+          "backtab"    => SplitAction::FocusPrev,
+          "f6"         => SplitAction::FocusNext,
+          "shift+f6"   => SplitAction::FocusPrev,
+          "alt+right"  => SplitAction::FocusRight,
+          "alt+l"      => SplitAction::FocusRight,
+          "alt+left"   => SplitAction::FocusLeft,
+          "alt+h"      => SplitAction::FocusLeft,
+          "alt+down"   => SplitAction::FocusDown,
+          "alt+j"      => SplitAction::FocusDown,
+          "alt+up"     => SplitAction::FocusUp,
+          "alt+k"      => SplitAction::FocusUp,
+          "alt+home"   => SplitAction::FocusFirst,
+          "ctrl+home"  => SplitAction::FocusFirst,
+          "alt+end"    => SplitAction::FocusLast,
+          "ctrl+end"   => SplitAction::FocusLast,
+          "alt+1"      => SplitAction::FocusPane1,
+          "alt+2"      => SplitAction::FocusPane2,
+          "alt+3"      => SplitAction::FocusPane3,
+          "alt+4"      => SplitAction::FocusPane4,
+          "alt+5"      => SplitAction::FocusPane5,
+          "alt+6"      => SplitAction::FocusPane6,
+          "alt+7"      => SplitAction::FocusPane7,
+          "alt+8"      => SplitAction::FocusPane8,
+          "alt+9"      => SplitAction::FocusPane9,
+          "ctrl+right" => SplitAction::StepGrow,
+          "ctrl+down"  => SplitAction::StepGrow,
+          "ctrl+]"     => SplitAction::StepGrow,
+          "alt+]"      => SplitAction::StepGrow,
+          "ctrl+left"  => SplitAction::StepShrink,
+          "ctrl+up"    => SplitAction::StepShrink,
+          "ctrl+["     => SplitAction::StepShrink,
+          "alt+["      => SplitAction::StepShrink,
+          "ctrl+0"     => SplitAction::ResetRatios,
+          "alt+0"      => SplitAction::ResetRatios,
+          "ctrl+="     => SplitAction::EqualizeRatios,
+          "alt+="      => SplitAction::EqualizeRatios,
+          "alt+o"      => SplitAction::ToggleOrientation,
+          "ctrl+o"     => SplitAction::ToggleOrientation,
+          "alt+c"      => SplitAction::ToggleCollapse,
+          "alt+z"      => SplitAction::ToggleZoom,
+          "alt+m"      => SplitAction::ToggleZoom,
+          "alt+?"      => SplitAction::AnnounceStatus,
+          "f1"         => SplitAction::AnnounceStatus,
+        }
+      end
+
+      def self.normalize_key_spec(key_spec : String) : String
+        raw = key_spec.downcase.strip
+        return "backtab" if raw == "backtab"
+        parts = raw.split('+').map(&.strip).reject(&.empty?)
+        mods = [] of String
+        mods << "ctrl" if parts.includes?("ctrl") || parts.includes?("control")
+        mods << "alt" if parts.includes?("alt") || parts.includes?("meta")
+        mods << "shift" if parts.includes?("shift")
+        base = parts.reject { |p| ["ctrl", "control", "alt", "meta", "shift"].includes?(p) }.first? || ""
+        base = "esc" if base == "escape"
+        base = "pageup" if base == "page_up"
+        base = "pagedown" if base == "page_down"
+        base = "space" if base == " "
+        mods << base unless base.empty?
+        mods.join("+")
+      end
+
+      def bind(key_spec : String, action : SplitAction | Symbol | String) : self
+        norm = SplitKeymap.normalize_key_spec(key_spec)
+        @bindings[norm] = SplitAction.from(action)
+        self
+      end
+
+      def unbind(key_spec : String) : self
+        norm = SplitKeymap.normalize_key_spec(key_spec)
+        @bindings.delete(norm)
+        self
+      end
+
+      # Resolves a key press descriptor (`name`, `char`, `ctrl`, `alt`, `shift`) to a `SplitAction`.
+      def resolve(
+        name : String,
+        char : Char? = nil,
+        ctrl : Bool = false,
+        alt : Bool = false,
+        shift : Bool = false,
+      ) : SplitAction?
+        raw_name = name.downcase.strip
+        return @bindings["backtab"]? if raw_name == "backtab" && @bindings.has_key?("backtab")
+        return @bindings["shift+tab"]? if raw_name == "shift+tab" && @bindings.has_key?("shift+tab")
+
+        base = if raw_name.empty? && (ch = char)
+                 ch == '\t' ? "tab" : ch.to_s.downcase
+               elsif raw_name == "\t"
+                 "tab"
+               else
+                 raw_name
+               end
+
+        spec = String.build do |io|
+          io << "ctrl+" if ctrl
+          io << "alt+" if alt
+          # Only include shift+ when base isn't a shifted symbol like '?' unless it's tab or f-key
+          if shift && (base == "tab" || base.starts_with?("f") || base == "left" || base == "right" || base == "up" || base == "down")
+            io << "shift+"
+          end
+          io << base
+        end
+
+        if act = @bindings[spec]?
+          return act
+        end
+
+        # Also check with char if name differed (e.g. char == '?' with shift: true, alt: true)
+        if ch = char
+          ch_base = (ch == '\t') ? "tab" : ch.to_s.downcase
+          alt_spec = String.build do |io|
+            io << "ctrl+" if ctrl
+            io << "alt+" if alt
+            io << "shift+" if shift && ch_base == "tab"
+            io << ch_base
+          end
+          return @bindings[alt_spec]? if @bindings.has_key?(alt_spec)
+        end
+
+        nil
+      end
+
+      # Returns human-readable and screen-reader-friendly keyboard shortcut hints.
+      def shortcut_hints : Array(NamedTuple(key: String, description: String))
+        [
+          {key: "Tab/Shift+Tab", description: "Switch Pane"},
+          {key: "Alt+Arrows/HJKL", description: "Navigate Directionally"},
+          {key: "Alt+1..9", description: "Jump to Pane"},
+          {key: "Ctrl+Arrows/[]", description: "Resize Pane"},
+          {key: "Ctrl+0", description: "Reset Ratios"},
+          {key: "Alt+=", description: "Equalize"},
+          {key: "Alt+Z", description: "Zoom Pane"},
+          {key: "Alt+O", description: "Flip Orientation"},
+        ]
+      end
+    end
+
     # Tier-1 Core Engine: 1D/2D Split-Pane Constraint Solver, Divider Drag/Step State Machine,
-    # and Focus Ring Navigation Manager.
+    # Focus Ring Navigation Manager, Keyboard Shortcut Dispatcher, and Screen-Reader Status Announcer.
     class SplitLayout
       property orientation : SplitOrientation
       getter panes : Array(PaneConstraint)
@@ -156,6 +388,10 @@ module Opal
       property resize_step : Float64
       getter? dragging : Bool
       getter active_divider : Int32?
+      property keymap : SplitKeymap
+      getter? zoomed : Bool
+      getter last_announcement : String
+      getter announcement_history : Array(String)
 
       # Pre-allocated scratch buffers for zero-allocation frame solving
       @extent_scratch : Array(Int32)
@@ -163,6 +399,7 @@ module Opal
       @exact_scratch : Array(Float64)
       @geometry_scratch : Array(PaneGeometry)
       @initial_flex : Array(Float64)
+      @pre_zoom_collapsed : Array(Bool)
 
       def initialize(
         orientation : SplitOrientation | Symbol | String = SplitOrientation::Horizontal,
@@ -178,12 +415,17 @@ module Opal
         separator_size : Int32 = 1,
         resize_step : Float64 = 0.05,
         panes : Array(PaneConstraint)? = nil,
+        keymap : SplitKeymap? = nil,
       )
         @orientation = SplitOrientation.from(orientation)
         @separator_size = Math.max(0, separator_size)
         @resize_step = resize_step.clamp(0.01, 0.5)
         @dragging = false
         @active_divider = nil
+        @keymap = keymap || SplitKeymap.new
+        @zoomed = false
+        @last_announcement = ""
+        @announcement_history = [] of String
 
         if custom_panes = panes
           @panes = custom_panes.dup
@@ -209,12 +451,14 @@ module Opal
         end
 
         @initial_flex = @panes.map(&.flex)
+        @pre_zoom_collapsed = @panes.map(&.collapsed?)
         @extent_scratch = Array(Int32).new(@panes.size, 0)
         @frozen_scratch = Array(Bool).new(@panes.size, false)
         @exact_scratch = Array(Float64).new(@panes.size, 0.0)
         @geometry_scratch = Array(PaneGeometry).new(@panes.size)
         @focused_index = 0
         focus_target(focused_pane)
+        record_announcement(build_focus_announcement)
       end
 
       def self.horizontal(
@@ -299,6 +543,7 @@ module Opal
         )
         @panes << constraint
         @initial_flex << constraint.flex
+        @pre_zoom_collapsed << constraint.collapsed?
         sync_scratch_capacity
         ensure_valid_focus
         constraint
@@ -308,12 +553,16 @@ module Opal
       def set_panes(constraints : Array(PaneConstraint)) : self
         @panes.clear
         @initial_flex.clear
+        @pre_zoom_collapsed.clear
+        @zoomed = false
         constraints.each do |c|
           @panes << c
           @initial_flex << c.flex
+          @pre_zoom_collapsed << c.collapsed?
         end
         sync_scratch_capacity
         ensure_valid_focus
+        record_announcement(build_focus_announcement)
         self
       end
 
@@ -322,6 +571,7 @@ module Opal
         if index >= 0 && index < @panes.size
           @panes[index] = constraint
           @initial_flex[index] = constraint.flex if index < @initial_flex.size
+          @pre_zoom_collapsed[index] = constraint.collapsed? if index < @pre_zoom_collapsed.size
           ensure_valid_focus
         end
         self
@@ -385,6 +635,7 @@ module Opal
           p.fixed_size = nil
           @panes[idx] = p
         end
+        record_announcement(build_resize_announcement(@focused_index))
         self
       end
 
@@ -395,7 +646,55 @@ module Opal
           cp.flex = @initial_flex[idx]? || 1.0
           @panes[idx] = cp
         end
+        record_announcement("Reset split ratios: #{pane_display_label(@focused_index)} at #{pane_share_percent(@focused_index)}% #{axis_dimension_word}")
         self
+      end
+
+      # Equalizes flex weights across all active panes.
+      def equalize_ratios! : self
+        active_count = 0
+        @panes.each_with_index do |p, idx|
+          cp = p
+          cp.flex = 1.0
+          cp.fixed_size = nil
+          @panes[idx] = cp
+          active_count += 1 unless cp.collapsed?
+        end
+        share = active_count > 0 ? (100.0 / active_count).round.to_i : 100
+        record_announcement("Equalized split ratios across #{active_count} panes (#{share}% #{axis_dimension_word} each)")
+        self
+      end
+
+      # Toggles primary split orientation between Horizontal and Vertical.
+      def toggle_orientation! : SplitOrientation
+        @orientation = @orientation.horizontal? ? SplitOrientation::Vertical : SplitOrientation::Horizontal
+        record_announcement("Switched split orientation to #{@orientation.to_s.downcase}: #{pane_display_label(@focused_index)} (#{pane_share_percent(@focused_index)}% #{axis_dimension_word})")
+        @orientation
+      end
+
+      # Toggles zoom (maximize) on the currently focused pane, collapsing or restoring sibling panes.
+      def toggle_zoom! : Bool
+        return false if @panes.size < 2
+        if @zoomed
+          @panes.each_with_index do |p, idx|
+            cp = p
+            cp.collapsed = @pre_zoom_collapsed[idx]? || false
+            @panes[idx] = cp
+          end
+          @zoomed = false
+          ensure_valid_focus
+          record_announcement("Restored split panes: #{pane_display_label(@focused_index)} (#{pane_share_percent(@focused_index)}% #{axis_dimension_word})")
+        else
+          @pre_zoom_collapsed = @panes.map(&.collapsed?)
+          @panes.each_with_index do |p, idx|
+            cp = p
+            cp.collapsed = (idx != @focused_index)
+            @panes[idx] = cp
+          end
+          @zoomed = true
+          record_announcement("Maximized pane #{@focused_index + 1} of #{@panes.size}: #{pane_display_label(@focused_index)} (100% #{axis_dimension_word})")
+        end
+        @zoomed
       end
 
       # 2-pane convenience accessors for first/second fixed and min/max bounds
@@ -509,6 +808,7 @@ module Opal
         @panes[idx] = p_a
         @panes[idx + 1] = p_b
 
+        record_announcement(build_resize_announcement(@focused_index))
         updated_share
       end
 
@@ -516,22 +816,26 @@ module Opal
       def step_grow(step : Float64 = @resize_step, pane_index : Int32 = @focused_index) : Float64
         return ratio if @panes.size < 2
         idx = pane_index.clamp(0, @panes.size - 1)
-        if idx < @panes.size - 1
-          adjust_ratio(step.abs, divider_index: idx)
-        else
-          1.0 - adjust_ratio(-step.abs, divider_index: idx - 1)
-        end
+        res = if idx < @panes.size - 1
+                adjust_ratio(step.abs, divider_index: idx)
+              else
+                1.0 - adjust_ratio(-step.abs, divider_index: idx - 1)
+              end
+        record_announcement(build_resize_announcement(idx))
+        res
       end
 
       # Shrinks the specified pane (defaults to focused pane) by `step`.
       def step_shrink(step : Float64 = @resize_step, pane_index : Int32 = @focused_index) : Float64
         return ratio if @panes.size < 2
         idx = pane_index.clamp(0, @panes.size - 1)
-        if idx < @panes.size - 1
-          adjust_ratio(-step.abs, divider_index: idx)
-        else
-          1.0 - adjust_ratio(step.abs, divider_index: idx - 1)
-        end
+        res = if idx < @panes.size - 1
+                adjust_ratio(-step.abs, divider_index: idx)
+              else
+                1.0 - adjust_ratio(step.abs, divider_index: idx - 1)
+              end
+        record_announcement(build_resize_announcement(idx))
+        res
       end
 
       # Starts an interactive divider drag operation on `divider_index`.
@@ -583,6 +887,7 @@ module Opal
         p_b.fixed_size = nil
         @panes[div_idx] = p_a
         @panes[div_idx + 1] = p_b
+        record_announcement(build_resize_announcement(div_idx))
         true
       end
 
@@ -598,7 +903,13 @@ module Opal
         p = @panes[index]
         p.collapsed = collapsed
         @panes[index] = p
+        @zoomed = false
         ensure_valid_focus
+        if collapsed
+          record_announcement("Collapsed pane #{index + 1} of #{@panes.size}: #{pane_display_label(index)}")
+        else
+          record_announcement("Expanded pane #{index + 1} of #{@panes.size}: #{pane_display_label(index)} (#{pane_share_percent(index)}% #{axis_dimension_word})")
+        end
         true
       end
 
@@ -639,12 +950,18 @@ module Opal
 
       def focused_pane=(pane : Symbol | Int32 | String) : Symbol
         focus_target(pane)
+        record_announcement(build_focus_announcement)
         focused_pane
       end
 
       # Returns the string ID of the currently focused pane.
       def focused_id : String
         @panes[@focused_index]?.try(&.id) || "first"
+      end
+
+      # Returns the human-readable title (or fallback ID) of the currently focused pane.
+      def focused_title : String
+        pane_display_label(@focused_index)
       end
 
       # Advances focus forward to the next focusable pane in the ring (wrapping around).
@@ -656,6 +973,7 @@ module Opal
         else
           @focused_index = ring.first
         end
+        record_announcement(build_focus_announcement)
         @focused_index
       end
 
@@ -668,7 +986,21 @@ module Opal
         else
           @focused_index = ring.last
         end
+        record_announcement(build_focus_announcement)
         @focused_index
+      end
+
+      # Moves focus directionally (`:left`, `:right`, `:up`, `:down`).
+      def focus_directional(direction : Symbol | String) : Int32
+        dir_key = direction.to_s.downcase.strip
+        case dir_key
+        when "left", "up", "prev", "previous"
+          focus_prev
+        when "right", "down", "next"
+          focus_next
+        else
+          @focused_index
+        end
       end
 
       # Cycles focus to the next focusable pane and returns the updated `focused_pane` symbol.
@@ -683,6 +1015,7 @@ module Opal
         pane = @panes[index]
         return false if !pane.focusable? || pane.collapsed?
         @focused_index = index
+        record_announcement(build_focus_announcement)
         true
       end
 
@@ -692,11 +1025,17 @@ module Opal
         if idx = @panes.index { |p| p.id.downcase == key }
           return focus_at(idx)
         end
+        if idx = @panes.index { |p| (t = p.title) && t.downcase == key }
+          return focus_at(idx)
+        end
         case key
         when "first", "left", "top", "0", "pane_0"
           focus_at(0)
         when "second", "right", "bottom", "1", "pane_1"
           focus_at(1)
+        when "last"
+          ring = focus_ring
+          ring.empty? ? false : focus_at(ring.last)
         else
           if key.starts_with?("pane_")
             if parsed = key.lchop("pane_").to_i?
@@ -707,12 +1046,133 @@ module Opal
         end
       end
 
-      def focus_first : Nil
-        focus_at(0)
+      def focus_first : Int32
+        ring = focus_ring
+        focus_at(ring.first) unless ring.empty?
+        @focused_index
       end
 
-      def focus_second : Nil
+      def focus_second : Int32
         focus_at(1)
+        @focused_index
+      end
+
+      def focus_last : Int32
+        ring = focus_ring
+        focus_at(ring.last) unless ring.empty?
+        @focused_index
+      end
+
+      # --- Keyboard Action Execution & Screen-Reader Announcements ---
+
+      # Dispatches a `SplitAction` against this layout and updates screen-reader announcements.
+      def execute_action(action : SplitAction) : Bool
+        if target_idx = action.target_pane_index
+          return focus_at(target_idx)
+        end
+
+        case action
+        in .focus_next?
+          focus_next
+          true
+        in .focus_prev?
+          focus_prev
+          true
+        in .focus_first?
+          focus_first
+          true
+        in .focus_last?
+          focus_last
+          true
+        in .focus_left?
+          focus_directional(:left)
+          true
+        in .focus_right?
+          focus_directional(:right)
+          true
+        in .focus_up?
+          focus_directional(:up)
+          true
+        in .focus_down?
+          focus_directional(:down)
+          true
+        in .focus_pane1?, .focus_pane2?, .focus_pane3?, .focus_pane4?, .focus_pane5?, .focus_pane6?, .focus_pane7?, .focus_pane8?, .focus_pane9?
+          false
+        in .step_grow?
+          return false if @panes.size < 2
+          step_grow
+          true
+        in .step_shrink?
+          return false if @panes.size < 2
+          step_shrink
+          true
+        in .reset_ratios?
+          reset_ratios!
+          true
+        in .equalize_ratios?
+          equalize_ratios!
+          true
+        in .toggle_orientation?
+          toggle_orientation!
+          true
+        in .toggle_collapse?
+          return false if @panes.size < 2
+          # Toggle the first collapsed pane if one exists; otherwise collapse the next sibling pane
+          if collapsed_idx = @panes.index(&.collapsed?)
+            set_collapsed(collapsed_idx, false)
+          else
+            sibling_idx = (@focused_index + 1) % @panes.size
+            set_collapsed(sibling_idx, true)
+          end
+        in .toggle_zoom?
+          return false if @panes.size < 2
+          toggle_zoom!
+          true
+        in .announce_status?
+          announce_status
+          true
+        end
+      end
+
+      # Resolves a key press through `@keymap` and executes the matched `SplitAction` if any.
+      def handle_key_action(
+        name : String,
+        char : Char? = nil,
+        ctrl : Bool = false,
+        alt : Bool = false,
+        shift : Bool = false,
+      ) : SplitAction?
+        if action = @keymap.resolve(name: name, char: char, ctrl: ctrl, alt: alt, shift: shift)
+          return action if execute_action(action)
+        end
+        nil
+      end
+
+      # Returns the latest screen-reader-friendly status announcement.
+      def status_announcement : String
+        if @last_announcement.empty?
+          @last_announcement = build_focus_announcement
+        end
+        @last_announcement
+      end
+
+      # Refreshes and records a full focus & layout announcement on demand.
+      def announce_status : String
+        msg = build_focus_announcement
+        record_announcement(msg)
+        msg
+      end
+
+      # Returns a screen-reader-friendly description of the currently focused pane.
+      def describe_focused_pane : String
+        build_focus_announcement
+      end
+
+      # Formats a complete single-line screen-reader-friendly status bar string.
+      def format_status_line(include_shortcuts : Bool = true) : String
+        base = status_announcement
+        return base unless include_shortcuts
+        "#{base} | Shortcuts: Tab/Shift+Tab switch pane, Alt+1..9 jump, Ctrl+Arrows resize, Ctrl+0 reset, Alt+Z zoom"
       end
 
       # --- 1D & 2D Box Constraint Solver ---
@@ -1051,6 +1511,56 @@ module Opal
         when 3 then :fourth
         else        :first
         end
+      end
+
+      private def record_announcement(message : String) : Nil
+        @last_announcement = message
+        @announcement_history << message
+        if @announcement_history.size > 32
+          @announcement_history.shift
+        end
+      end
+
+      private def pane_display_label(index : Int32) : String
+        if p = @panes[index]?
+          if (t = p.title) && !t.strip.empty?
+            t.strip
+          else
+            p.id
+          end
+        else
+          "pane #{index + 1}"
+        end
+      end
+
+      private def pane_share_percent(index : Int32) : Int32
+        r = ratios
+        val = r[index]? || 0.0
+        (val * 100.0).round.to_i
+      end
+
+      private def axis_dimension_word : String
+        @orientation.horizontal? ? "width" : "height"
+      end
+
+      private def build_focus_announcement : String
+        return "Split layout empty" if @panes.empty?
+        idx = @focused_index.clamp(0, @panes.size - 1)
+        label = pane_display_label(idx)
+        share = pane_share_percent(idx)
+        dim = axis_dimension_word
+        orient = @orientation.to_s.downcase
+        state_suffix = @zoomed ? ", maximized" : ""
+        "Focused pane #{idx + 1} of #{@panes.size}: #{label} (#{share}% #{dim}, #{orient} split#{state_suffix})"
+      end
+
+      private def build_resize_announcement(index : Int32) : String
+        return "Split layout empty" if @panes.empty?
+        idx = index.clamp(0, @panes.size - 1)
+        label = pane_display_label(idx)
+        share = pane_share_percent(idx)
+        dim = axis_dimension_word
+        "Resized pane #{idx + 1} of #{@panes.size}: #{label} to #{share}% #{dim}"
       end
     end
   end

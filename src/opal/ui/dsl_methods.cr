@@ -482,6 +482,9 @@ module Opal
         focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
         resize_step : Float64 = 0.05,
+        highlight_focus : Bool = true,
+        high_contrast_focus : Bool = false,
+        show_status_line : Bool = false,
         &
       ) : SplitView
         sb = SplitBuilder.new
@@ -499,7 +502,10 @@ module Opal
           separator_fg: separator_fg,
           focused_pane: focused_pane,
           show_separator: show_separator,
-          resize_step: resize_step
+          resize_step: resize_step,
+          highlight_focus: highlight_focus,
+          high_contrast_focus: high_contrast_focus,
+          show_status_line: show_status_line
         )
         add_element(el)
         el
@@ -519,6 +525,9 @@ module Opal
         focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
         resize_step : Float64 = 0.05,
+        highlight_focus : Bool = true,
+        high_contrast_focus : Bool = false,
+        show_status_line : Bool = false,
         &
       ) : SplitView
         split_view(
@@ -534,7 +543,10 @@ module Opal
           separator_fg: separator_fg,
           focused_pane: focused_pane,
           show_separator: show_separator,
-          resize_step: resize_step
+          resize_step: resize_step,
+          highlight_focus: highlight_focus,
+          high_contrast_focus: high_contrast_focus,
+          show_status_line: show_status_line
         ) { |sb| with sb yield sb }
       end
 

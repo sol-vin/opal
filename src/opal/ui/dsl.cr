@@ -77,8 +77,24 @@ module Opal
       property show_separator_override : Bool? = nil
       property resize_step_override : Float64? = nil
       property highlight_focus_override : Bool? = nil
+      property high_contrast_focus_override : Bool? = nil
+      property focus_border_override : Border? = nil
+      property unfocused_border_override : Border? = nil
       property focus_border_fg_override : Color? = nil
       property unfocused_border_fg_override : Color? = nil
+      property focus_title_fg_override : Color? = nil
+      property unfocused_title_fg_override : Color? = nil
+      property focus_style_override : Style? = nil
+      property unfocused_style_override : Style? = nil
+      property focus_title_prefix_override : String? = nil
+      property show_status_line_override : Bool? = nil
+      property status_line_shortcuts_override : Bool? = nil
+      property status_line_fg_override : Color? = nil
+      property status_line_bg_override : Color? = nil
+      property keymap_override : Core::SplitKeymap? = nil
+      property on_announce_override : Proc(String, Nil)? = nil
+      property on_focus_change_override : Proc(Int32, String, Nil)? = nil
+      property on_resize_override : Proc(Array(Float64), Nil)? = nil
 
       def first(
         id : String? = nil,
@@ -497,12 +513,123 @@ module Opal
 
       def highlight_focus(
         enabled : Bool = true,
+        focus_border : Symbol | Border | String | Nil = nil,
+        unfocused_border : Symbol | Border | String | Nil = nil,
         focus_fg : Color | Symbol | String | Nil = nil,
         unfocused_fg : Color | Symbol | String | Nil = nil,
+        focus_title_fg : Color | Symbol | String | Nil = nil,
+        unfocused_title_fg : Color | Symbol | String | Nil = nil,
       ) : self
         @highlight_focus_override = enabled
+        @focus_border_override = Border.from(focus_border) if focus_border
+        @unfocused_border_override = Border.from(unfocused_border) if unfocused_border
         @focus_border_fg_override = Color.from(focus_fg) if focus_fg
         @unfocused_border_fg_override = Color.from(unfocused_fg) if unfocused_fg
+        @focus_title_fg_override = Color.from(focus_title_fg) if focus_title_fg
+        @unfocused_title_fg_override = Color.from(unfocused_title_fg) if unfocused_title_fg
+        self
+      end
+
+      # Enables WCAG AAA high-contrast Lipgloss border focus indicators.
+      def high_contrast_focus(
+        enabled : Bool = true,
+        focus_border : Symbol | Border | String = :thick,
+        unfocused_border : Symbol | Border | String = :rounded,
+        focus_fg : Color | Symbol | String | Nil = nil,
+        unfocused_fg : Color | Symbol | String | Nil = nil,
+        title_prefix : String? = nil,
+      ) : self
+        @highlight_focus_override = true
+        @high_contrast_focus_override = enabled
+        @focus_border_override = Border.from(focus_border)
+        @unfocused_border_override = Border.from(unfocused_border)
+        @focus_border_fg_override = Color.from(focus_fg) if focus_fg
+        @unfocused_border_fg_override = Color.from(unfocused_fg) if unfocused_fg
+        @focus_title_prefix_override = title_prefix if title_prefix
+        self
+      end
+
+      def focus_border(
+        border : Symbol | Border | String,
+        fg : Color | Symbol | String | Nil = nil,
+        title_fg : Color | Symbol | String | Nil = nil,
+      ) : self
+        @highlight_focus_override = true
+        @focus_border_override = Border.from(border)
+        @focus_border_fg_override = Color.from(fg) if fg
+        @focus_title_fg_override = Color.from(title_fg) if title_fg
+        self
+      end
+
+      def unfocused_border(
+        border : Symbol | Border | String,
+        fg : Color | Symbol | String | Nil = nil,
+        title_fg : Color | Symbol | String | Nil = nil,
+      ) : self
+        @unfocused_border_override = Border.from(border)
+        @unfocused_border_fg_override = Color.from(fg) if fg
+        @unfocused_title_fg_override = Color.from(title_fg) if title_fg
+        self
+      end
+
+      def focus_style(style : Style) : self
+        @highlight_focus_override = true
+        @focus_style_override = style
+        self
+      end
+
+      def unfocused_style(style : Style) : self
+        @unfocused_style_override = style
+        self
+      end
+
+      def focus_title_prefix(prefix : String?) : self
+        @focus_title_prefix_override = prefix
+        self
+      end
+
+      # Enables or configures the bottom screen-reader-friendly status line bar.
+      def status_line(
+        enabled : Bool = true,
+        shortcuts : Bool = true,
+        fg : Color | Symbol | String | Nil = nil,
+        bg : Color | Symbol | String | Nil = nil,
+      ) : self
+        @show_status_line_override = enabled
+        @status_line_shortcuts_override = shortcuts
+        @status_line_fg_override = Color.from(fg) if fg
+        @status_line_bg_override = Color.from(bg) if bg
+        self
+      end
+
+      # Binds a custom keyboard shortcut to a `SplitAction`.
+      def bind_key(key_spec : String, action : Core::SplitAction | Symbol | String) : self
+        km = @keymap_override || Core::SplitKeymap.new
+        km.bind(key_spec, action)
+        @keymap_override = km
+        self
+      end
+
+      # Unbinds a keyboard shortcut from the SplitPane keymap.
+      def unbind_key(key_spec : String) : self
+        km = @keymap_override || Core::SplitKeymap.new
+        km.unbind(key_spec)
+        @keymap_override = km
+        self
+      end
+
+      def on_announce(&block : String -> Nil) : self
+        @on_announce_override = block
+        self
+      end
+
+      def on_focus_change(&block : Int32, String -> Nil) : self
+        @on_focus_change_override = block
+        self
+      end
+
+      def on_resize(&block : Array(Float64) -> Nil) : self
+        @on_resize_override = block
         self
       end
 
@@ -520,6 +647,9 @@ module Opal
         focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
         resize_step : Float64 = 0.05,
+        highlight_focus : Bool = true,
+        high_contrast_focus : Bool = false,
+        show_status_line : Bool = false,
       ) : SplitView
         eff_dir = @direction_override || SplitDirection.from(direction)
         eff_ratio = @ratio_override || ratio
@@ -534,6 +664,10 @@ module Opal
         eff_focus = @focused_pane_override || focused_pane
         eff_show_sep = @show_separator_override.nil? ? show_separator : @show_separator_override.not_nil!
         eff_step = @resize_step_override || resize_step
+        eff_highlight_focus = @highlight_focus_override.nil? ? highlight_focus : @highlight_focus_override.not_nil!
+        eff_high_contrast = @high_contrast_focus_override.nil? ? high_contrast_focus : @high_contrast_focus_override.not_nil!
+        eff_status_line = @show_status_line_override.nil? ? show_status_line : @show_status_line_override.not_nil!
+        eff_status_shortcuts = @status_line_shortcuts_override.nil? ? true : @status_line_shortcuts_override.not_nil!
 
         entries = if !@pane_entries.empty?
                     @pane_entries
@@ -604,9 +738,25 @@ module Opal
           focused_pane: eff_focus,
           show_separator: eff_show_sep,
           resize_step: eff_step,
+          focus_border: @focus_border_override,
+          unfocused_border: @unfocused_border_override,
           focus_border_fg: @focus_border_fg_override,
           unfocused_border_fg: @unfocused_border_fg_override,
-          highlight_focus: @highlight_focus_override || false,
+          focus_title_fg: @focus_title_fg_override,
+          unfocused_title_fg: @unfocused_title_fg_override,
+          focus_style: @focus_style_override,
+          unfocused_style: @unfocused_style_override,
+          focus_title_prefix: @focus_title_prefix_override,
+          highlight_focus: eff_highlight_focus,
+          high_contrast_focus: eff_high_contrast,
+          show_status_line: eff_status_line,
+          status_line_shortcuts: eff_status_shortcuts,
+          status_line_fg: @status_line_fg_override,
+          status_line_bg: @status_line_bg_override,
+          on_announce: @on_announce_override,
+          on_focus_change: @on_focus_change_override,
+          on_resize: @on_resize_override,
+          keymap: @keymap_override,
           panes: elements,
           constraints: constraints
         )
@@ -684,6 +834,9 @@ module Opal
         focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
         resize_step : Float64 = 0.05,
+        highlight_focus : Bool = true,
+        high_contrast_focus : Bool = false,
+        show_status_line : Bool = false,
         &
       ) : SplitView
         sb = SplitBuilder.new
@@ -701,7 +854,10 @@ module Opal
           separator_fg: separator_fg,
           focused_pane: focused_pane,
           show_separator: show_separator,
-          resize_step: resize_step
+          resize_step: resize_step,
+          highlight_focus: highlight_focus,
+          high_contrast_focus: high_contrast_focus,
+          show_status_line: show_status_line
         )
       end
 
@@ -900,6 +1056,9 @@ module Opal
       focused_pane : Symbol | Int32 | String = :first,
       show_separator : Bool = true,
       resize_step : Float64 = 0.05,
+      highlight_focus : Bool = true,
+      high_contrast_focus : Bool = false,
+      show_status_line : Bool = false,
       &
     ) : SplitView
       SplitView.new(
@@ -915,7 +1074,10 @@ module Opal
         separator_fg: separator_fg,
         focused_pane: focused_pane,
         show_separator: show_separator,
-        resize_step: resize_step
+        resize_step: resize_step,
+        highlight_focus: highlight_focus,
+        high_contrast_focus: high_contrast_focus,
+        show_status_line: show_status_line
       ) { |sb| with sb yield sb }
     end
 

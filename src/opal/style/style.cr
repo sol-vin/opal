@@ -107,11 +107,57 @@ module Opal
       hyperlink(url, id)
     end
 
-    def border(style : Symbol | Border, fg : Color | Symbol | String = Color.none, bg : Color | Symbol | String = Color.none) : self
+    def border(style : Symbol | Border | String, fg : Color | Symbol | String = Color.none, bg : Color | Symbol | String = Color.none) : self
       @border = Border.from(style)
-      @border_foreground = Color.from(fg)
-      @border_background = Color.from(bg)
+      @border_foreground = Color.from(fg) if fg != Color.none
+      @border_background = Color.from(bg) if bg != Color.none
       self
+    end
+
+    def border_foreground(color : Color | Symbol | String) : self
+      @border_foreground = Color.from(color)
+      self
+    end
+
+    def border_fg(color : Color | Symbol | String) : self
+      border_foreground(color)
+    end
+
+    def border_background(color : Color | Symbol | String) : self
+      @border_background = Color.from(color)
+      self
+    end
+
+    def border_bg(color : Color | Symbol | String) : self
+      border_background(color)
+    end
+
+    # Lipgloss preset for a WCAG AAA high-contrast focused split pane border.
+    def self.high_contrast_focus(
+      border_style : Symbol | Border | String = :thick,
+      fg : Color | Symbol | String = Color.hex("#00FFFF"),
+      bg : Color | Symbol | String = Color.none,
+    ) : Style
+      Style.new
+        .bold
+        .foreground(fg)
+        .border(border_style)
+        .border_foreground(fg)
+        .border_background(bg)
+    end
+
+    # Lipgloss preset for an unfocused split pane border.
+    def self.unfocused_pane(
+      border_style : Symbol | Border | String = :rounded,
+      fg : Color | Symbol | String = Color.hex("#6C7086"),
+      bg : Color | Symbol | String = Color.none,
+    ) : Style
+      Style.new
+        .faint
+        .foreground(fg)
+        .border(border_style)
+        .border_foreground(fg)
+        .border_background(bg)
     end
 
     def padding(all : Int32) : self
