@@ -469,49 +469,56 @@ module Opal
       end
 
       def split_view(
-        direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
+        direction : SplitDirection | Core::SplitOrientation | Symbol | String = SplitDirection::Horizontal,
         ratio : Float64? = 0.5,
         first_size : Int32? = nil,
         second_size : Int32? = nil,
         min_first_size : Int32? = nil,
         max_first_size : Int32? = nil,
+        min_second_size : Int32? = nil,
+        max_second_size : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
-        focused_pane : Symbol = :first,
+        focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
+        resize_step : Float64 = 0.05,
         &
       ) : SplitView
         sb = SplitBuilder.new
         with sb yield sb
-        el = SplitView.new(
-          first: sb.first,
-          second: sb.second,
-          direction: sb.direction_override || direction,
-          ratio: sb.ratio_override || ratio,
-          first_size: sb.first_size_override || first_size,
-          second_size: sb.second_size_override || second_size,
-          min_first_size: sb.min_first_size_override || min_first_size,
-          max_first_size: sb.max_first_size_override || max_first_size,
-          separator: sb.separator_override || separator,
-          separator_fg: sb.separator_fg_override || separator_fg,
-          focused_pane: sb.focused_pane_override || focused_pane,
-          show_separator: sb.show_separator_override.nil? ? show_separator : sb.show_separator_override.not_nil!
+        el = sb.build_split_view(
+          direction: direction,
+          ratio: ratio,
+          first_size: first_size,
+          second_size: second_size,
+          min_first_size: min_first_size,
+          max_first_size: max_first_size,
+          min_second_size: min_second_size,
+          max_second_size: max_second_size,
+          separator: separator,
+          separator_fg: separator_fg,
+          focused_pane: focused_pane,
+          show_separator: show_separator,
+          resize_step: resize_step
         )
         add_element(el)
         el
       end
 
       def split_pane(
-        direction : SplitDirection | Symbol | String = SplitDirection::Horizontal,
+        direction : SplitDirection | Core::SplitOrientation | Symbol | String = SplitDirection::Horizontal,
         ratio : Float64? = 0.5,
         first_size : Int32? = nil,
         second_size : Int32? = nil,
         min_first_size : Int32? = nil,
         max_first_size : Int32? = nil,
+        min_second_size : Int32? = nil,
+        max_second_size : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
-        focused_pane : Symbol = :first,
+        focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
+        resize_step : Float64 = 0.05,
         &
       ) : SplitView
         split_view(
@@ -521,10 +528,13 @@ module Opal
           second_size: second_size,
           min_first_size: min_first_size,
           max_first_size: max_first_size,
+          min_second_size: min_second_size,
+          max_second_size: max_second_size,
           separator: separator,
           separator_fg: separator_fg,
           focused_pane: focused_pane,
-          show_separator: show_separator
+          show_separator: show_separator,
+          resize_step: resize_step
         ) { |sb| with sb yield sb }
       end
 
@@ -534,10 +544,13 @@ module Opal
         second_width : Int32? = nil,
         min_first_width : Int32? = nil,
         max_first_width : Int32? = nil,
+        min_second_width : Int32? = nil,
+        max_second_width : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
-        focused_pane : Symbol = :first,
+        focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
+        resize_step : Float64 = 0.05,
         &
       ) : SplitView
         split_view(
@@ -547,10 +560,13 @@ module Opal
           second_size: second_width,
           min_first_size: min_first_width,
           max_first_size: max_first_width,
+          min_second_size: min_second_width,
+          max_second_size: max_second_width,
           separator: separator,
           separator_fg: separator_fg,
           focused_pane: focused_pane,
-          show_separator: show_separator
+          show_separator: show_separator,
+          resize_step: resize_step
         ) { |sb| with sb yield sb }
       end
 
@@ -560,10 +576,13 @@ module Opal
         second_height : Int32? = nil,
         min_first_height : Int32? = nil,
         max_first_height : Int32? = nil,
+        min_second_height : Int32? = nil,
+        max_second_height : Int32? = nil,
         separator : Char? = nil,
         separator_fg : Color | Symbol | String = Color.none,
-        focused_pane : Symbol = :first,
+        focused_pane : Symbol | Int32 | String = :first,
         show_separator : Bool = true,
+        resize_step : Float64 = 0.05,
         &
       ) : SplitView
         split_view(
@@ -573,10 +592,13 @@ module Opal
           second_size: second_height,
           min_first_size: min_first_height,
           max_first_size: max_first_height,
+          min_second_size: min_second_height,
+          max_second_size: max_second_height,
           separator: separator,
           separator_fg: separator_fg,
           focused_pane: focused_pane,
-          show_separator: show_separator
+          show_separator: show_separator,
+          resize_step: resize_step
         ) { |sb| with sb yield sb }
       end
 

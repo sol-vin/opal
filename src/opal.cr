@@ -21,6 +21,8 @@ module Opal
   # Top-level DSL mixin allowing any class or namespace to write Opal DSL directly
   module DSL
     include UI::DSL
+    alias SplitPane = UI::SplitView
+    alias SplitBuilder = UI::SplitBuilder
   end
 
   # Creates a clickable OSC 8 hyperlink for modern terminals.
